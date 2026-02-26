@@ -1394,7 +1394,7 @@
         }
     },
     "legal": {
-        "title": "Pravne napomene i odricanje odgovornosti",
+        "title": "Pravne napomene i odricanje od odgovornosti",
         "intro_title": "Priroda aplikacije",
         "intro_text": "Nuvio je reproduktor sadržaja i aplikacija za upravljanje opisnim podacima. Djeluje isključivo kao sučelje na strani klijenta za pregledavanje javno dostupnih opisnih podataka (filmovi, serije itd.) i reprodukciju sadržaja kojeg osigurava korisnik ili proširenja trećih strana. Nuvio sam po sebi ne sadrži, ne pohranjuje, ne distribuira niti indeksira ikakav sadržaj.",
         "extensions_title": "Priključci trećih strana",
@@ -1412,7 +1412,7 @@
         "tabs": {
             "individual": "Pojedinačno",
             "repo": "Tester spremišta",
-            "code": "Kôd",
+            "code": "Kod",
             "logs": "Zapisnici",
             "results": "Rezultati"
         },
@@ -1479,8 +1479,8 @@
             "fetch_hint": "Dohvati spremište za prikaz pružatelja.",
             "test_all": "Testiraj sve",
             "status_running": "POKRENUTO",
-            "status_ok": "OK ({{count}})",
-            "status_ok_empty": "OK (0)",
+            "status_ok": "U REDU ({{count}})",
+            "status_ok_empty": "U REDU (0)",
             "status_failed": "NEUSPJEŠNO",
             "status_idle": "MIROVANJE",
             "tried_url": "Pokušana poveznica: {{url}}",
