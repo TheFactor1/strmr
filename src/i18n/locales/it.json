@@ -1564,5 +1564,14 @@
 		"installing": "Installazione...",
 		"later": "Dopo",
 		"dismiss": "Ignora"
+	},
+	"major_update_screen": {
+		"major_update_title": "Aggiornamento Importante Disponibile",
+		"latest": "Ultima:",
+		"downloading": "Download in corso...",
+		"update_now": "Aggiorna Ora",
+		"later": "Dopo",
+		"dismiss": "Ignora",
+		"view_release": "Vedi Release"
 	}
 }

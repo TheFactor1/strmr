@@ -1564,5 +1564,14 @@
 		"installing": "Installing...",
 		"later": "Later",
 		"dismiss": "Dismiss"
-	}
+	},
+    "major_update_screen":{
+        "major_update_title":"Major update available",
+        "latest":"Latest:",
+        "downloading":"Downloading...",
+        "update_now":"Update Now",
+        "later":"Later",
+        "dismiss":"Dismiss",
+        "view_release":"View Release"
+    }
 }

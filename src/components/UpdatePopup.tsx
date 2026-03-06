@@ -13,7 +13,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import AndroidUpdatePopup from './AndroidUpdatePopup';
-import { t } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 const { width, height } = Dimensions.get('window');
 
@@ -43,7 +43,7 @@ const UpdatePopup: React.FC<UpdatePopupProps> = ({
 }) => {
 	const { currentTheme } = useTheme();
 	const insets = useSafeAreaInsets();
-
+	const { t } = useTranslation();
 	const getReleaseNotes = () => {
 		const manifest: any = updateInfo?.manifest || {};
 		return (
