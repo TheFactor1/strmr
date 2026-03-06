@@ -629,7 +629,9 @@
 		"key_verified": "API key verified and saved successfully.",
 		"disclaimer_part_one": "This product uses the TMDB API but is not",
 		"disclaimer_part_two": "endorsed or certified by TMDB.",
-		"done": "Done"
+		"done": "Done",
+        "current":"Current:",
+        "fallback_to_available":"(fallback to available)"
 	},
 	"settings": {
 		"language": "Language",

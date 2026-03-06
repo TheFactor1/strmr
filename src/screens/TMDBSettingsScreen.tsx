@@ -721,7 +721,8 @@ const TMDBSettingsScreen = () => {
 													{ color: currentTheme.colors.mediumEmphasis },
 												]}
 											>
-												Current: {(settings.tmdbLanguagePreference || 'en').toUpperCase()}
+												{t('tmdb_settings.current')}{' '}
+												{(settings.tmdbLanguagePreference || 'en').toUpperCase()}
 											</Text>
 										</View>
 										<TouchableOpacity
@@ -822,7 +823,7 @@ const TMDBSettingsScreen = () => {
 													{ color: currentTheme.colors.mediumEmphasis },
 												]}
 											>
-												{`Language: ${(previewLanguage || '').toUpperCase() || 'N/A'}${isPreviewFallback ? ' (fallback to available)' : ''}`}
+												{`${t('tmdb_settings.language')}: ${(previewLanguage || '').toUpperCase() || 'N/A'} ${isPreviewFallback ? t('tmdb_settings.fallback_to_available') : ''}`}
 											</Text>
 										)}
 									</View>

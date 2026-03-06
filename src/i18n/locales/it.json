@@ -629,7 +629,10 @@
 		"key_verified": "Chiave API verificata e salvata con successo.",
 		"disclaimer_part_one": "Questo prodotto usa l'API di TMDB ",
 		"disclaimer_part_two": "ma non è sponsorizzato nè certificato da TMDB.",
-		"done": "Fatto"
+		"done": "Fatto",
+		"current": "Attuale:",
+        "fallback_to_available":"(usa disponibile)"
+        
 	},
 	"settings": {
 		"language": "Lingua",
