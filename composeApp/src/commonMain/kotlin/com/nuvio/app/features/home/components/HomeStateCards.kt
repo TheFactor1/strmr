@@ -14,10 +14,11 @@ import com.nuvio.app.core.ui.NuvioSurfaceCard
 fun HomeEmptyStateCard(
     title: String,
     message: String,
+    modifier: Modifier = Modifier,
     actionLabel: String? = null,
     onActionClick: (() -> Unit)? = null,
 ) {
-    NuvioSurfaceCard {
+    NuvioSurfaceCard(modifier = modifier) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,

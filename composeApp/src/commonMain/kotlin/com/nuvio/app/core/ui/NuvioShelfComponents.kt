@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -40,6 +42,8 @@ fun <T> NuvioShelfSection(
     title: String,
     entries: List<T>,
     modifier: Modifier = Modifier,
+    headerHorizontalPadding: Dp = 0.dp,
+    rowContentPadding: PaddingValues = PaddingValues(0.dp),
     onViewAllClick: (() -> Unit)? = null,
     key: ((T) -> Any)? = null,
     itemContent: @Composable (T) -> Unit,
@@ -50,9 +54,11 @@ fun <T> NuvioShelfSection(
     ) {
         NuvioShelfSectionHeader(
             title = title,
+            modifier = Modifier.padding(horizontal = headerHorizontalPadding),
             onViewAllClick = onViewAllClick,
         )
         LazyRow(
+            contentPadding = rowContentPadding,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             if (key != null) {

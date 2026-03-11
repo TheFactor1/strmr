@@ -41,11 +41,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun NuvioScreen(
     modifier: Modifier = Modifier,
+    horizontalPadding: Dp = 16.dp,
     content: LazyListScope.() -> Unit,
 ) {
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -54,9 +56,9 @@ fun NuvioScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(
-            start = 16.dp,
+            start = horizontalPadding,
             top = 10.dp + statusBarTop + nuvioPlatformExtraTopPadding,
-            end = 16.dp,
+            end = horizontalPadding,
             bottom = 18.dp + nuvioPlatformExtraBottomPadding,
         ),
         verticalArrangement = Arrangement.spacedBy(12.dp),

@@ -1,7 +1,5 @@
 package com.nuvio.app.features.home
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,11 +43,15 @@ fun HomeScreen(
         HomeRepository.refresh(addonsUiState.addons)
     }
 
-    NuvioScreen(modifier = modifier) {
+    NuvioScreen(
+        modifier = modifier,
+        horizontalPadding = 0.dp,
+    ) {
         when {
             addonsUiState.addons.none { it.manifest != null } -> {
                 item {
                     HomeEmptyStateCard(
+                        modifier = Modifier.padding(horizontal = 16.dp),
                         title = "No active addons",
                         message = "Install and validate at least one addon before loading catalog rows on Home.",
                     )
@@ -58,13 +60,14 @@ fun HomeScreen(
 
             homeUiState.isLoading && homeUiState.sections.isEmpty() -> {
                 items(3) {
-                    HomeSkeletonRow()
+                    HomeSkeletonRow(modifier = Modifier.padding(horizontal = 16.dp))
                 }
             }
 
             homeUiState.sections.isEmpty() -> {
                 item {
                     HomeEmptyStateCard(
+                        modifier = Modifier.padding(horizontal = 16.dp),
                         title = "No home rows available",
                         message = homeUiState.errorMessage
                             ?: "Installed addons do not currently expose board-compatible catalogs without required extras.",

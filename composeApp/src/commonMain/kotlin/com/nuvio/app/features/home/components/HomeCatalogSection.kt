@@ -2,6 +2,7 @@ package com.nuvio.app.features.home.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.nuvio.app.core.ui.NuvioShelfSection
 import com.nuvio.app.features.home.HomeCatalogSection
 import com.nuvio.app.features.home.MetaPreview
@@ -17,6 +18,8 @@ fun HomeCatalogRowSection(
         title = section.title,
         entries = section.items,
         modifier = modifier,
+        headerHorizontalPadding = 16.dp,
+        rowContentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp),
         onViewAllClick = onViewAllClick,
         key = { item -> item.id },
     ) { item ->
