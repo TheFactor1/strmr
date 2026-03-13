@@ -958,6 +958,7 @@ export const useMetadata = ({ id, type, addonId }: UseMetadataProps): UseMetadat
                     name: localized.title || finalMetadata.name,
                     description: localized.overview || finalMetadata.description,
                     movieDetails: movieDetailsObj,
+                    tmdbId: finalTmdbId,
                     ...(productionInfo.length > 0 && { networks: productionInfo }),
                   };
                 }
@@ -995,6 +996,7 @@ export const useMetadata = ({ id, type, addonId }: UseMetadataProps): UseMetadat
                     name: localized.name || finalMetadata.name,
                     description: localized.overview || finalMetadata.description,
                     tvDetails,
+                    tmdbId: finalTmdbId,
                     ...(productionInfo.length > 0 && { networks: productionInfo }),
                   };
                 }
