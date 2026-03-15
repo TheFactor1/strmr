@@ -2278,7 +2278,12 @@ export const useMetadata = ({ id, type, addonId }: UseMetadataProps): UseMetadat
               }
             }
 
-            if (!settings.enrichMetadataWithTMDB) return; // Only needed imdbId, skip enrichment
+            if (!settings.enrichMetadataWithTMDB) {
+              // Enrichment is disabled but we still resolved tmdbId for Trakt scrobbling.
+              // Set it on the metadata object so the player can read it via metadata.tmdbId.
+              setMetadata(prev => prev ? { ...prev, tmdbId: fetchedTmdbId } : null);
+              return;
+            }
 
             // Fetch certification only if granular setting is enabled
             if (settings.tmdbEnrichCertification) {
