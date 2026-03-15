@@ -1496,5 +1496,22 @@
         "update_now":"Aggiorna Ora",
         "later":"Dopo",
         "dismiss":"Chiudi"
+    },
+    "onboarding_screen":{
+        "welcome":"Benvenuto su\nNuvio",
+        "welcome_subtitle":"Il tuo Hub Contenuti Definitivo",
+        "welcome_description":"Scopri, organizza e gestisci i tuoi film e serie tv preferiti da diverse fonti in un'unica bellissima app.",
+        "addons":"Addon\nPotenti",
+        "addons_subtitle":"Estendi la Tua Esperienza",
+        "addons_description":"Installa addon per accedere ai contenuti da diverse piattaforme e servizi. Scegli ciò che fa al caso tuo.",
+        "discovery":"Smart\nDiscovery",
+        "discovery_subtitle":"Trova ciò che ami",
+        "discovery_description":"Visualizza contenuti in tendenza, cerca fra tutte le tue sorgenti e ricevi suggerimenti personalizzati.",
+        "library":"La tua\nLibreria",
+        "library_subtitle":"Monitora e Organizza",
+        "library_description":"Salva i preferiti, monitora i tuoi progressi, e sincronizza con Trakt per mantenere tutto organizzato fra più dispositivi.",
+        "skip":"Salta",
+        "get_started":"Inizia",
+        "swipe_to_continue":"Scorri per continuare"
     }
 }

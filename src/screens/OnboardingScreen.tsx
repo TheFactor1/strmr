@@ -26,7 +26,7 @@ import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { mmkvStorage } from '../services/mmkvStorage';
 import { ShapeAnimation } from '../components/onboarding/ShapeAnimation';
-
+import { useTranslation } from 'react-i18next';
 const { width, height } = Dimensions.get('window');
 
 const SPRING_CONFIG = {
@@ -42,32 +42,7 @@ interface OnboardingSlide {
   description: string;
 }
 
-const onboardingData: OnboardingSlide[] = [
-  {
-    id: '1',
-    title: 'Welcome to\nNuvio',
-    subtitle: 'Your Ultimate Content Hub',
-    description: 'Discover, organize, and manage your favorite movies and TV shows from multiple sources in one beautiful app.',
-  },
-  {
-    id: '2',
-    title: 'Powerful\nAddons',
-    subtitle: 'Extend Your Experience',
-    description: 'Install addons to access content from various platforms and services. Choose what works best for you.',
-  },
-  {
-    id: '3',
-    title: 'Smart\nDiscovery',
-    subtitle: 'Find What You Love',
-    description: 'Browse trending content, search across all your sources, and get personalized recommendations.',
-  },
-  {
-    id: '4',
-    title: 'Your\nLibrary',
-    subtitle: 'Track & Organize',
-    description: 'Save favorites, track your progress, and sync with Trakt to keep everything organized across devices.',
-  },
-];
+
 
 // Animated Slide Component with parallax
 const AnimatedSlide = ({
@@ -169,7 +144,34 @@ const OnboardingScreen = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<Animated.FlatList<OnboardingSlide>>(null);
   const scrollX = useSharedValue(0);
+  const { t } = useTranslation();
 
+  const onboardingData: OnboardingSlide[] = [
+  {
+    id: '1',
+    title: t('onboarding_screen.welcome'),
+    subtitle: t('onboarding_screen.welcome_subtitle'),
+    description: t('onboarding_screen.welcome_description'),
+  },
+  {
+    id: '2',
+    title: t('onboarding_screen.addons'),
+    subtitle: t('onboarding_screen.addons_subtitle'),
+    description: t('onboarding_screen.addons_description'),
+  },
+  {
+    id: '3',
+    title: t('onboarding_screen.discovery'),
+    subtitle: t('onboarding_screen.discovery_subtitle'),
+    description: t('onboarding_screen.discovery_description'),
+  },
+  {
+    id: '4',
+    title: t('onboarding_screen.library'),
+    subtitle: t('onboarding_screen.library_subtitle'),
+    description: t('onboarding_screen.library_description'),
+  },
+];
   const updateIndex = (index: number) => {
     setCurrentIndex(index);
   };
@@ -309,7 +311,7 @@ const OnboardingScreen = () => {
           style={styles.header}
         >
           <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
-            <Text style={styles.skipText}>Skip</Text>
+            <Text style={styles.skipText}>{t('onboarding_screen.skip')}</Text>
           </TouchableOpacity>
 
           {/* Smooth Progress Bar */}
@@ -352,7 +354,7 @@ const OnboardingScreen = () => {
           <View style={styles.footerButtonContainer}>
             {/* Swipe Indicator - fades out on last slide */}
             <Animated.View style={[styles.swipeIndicator, styles.absoluteFill, swipeOpacityStyle]}>
-              <Text style={styles.swipeText}>Swipe to continue</Text>
+              <Text style={styles.swipeText}>{t('onboarding_screen.swipe_to_continue')}</Text>
               <Text style={styles.swipeArrow}>→</Text>
             </Animated.View>
 
@@ -365,7 +367,7 @@ const OnboardingScreen = () => {
                 activeOpacity={1}
               >
                 <Animated.View style={[styles.button, buttonStyle]}>
-                  <Text style={styles.buttonText}>Get Started</Text>
+                  <Text style={styles.buttonText}>{t('onboarding_screen.get_started')}</Text>
                 </Animated.View>
               </TouchableOpacity>
             </Animated.View>

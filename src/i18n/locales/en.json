@@ -1513,5 +1513,22 @@
         "update_now":"Update Now",
         "later":"Later",
         "dismiss":"Dismiss"
+    },
+    "onboarding_screen":{
+        "welcome":"Welcome to\nNuvio",
+        "welcome_subtitle":"Your Ultimate Content Hub",
+        "welcome_description":"Discover, organize, and manage your favorite movies and TV shows from multiple sources in one beautiful app.",
+        "addons":"Powerful\nAddons",
+        "addons_subtitle":"Extend Your Experience",
+        "addons_description":"Install addons to access content from various platforms and services. Choose what works best for you.",
+        "discovery":"Smart\nDiscovery",
+        "discovery_subtitle":"Find What You Love",
+        "discovery_description":"Browse trending content, search across all your sources, and get personalized recommendations.",
+        "library":"Your\nLibrary",
+        "library_subtitle":"Track & Organize",
+        "library_description":"Save favorites, track your progress, and sync with Trakt to keep everything organized across devices.",
+        "skip":"Skip",
+        "get_started":"Get Started",
+        "swipe_to_continue":"Swipe to continue"
     }
 }
