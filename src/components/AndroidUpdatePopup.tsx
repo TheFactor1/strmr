@@ -11,6 +11,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 const { width } = Dimensions.get('window');
 
@@ -39,6 +40,7 @@ const AndroidUpdatePopup: React.FC<AndroidUpdatePopupProps> = ({
   isInstalling = false,
 }) => {
   const { currentTheme } = useTheme();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const backHandlerRef = useRef<any>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -168,13 +170,13 @@ const AndroidUpdatePopup: React.FC<AndroidUpdatePopupProps> = ({
               styles.title,
               { color: currentTheme.colors.highEmphasis }
             ]}>
-              Update Available
+              {t('update_popup.title')}
             </Text>
             <Text style={[
               styles.subtitle,
               { color: currentTheme.colors.mediumEmphasis }
             ]}>
-              A new version of Nuvio is ready to install
+              {t('update_popup.title_desc')}
             </Text>
           </View>
 
@@ -190,7 +192,7 @@ const AndroidUpdatePopup: React.FC<AndroidUpdatePopupProps> = ({
                 styles.infoLabel,
                 { color: currentTheme.colors.mediumEmphasis }
               ]}>
-                Version:
+                {t('update_popup.version')}
               </Text>
               <Text
                 style={[
@@ -233,12 +235,12 @@ const AndroidUpdatePopup: React.FC<AndroidUpdatePopupProps> = ({
               {isInstalling ? (
                 <>
                   <MaterialIcons name="install-mobile" size={18} color="white" />
-                  <Text style={styles.buttonText}>Installing...</Text>
+                  <Text style={styles.buttonText}>{t('update_popup.installing')}</Text>
                 </>
               ) : (
                 <>
                   <MaterialIcons name="download" size={18} color="white" />
-                  <Text style={styles.buttonText}>Update Now</Text>
+                  <Text style={styles.buttonText}>{t('update_popup.update_now')}</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -261,7 +263,7 @@ const AndroidUpdatePopup: React.FC<AndroidUpdatePopupProps> = ({
                   styles.secondaryButtonText,
                   { color: currentTheme.colors.mediumEmphasis }
                 ]}>
-                  Later
+                  {t('update_popup.later')}
                 </Text>
               </TouchableOpacity>
 
@@ -282,7 +284,7 @@ const AndroidUpdatePopup: React.FC<AndroidUpdatePopupProps> = ({
                   styles.secondaryButtonText,
                   { color: currentTheme.colors.mediumEmphasis }
                 ]}>
-                  Dismiss
+                  {t('update_popup.dismiss')}
                 </Text>
               </TouchableOpacity>
             </View>

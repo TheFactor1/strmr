@@ -1487,5 +1487,14 @@
             "provider_logs": "Log Provider",
             "no_logs_captured": "Nessun log catturato."
         }
+    },
+    "update_popup":{
+        "title": "Aggiornamento Disponibile",
+        "title_desc": "Una nuova versione di Nuvio è pronta per essere installata",
+        "version":"Versione:",
+        "installing":"Installando...",
+        "update_now":"Aggiorna Ora",
+        "later":"Dopo",
+        "dismiss":"Chiudi"
     }
 }

@@ -1503,5 +1503,14 @@
             "provider_logs": "Provider Logs",
             "no_logs_captured": "No logs captured."
         }
+    },
+    "update_popup":{
+        "title": "Update Available",
+        "title_desc": "A new Version of Nuvio is ready to install",
+        "version":"Version:",
+        "installing":"Installing...",
+        "update_now":"Update Now",
+        "later":"Later",
+        "dismiss":"Dismiss"
     }
 }
