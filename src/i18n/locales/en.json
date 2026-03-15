@@ -840,7 +840,8 @@
                 "env_warning": "Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to enable sync."
             },
             "connection": "Connection"
-        }
+        },
+        "mal_description":"Sincronizza con MyAnimeList"
     },
     "privacy": {
         "title": "Privacy & Data",
