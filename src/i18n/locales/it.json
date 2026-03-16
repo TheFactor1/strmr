@@ -668,6 +668,7 @@
         "account": "Account",
         "content_discovery": "Contenuti e Scoperta",
         "appearance": "Aspetto",
+        "appearance_desc":"Temi e layout episodi",
         "integrations": "Integrazioni",
         "playback": "Riproduzione",
         "backup_restore": "Backup e Ripristino",

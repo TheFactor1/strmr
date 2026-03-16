@@ -792,7 +792,7 @@ const SettingsScreen: React.FC = () => {
                   {(settingsConfig?.categories?.['appearance']?.visible !== false) && (
                     <SettingItem
                       title={t('settings.appearance')}
-                      description={currentTheme.name}
+                      description={t('settings.appearance_desc')}
                       icon="sliders"
                       renderControl={() => <ChevronRight />}
                       onPress={() => navigation.navigate('AppearanceSettings')}

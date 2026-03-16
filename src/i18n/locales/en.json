@@ -684,6 +684,7 @@
         "account": "Account",
         "content_discovery": "Content & Discovery",
         "appearance": "Appearance",
+        "appearance_desc":"Themes and episodes layout",
         "integrations": "Integrations",
         "playback": "Playback",
         "backup_restore": "Backup & Restore",
