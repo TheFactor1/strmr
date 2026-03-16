@@ -737,7 +737,7 @@
             "simkl_desc": "Sincronizza con Simkl",
             "tmdb": "TMDB",
             "tmdb_desc": "Sorgente metadati e loghi",
-            "openrouter": "API OpenRouter",
+            "openrouter": "OpenRouter",
             "openrouter_connected": "Connesso",
             "openrouter_desc": "Aggiungi la tua chiave API per abilitare la chat IA",
             "video_player": "Video Player",
@@ -914,7 +914,8 @@
         "error_remove": "Impossibile rimuovere la chiave API",
         "using":"In uso",
         "free_routing":"scelta modello gratuito automatica",
-        "paid_plan":"Usa un ID di un modello custom di OpenRouter (utile in caso di piani a pagamento)"
+        "paid_plan":"Usa un ID di un modello custom di OpenRouter (utile in caso di piani a pagamento)",
+        "model":"Modello"
     },
     "catalog_settings": {
         "title": "Cataloghi",

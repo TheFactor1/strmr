@@ -274,7 +274,7 @@ const AISettingsScreen: React.FC = () => {
             <View style={styles.modelSection}>
               <View style={styles.modelHeader}>
                 <Text style={[styles.label, { color: currentTheme.colors.highEmphasis }]}>
-                  Model
+                  {t('ai_settings.model')}
                 </Text>
                 <Switch
                   value={useDefaultModel}

@@ -929,7 +929,8 @@
         "using":"Using",
         "error_remove": "Failed to remove API key",
         "free_routing":"free automatic routing",
-        "paid_plan":"Use a custom OpenRouter model ID (useful for paid plans)"
+        "paid_plan":"Use a custom OpenRouter model ID (useful for paid plans)",
+        "model":"Model"
     },
     "catalog_settings": {
         "title": "Catalogs",
