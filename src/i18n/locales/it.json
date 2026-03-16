@@ -702,7 +702,8 @@
             "media": "MEDIA",
             "notifications": "NOTIFICHE",
             "testing": "TEST",
-            "danger_zone": "ZONA PERICOLOSA"
+            "danger_zone": "ZONA PERICOLOSA",
+            "introdb_contribution":"CONTRIBUTI INTRODB"
         },
         "items": {
             "legal": "Note Legali & Disclaimer",
@@ -1588,5 +1589,14 @@
         "dont_have_account":"Non hai un account?",
         "already_have_account":"Hai un account?",
         "continue_without_account":"Continua senza account"
+    },
+    "intro_db":{
+        "enable_submission":"Abilita contributi IntroDB",
+        "enable_submission_desc":"Fornisci timestamps alla community",
+        "api_key":"CHIAVE API INTRODB",
+        "enter_api_placeholder":"Inserisci la tua chiave API",
+        "api_key_cleared":"Chiave API cancellata",
+        "api_key_saved":"Chiave API Salvata",
+        "api_key_invalid":"Chiave API non valida"
     }
 }

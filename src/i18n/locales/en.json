@@ -717,7 +717,8 @@
             "media": "MEDIA",
             "notifications": "NOTIFICATIONS",
             "testing": "TESTING",
-            "danger_zone": "DANGER ZONE"
+            "danger_zone": "DANGER ZONE",
+            "introdb_contribution":"INTRODB CONTRIBUTION"
         },
         "items": {
             "legal": "Legal & Disclaimer",
@@ -1603,5 +1604,14 @@
         "dont_have_account":"Dont't have an account?",
         "already_have_account":"Already have an account?",
         "continue_without_account":"Continue without an account"
+    },
+    "intro_db":{
+        "enable_submission":"Enable Intro Submission",
+        "enable_submission_desc":"Contribute timestamps to the community",
+        "api_key":"INTRODB API KEY",
+        "enter_api_placeholder":"Enter your API key",
+        "api_key_cleared":"API Key Cleared",
+        "api_key_saved":"API Key Saved",
+        "api_key_invalid":"Invalid API Key"
     }
 }

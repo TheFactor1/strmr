@@ -107,7 +107,7 @@ export const PlaybackSettingsContent: React.FC<PlaybackSettingsContentProps> = (
     const handleApiKeySubmit = async () => {
         if (!apiKeyInput.trim()) {
             updateSetting('introDbApiKey', '');
-            toastService.success(t('settings.items.api_key_cleared', { defaultValue: 'API Key Cleared' }));
+            toastService.success(t('intro_db.api_key_cleared'));
             return;
         }
 
@@ -119,9 +119,9 @@ export const PlaybackSettingsContent: React.FC<PlaybackSettingsContentProps> = (
 
         if (isValid) {
             updateSetting('introDbApiKey', apiKeyInput);
-            toastService.success(t('settings.items.api_key_saved', { defaultValue: 'API Key Saved' }));
+            toastService.success(t('intro_db.api_key_saved'));
         } else {
-            toastService.error(t('settings.items.api_key_invalid', { defaultValue: 'Invalid API Key' }));
+            toastService.error(t('intro_db.api_key_invalid'));
         }
     };
 
@@ -273,10 +273,10 @@ export const PlaybackSettingsContent: React.FC<PlaybackSettingsContentProps> = (
             </SettingsCard>
 
             {/* IntroDB Contribution Section */}
-            <SettingsCard title={t('settings.sections.introdb_contribution', { defaultValue: 'IntroDB Contribution' })} isTablet={isTablet}>
+            <SettingsCard title={t('settings.sections.introdb_contribution')} isTablet={isTablet}>
                 <SettingItem
-                    title={t('settings.items.enable_intro_submission', { defaultValue: 'Enable Intro Submission' })}
-                    description={t('settings.items.enable_intro_submission_desc', { defaultValue: 'Contribute timestamps to the community' })}
+                    title={t('intro_db.enable_submission')}
+                    description={t('intro_db.enable_submission_desc')}
                     icon="flag"
                     renderControl={() => (
                         <CustomSwitch
@@ -291,14 +291,14 @@ export const PlaybackSettingsContent: React.FC<PlaybackSettingsContentProps> = (
                 {settings?.introSubmitEnabled && (
                     <View style={styles.inputContainer}>
                         <Text style={styles.inputLabel}>
-                            {t('settings.items.introdb_api_key', { defaultValue: 'INTRODB API KEY' })}
+                            {t('intro_db.api_key')}
                         </Text>
                         <View style={styles.apiKeyRow}>
                             <TextInput
                                 style={[styles.input, { flex: 1, marginRight: 10, color: currentTheme.colors.highEmphasis }]}
                                 value={apiKeyInput}
                                 onChangeText={setApiKeyInput}
-                                placeholder="Enter your API key"
+                                placeholder={t('intro_db.enter_api_placeholder')}
                                 placeholderTextColor={currentTheme.colors.mediumEmphasis}
                                 autoCapitalize="none"
                                 autoCorrect={false}
