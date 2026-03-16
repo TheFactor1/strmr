@@ -130,31 +130,31 @@ const BackupScreen: React.FC = () => {
       let total = 0;
 
       if (preferences.includeLibrary) {
-        items.push(`${t('backup.library_label')}: ${preview.library} items`);
+        items.push(`${t('backup.library_label')}: ${preview.library} ${t('backup.items')}`);
         total += preview.library;
       }
 
       if (preferences.includeWatchProgress) {
-        items.push(`${t('backup.watch_progress_label')}: ${preview.watchProgress} entries`);
+        items.push(`${t('backup.watch_progress_label')}: ${preview.watchProgress} ${t('backup.entries')}`);
         total += preview.watchProgress;
         // Include watched status with watch progress
-        items.push(`Watched Status: ${preview.watchedStatus} items`);
+        items.push(`${t('backup.watched_status')}: ${preview.watchedStatus} ${t('backup.items')}`);
         total += preview.watchedStatus;
       }
 
       if (preferences.includeAddons) {
-        items.push(`${t('backup.addons_label')}: ${preview.addons} installed`);
+        items.push(`${t('backup.addons_label')}: ${preview.addons} ${t('backup.installed')}`);
         total += preview.addons;
       }
 
       if (preferences.includeLocalScrapers) {
-        items.push(`${t('backup.plugins_label')}: ${preview.scrapers} configurations`);
+        items.push(`${t('backup.plugins_label')}: ${preview.scrapers} ${t('backup.configurations')}`);
         total += preview.scrapers;
       }
 
       // Check if no items are selected
       const message = items.length > 0
-        ? `Backup Contents:\n\n${items.join('\n')}\n\nTotal: ${total} items\n\nThis backup includes your selected app settings, themes, watched markers, and integration data.`
+        ? `${t('backup.backup_contents')}:\n\n${items.join('\n')}\n\ ${t('backup.total')}: ${total} ${t('backup.items')}\n\n${t('backup.backup_contents_desc')}`
         : t('backup.alert_no_content');
 
       openAlert(
