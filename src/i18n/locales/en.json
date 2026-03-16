@@ -543,7 +543,8 @@
         "sync_complete_title": "Sync Complete",
         "sync_success_msg": "Successfully synced your watch progress with Trakt.",
         "sync_error_msg": "Sync failed. Please try again.",
-        "disclaimer":"This product uses the Trakt API but is not endorsed or certified by Trakt."
+        "disclaimer":"This product uses the Trakt API but is not endorsed or certified by Trakt.",
+        "library_mode":"Library Sync Mode"
     },
     "simkl": {
         "title": "Simkl Settings",

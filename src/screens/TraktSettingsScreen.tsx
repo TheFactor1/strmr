@@ -720,7 +720,7 @@ const TraktSettingsScreen: React.FC = () => {
       >
         <View style={styles.sheetHeader}>
           <Text style={[styles.sheetTitle, { color: currentTheme.colors.highEmphasis }]}>
-            Library Sync Mode
+            {t('trakt.library.mode')}
           </Text>
         </View>
         <BottomSheetScrollView contentContainerStyle={styles.sheetContent}>
