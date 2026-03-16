@@ -797,7 +797,7 @@
                 "description": "Aggiorna dal cloud (pull) o usa le impostazioni di questo dispositivo come sorgente principale (push).",
                 "pull_btn": "Pull dal Cloud",
                 "push_btn": "Push dal Dispositivo",
-                "manage_account": "Gestiscci Account",
+                "manage_account": "Gestisci Account",
                 "sign_out": "Disconnetti",
                 "sign_in_up": "Accedi / Registrati"
             },
@@ -1046,7 +1046,7 @@
         "select_catalogs": "Seleziona cataloghi",
         "all_catalogs": "Tutti i cataloghi",
         "selected": "selezionati",
-        "prefer_external_meta": "Preferisci Metadati Estrerni",
+        "prefer_external_meta": "Preferisci Metadati Esterni",
         "prefer_external_meta_desc": "Usa i metadati esterni nella pagina dei dettagli",
         "hero_layout": "Layout Hero",
         "layout_legacy": "Classico",
