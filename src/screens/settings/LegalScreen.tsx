@@ -67,7 +67,7 @@ const LegalScreen: React.FC = () => {
 
                 <View style={styles.footer}>
                     <Text style={[styles.footerText, { color: currentTheme.colors.disabled }]}>
-                        Last updated: January 2026
+                        {t('legal.last_updated')}: January 2026
                     </Text>
                 </View>
             </ScrollView>

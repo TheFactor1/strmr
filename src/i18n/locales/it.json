@@ -1437,7 +1437,8 @@
         "dmca_title": "Copyright e DMCA",
         "dmca_text": "Rispettiamo i diritti di proprietà intellettuale altrui. Poiché Nuvio non ospita alcun contenuto, non possiamo rimuovere contenuti da Internet. Tuttavia, se ritieni che l'interfaccia stessa dell'applicazione violi i tuoi diritti, ti preghiamo di contattarci.",
         "warranty_title": "Nessuna Garanzia",
-        "warranty_text": "Questo software è fornito \"così com'è\", senza garanzia di alcun tipo, espressa o implicita. In nessun caso gli autori o i detentori del copyright saranno responsabili per qualsiasi reclamo, danno o altra responsabilità derivante dall'uso di questo software."
+        "warranty_text": "Questo software è fornito \"così com'è\", senza garanzia di alcun tipo, espressa o implicita. In nessun caso gli autori o i detentori del copyright saranno responsabili per qualsiasi reclamo, danno o altra responsabilità derivante dall'uso di questo software.",
+        "last_updated":"Ultimo aggiornamento"
     },
     "plugin_tester": {
         "title": "Tester Plugin",

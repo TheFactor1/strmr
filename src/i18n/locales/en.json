@@ -1453,7 +1453,8 @@
         "dmca_title": "Copyright & DMCA",
         "dmca_text": "We respect the intellectual property rights of others. Nuvio does not host media content. If you believe this project's code, assets, or interface infringes your rights, submit a notice through the official project contact channels listed on the website and repository.",
         "warranty_title": "No Warranty",
-        "warranty_text": "This software is provided \"as is\", without warranty of any kind, express or implied. In no event shall the authors or copyright holders be liable for any claim, damages, or other liability arising from the use of this software."
+        "warranty_text": "This software is provided \"as is\", without warranty of any kind, express or implied. In no event shall the authors or copyright holders be liable for any claim, damages, or other liability arising from the use of this software.",
+        "last_updated":"Last updated"
     },
     "plugin_tester": {
         "title": "Plugin Tester",
