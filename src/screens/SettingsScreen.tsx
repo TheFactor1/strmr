@@ -438,7 +438,7 @@ const SettingsScreen: React.FC = () => {
       case 'appearance':
         return (
           <>
-            <SettingsCard title="GENERAL" isTablet={isTablet}>
+            <SettingsCard title={t('settings.sections.general')} isTablet={isTablet}>
               <SettingItem
                 title={t('settings.language')}
                 description={t(`settings.${LOCALES.find(l => l.code === i18n.language)?.key}`)}
@@ -771,7 +771,7 @@ const SettingsScreen: React.FC = () => {
               (settingsConfig?.categories?.['integrations']?.visible !== false) ||
               (settingsConfig?.categories?.['playback']?.visible !== false)
             ) && (
-                <SettingsCard title="GENERAL">
+                <SettingsCard title={t('settings.sections.general')}>
                   <SettingItem
                     title={t('settings.language')}
                     description={t(`settings.${LOCALES.find(l => l.code === i18n.language)?.key}`)
@@ -825,7 +825,7 @@ const SettingsScreen: React.FC = () => {
               (settingsConfig?.categories?.['backup']?.visible !== false) ||
               (settingsConfig?.categories?.['updates']?.visible !== false)
             ) && (
-                <SettingsCard title="DATA">
+                <SettingsCard title={t('settings.sections.data')}>
                   {(settingsConfig?.categories?.['backup']?.visible !== false) && (
                     <SettingItem
                       title={t('settings.backup_restore')}

@@ -689,6 +689,8 @@
         "made_with_love": "Fatto con ❤️ da Tapframe e amici",
         "sections": {
             "information": "INFORMAZIONI",
+            "general":"GENERALE",
+            "data":"DATI",
             "account": "ACCOUNT",
             "theme": "TEMA",
             "layout": "LAYOUT",
@@ -701,7 +703,7 @@
             "audio_subtitles": "AUDIO E SOTTOTITOLI",
             "media": "MEDIA",
             "notifications": "NOTIFICHE",
-            "testing": "TEST",
+            "testing": "STRUMENTI PER SVILUPPATORI",
             "danger_zone": "ZONA PERICOLOSA",
             "introdb_contribution":"CONTRIBUTI INTRODB"
         },

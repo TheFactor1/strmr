@@ -704,6 +704,8 @@
         "made_with_love": "Made with ❤️ by Tapframe and friends",
         "sections": {
             "information": "INFORMATION",
+            "general":"GENERAL",
+            "data":"DATA",
             "account": "ACCOUNT",
             "theme": "THEME",
             "layout": "LAYOUT",
