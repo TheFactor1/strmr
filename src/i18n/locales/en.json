@@ -542,7 +542,8 @@
         "sign_out_error": "Failed to sign out of Trakt.",
         "sync_complete_title": "Sync Complete",
         "sync_success_msg": "Successfully synced your watch progress with Trakt.",
-        "sync_error_msg": "Sync failed. Please try again."
+        "sync_error_msg": "Sync failed. Please try again.",
+        "disclaimer":"This product uses the Trakt API but is not endorsed or certified by Trakt."
     },
     "simkl": {
         "title": "Simkl Settings",

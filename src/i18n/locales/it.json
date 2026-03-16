@@ -527,7 +527,8 @@
         "sign_out_error": "Impossibile uscire da Trakt.",
         "sync_complete_title": "Sincronizzazione completata",
         "sync_success_msg": "Progressi di visione sincronizzati con successo con Trakt.",
-        "sync_error_msg": "Sincronizzazione fallita. Riprova."
+        "sync_error_msg": "Sincronizzazione fallita. Riprova.",
+        "disclaimer":"Questo prodotto usa l'API di Trakt ma non è nè approvato nè certificato da Trakt."
     },
     "simkl": {
         "title": "Impostazioni Simkl",
