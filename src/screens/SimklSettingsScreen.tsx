@@ -155,7 +155,7 @@ const SimklSettingsScreen: React.FC = () => {
                         color={isDarkMode ? currentTheme.colors.highEmphasis : currentTheme.colors.textDark}
                     />
                     <Text style={[styles.backText, { color: isDarkMode ? currentTheme.colors.highEmphasis : currentTheme.colors.textDark }]}>
-                        Settings
+                        {t('simkl.settings')}
                     </Text>
                 </TouchableOpacity>
             </View>

@@ -566,7 +566,8 @@
         "config_error_msg": "Simkl Client ID is missing in environment variables.",
         "conflict_title": "Conflict",
         "conflict_msg": "You cannot connect to Simkl while Trakt is connected. Please disconnect Trakt first.",
-        "disclaimer": "Nuvio is not affiliated with Simkl."
+        "disclaimer": "Nuvio is not affiliated with Simkl.",
+        "settings":"Settings"
     },
     "tmdb_settings": {
         "title": "TMDb Settings",

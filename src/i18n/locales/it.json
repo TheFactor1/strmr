@@ -498,7 +498,7 @@
         "pre_installed": "PRE-INSTALLATO"
     },
     "trakt": {
-        "title": "Impostazioni Trakt",
+        "title": "Trakt Sync",
         "settings_title": "Impostazioni Trakt",
         "connect_title": "Connettiti a Trakt",
         "connect_desc": "Sincronizza cronologia, watchlist e collezione con Trakt.tv",
@@ -551,7 +551,8 @@
         "config_error_msg": "L'ID client Simkl manca nelle variabili d'ambiente.",
         "conflict_title": "Conflitto",
         "conflict_msg": "Non puoi connettere Simkl mentre Trakt è connesso. Disconnetti prima Trakt.",
-        "disclaimer": "Nuvio non è affiliato con Simkl."
+        "disclaimer": "Nuvio non è affiliato con Simkl.",
+        "settings":"Impostazioni"
     },
     "tmdb_settings": {
         "title": "Impostazioni TMDB",
@@ -730,7 +731,7 @@
             "mdblist": "MDBList",
             "mdblist_connected": "Connesso",
             "mdblist_desc": "Abilita per aggiungere voti e recensioni",
-            "simkl": "Simkl",
+            "simkl": "Simkl Sync",
             "simkl_connected": "Connesso",
             "simkl_desc": "Sincronizza con Simkl",
             "tmdb": "TMDB",
@@ -778,7 +779,7 @@
         "about_nuvio": "Informazioni su Nuvio",
         "cloud_sync": {
             "title": "Nuvio Sync",
-            "description": "Sicronizza i dati sui tuoi dispositivi con Nuvio",
+            "description": "Sicronizza con Nuvio",
             "hero_title": "Sincronizzazione su Cloud",
             "hero_subtitle": "Mantieni i tuoi addons, progressi e libreria allineati su tutti i tuoi dispositivi.",
             "auth": {
@@ -828,7 +829,7 @@
             "pre_auth": {
                 "title": "Prima della Sincronizzazione",
                 "description": "Accedi per abilitare la sincronizzazione Cloud e mantenere i dati sincronizzati fra tutti i dispositivi.",
-                "point_1": "• Imostazioni Addons e plugins ",
+                "point_1": "• Impostazioni Addons e plugins ",
                 "point_2": "• Avanzamento della visione e libreria",
                 "env_warning": "Imposta EXPO_PUBLIC_SUPABASE_URL e EXPO_PUBLIC_SUPABASE_ANON_KEY per abilitare la sincronizzazione."
             },
