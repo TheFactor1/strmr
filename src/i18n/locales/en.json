@@ -1633,5 +1633,19 @@
     "major_update_overlay":{
         "major_update_available":"Major update available",
         "update_now":"Update Now"
+    },
+    "default_theme_names":{
+        "default":"Default Dark",
+        "ocean":"Ocean Blue",
+        "sunset":"Sunset",
+        "moonlight":"Moonlight",
+        "emerald":"Emerald",
+        "ruby":"Ruby",
+        "amethyst":"Amethyst",
+        "amber":"Amber",
+        "mint":"Mint",
+        "slate":"Slate",
+        "neon":"Neon",
+        "retro":"Retro Wave"
     }
 }

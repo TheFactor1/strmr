@@ -1617,5 +1617,19 @@
     "major_update_overlay":{
         "major_update_available":"Aggiornamento Importante Disponibile",
         "update_now":"Aggiorna Ora"
+    },
+    "default_theme_names":{
+        "default":"Scuro Predefinito",
+        "ocean":"Oceano Blu",
+        "sunset":"Tramonto",
+        "moonlight":"Luce Lunare",
+        "emerald":"Smeraldo",
+        "ruby":"Rubino",
+        "amethyst":"Ametista",
+        "amber":"Ambra",
+        "mint":"Menta",
+        "slate":"Ardesia",
+        "neon":"Neon",
+        "retro":"Retro Wave"
     }
 }

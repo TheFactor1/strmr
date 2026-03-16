@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect, ReactNode } from
 import { mmkvStorage } from '../services/mmkvStorage';
 import { settingsEmitter } from '../hooks/useSettings';
 import { colors as defaultColors } from '../styles/colors';
+import { useTranslation } from 'react-i18next';
 
 // Define the Theme interface
 export interface Theme {
@@ -10,138 +11,7 @@ export interface Theme {
   colors: typeof defaultColors;
   isEditable: boolean;
 }
-
-// Default built-in themes
-export const DEFAULT_THEMES: Theme[] = [
-  {
-    id: 'default',
-    name: 'Default Dark',
-    colors: defaultColors,
-    isEditable: false,
-  },
-  {
-    id: 'ocean',
-    name: 'Ocean Blue',
-    colors: {
-      ...defaultColors,
-      primary: '#3498db',
-      secondary: '#2ecc71',
-      darkBackground: '#0a192f',
-    },
-    isEditable: false,
-  },
-  {
-    id: 'sunset',
-    name: 'Sunset',
-    colors: {
-      ...defaultColors,
-      primary: '#ff7e5f',
-      secondary: '#feb47b',
-      darkBackground: '#1a0f0b',
-    },
-    isEditable: false,
-  },
-  {
-    id: 'moonlight',
-    name: 'Moonlight',
-    colors: {
-      ...defaultColors,
-      primary: '#c084fc',
-      secondary: '#60a5fa',
-      darkBackground: '#060609',
-    },
-    isEditable: false,
-  },
-  {
-    id: 'emerald',
-    name: 'Emerald',
-    colors: {
-      ...defaultColors,
-      primary: '#2ecc71',
-      secondary: '#3498db',
-      darkBackground: '#0e1e13',
-    },
-    isEditable: false,
-  },
-  {
-    id: 'ruby',
-    name: 'Ruby',
-    colors: {
-      ...defaultColors,
-      primary: '#e74c3c',
-      secondary: '#9b59b6',
-      darkBackground: '#1a0a0a',
-    },
-    isEditable: false,
-  },
-  {
-    id: 'amethyst',
-    name: 'Amethyst',
-    colors: {
-      ...defaultColors,
-      primary: '#9b59b6',
-      secondary: '#3498db',
-      darkBackground: '#140a1c',
-    },
-    isEditable: false,
-  },
-  {
-    id: 'amber',
-    name: 'Amber',
-    colors: {
-      ...defaultColors,
-      primary: '#f39c12',
-      secondary: '#d35400',
-      darkBackground: '#1a140a',
-    },
-    isEditable: false,
-  },
-  {
-    id: 'mint',
-    name: 'Mint',
-    colors: {
-      ...defaultColors,
-      primary: '#1abc9c',
-      secondary: '#16a085',
-      darkBackground: '#0a1a17',
-    },
-    isEditable: false,
-  },
-  {
-    id: 'slate',
-    name: 'Slate',
-    colors: {
-      ...defaultColors,
-      primary: '#7f8c8d',
-      secondary: '#95a5a6',
-      darkBackground: '#10191a',
-    },
-    isEditable: false,
-  },
-  {
-    id: 'neon',
-    name: 'Neon',
-    colors: {
-      ...defaultColors,
-      primary: '#00ff00',
-      secondary: '#ff00ff',
-      darkBackground: '#0a0a0a',
-    },
-    isEditable: false,
-  },
-  {
-    id: 'retro',
-    name: 'Retro Wave',
-    colors: {
-      ...defaultColors,
-      primary: '#ff00ff',
-      secondary: '#00ffff',
-      darkBackground: '#150036',
-    },
-    isEditable: false,
-  },
-];
-
+ 
 // Theme context props
 interface ThemeContextProps {
   currentTheme: Theme;
@@ -161,6 +31,138 @@ const CUSTOM_THEMES_KEY = 'custom_themes';
 
 // Provider component
 export function ThemeProvider({ children }: { children: ReactNode }) {
+  
+  const {t} = useTranslation();
+  //Default Theme inside ThemeProvider to provide Localization Support to default theme names 
+  const DEFAULT_THEMES: Theme[] = [
+  {
+    id: 'default',
+    name: t('default_theme_names.default'),
+    colors: defaultColors,
+    isEditable: false,
+  },
+  {
+    id: 'ocean',
+    name: t('default_theme_names.ocean'),
+    colors: {
+      ...defaultColors,
+      primary: '#3498db',
+      secondary: '#2ecc71',
+      darkBackground: '#0a192f',
+    },
+    isEditable: false,
+  },
+  {
+    id: 'sunset',
+    name: t('default_theme_names.sunset'),
+    colors: {
+      ...defaultColors,
+      primary: '#ff7e5f',
+      secondary: '#feb47b',
+      darkBackground: '#1a0f0b',
+    },
+    isEditable: false,
+  },
+  {
+    id: 'moonlight',
+    name: t('default_theme_names.moonlight'),
+    colors: {
+      ...defaultColors,
+      primary: '#c084fc',
+      secondary: '#60a5fa',
+      darkBackground: '#060609',
+    },
+    isEditable: false,
+  },
+  {
+    id: 'emerald',
+    name: t('default_theme_names.emerald'),
+    colors: {
+      ...defaultColors,
+      primary: '#2ecc71',
+      secondary: '#3498db',
+      darkBackground: '#0e1e13',
+    },
+    isEditable: false,
+  },
+  {
+    id: 'ruby',
+    name: t('default_theme_names.ruby'),
+    colors: {
+      ...defaultColors,
+      primary: '#e74c3c',
+      secondary: '#9b59b6',
+      darkBackground: '#1a0a0a',
+    },
+    isEditable: false,
+  },
+  {
+    id: 'amethyst',
+    name: t('default_theme_names.amethyst'),
+    colors: {
+      ...defaultColors,
+      primary: '#9b59b6',
+      secondary: '#3498db',
+      darkBackground: '#140a1c',
+    },
+    isEditable: false,
+  },
+  {
+    id: 'amber',
+    name: t('default_theme_names.amber'),
+    colors: {
+      ...defaultColors,
+      primary: '#f39c12',
+      secondary: '#d35400',
+      darkBackground: '#1a140a',
+    },
+    isEditable: false,
+  },
+  {
+    id: 'mint',
+    name: t('default_theme_names.minst'),
+    colors: {
+      ...defaultColors,
+      primary: '#1abc9c',
+      secondary: '#16a085',
+      darkBackground: '#0a1a17',
+    },
+    isEditable: false,
+  },
+  {
+    id: 'slate',
+    name: t('default_theme_names.slate'),
+    colors: {
+      ...defaultColors,
+      primary: '#7f8c8d',
+      secondary: '#95a5a6',
+      darkBackground: '#10191a',
+    },
+    isEditable: false,
+  },
+  {
+    id: 'neon',
+    name: t('default_theme_names.neon'),
+    colors: {
+      ...defaultColors,
+      primary: '#00ff00',
+      secondary: '#ff00ff',
+      darkBackground: '#0a0a0a',
+    },
+    isEditable: false,
+  },
+  {
+    id: 'retro',
+    name: t('default_theme_names.retro'),
+    colors: {
+      ...defaultColors,
+      primary: '#ff00ff',
+      secondary: '#00ffff',
+      darkBackground: '#150036',
+    },
+    isEditable: false,
+  },
+];
   const [currentTheme, setCurrentThemeState] = useState<Theme>(DEFAULT_THEMES[0]);
   const [availableThemes, setAvailableThemes] = useState<Theme[]>(DEFAULT_THEMES);
 
