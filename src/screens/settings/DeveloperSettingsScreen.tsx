@@ -51,31 +51,31 @@ const DeveloperSettingsScreen: React.FC = () => {
     const handleResetOnboarding = async () => {
         try {
             await mmkvStorage.removeItem('hasCompletedOnboarding');
-            openAlert('Success', 'Onboarding has been reset. Restart the app to see the onboarding flow.');
+            openAlert(t('common.success'), t('settings.items.onboarding_reset_success'));
         } catch (error) {
-            openAlert('Error', 'Failed to reset onboarding.');
+            openAlert(t('common.error'), t('settings.items.onboarding_reset_fail'));
         }
     };
 
     const handleResetCampaigns = async () => {
         await campaignService.resetCampaigns();
-        openAlert('Success', 'Campaign history reset. Restart app to see posters again.');
+        openAlert(t('common.success'), t('settings.items.campaigns_reset'));
     };
 
     const handleClearAllData = () => {
         openAlert(
-            'Clear All Data',
-            'This will reset all settings and clear all cached data. Are you sure?',
+            t('settings.items.clear_all_data'),
+            t('settings.items.clear_all_data_confirm'),
             [
-                { label: 'Cancel', onPress: () => { } },
+                { label: t('common.cancel'), onPress: () => { } },
                 {
-                    label: 'Clear',
+                    label: t('common.clear'),
                     onPress: async () => {
                         try {
                             await mmkvStorage.clear();
-                            openAlert('Success', 'All data cleared. Please restart the app.');
+                            openAlert(t('common.success'), t('settings.items.clear_all_data_success'));
                         } catch (error) {
-                            openAlert('Error', 'Failed to clear data.');
+                            openAlert(t('common.error'), t('settings.items.clear_all_data_fail'));
                         }
                     }
                 }

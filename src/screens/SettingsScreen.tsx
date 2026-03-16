@@ -489,9 +489,9 @@ const SettingsScreen: React.FC = () => {
               onPress={async () => {
                 try {
                   await mmkvStorage.removeItem('hasCompletedOnboarding');
-                  openAlert('Success', 'Onboarding has been reset. Restart the app to see the onboarding flow.');
+                  openAlert(t('common.success'), t('settings.items.onboarding_reset_success'));
                 } catch (error) {
-                  openAlert('Error', 'Failed to reset onboarding.');
+                  openAlert(t('common.error'), t('settings.items.onboarding_reset_fail'));
                 }
               }}
               renderControl={() => <ChevronRight />}
@@ -503,7 +503,7 @@ const SettingsScreen: React.FC = () => {
               icon="refresh-cw"
               onPress={async () => {
                 await campaignService.resetCampaigns();
-                openAlert('Success', 'Campaign history reset. Restart app to see posters again.');
+                openAlert(t('common.success'), t('settings.items.campaigns_reset'));
               }}
               renderControl={() => <ChevronRight />}
               isTablet={isTablet}
@@ -516,15 +516,15 @@ const SettingsScreen: React.FC = () => {
                   t('settings.clear_data'),
                   t('settings.clear_data_desc'),
                   [
-                    { label: 'Cancel', onPress: () => { } },
+                    { label: t('common.cancel'), onPress: () => { } },
                     {
-                      label: 'Clear',
+                      label: t('common.clear'),
                       onPress: async () => {
                         try {
                           await mmkvStorage.clear();
-                          openAlert('Success', 'All data cleared. Please restart the app.');
+                          openAlert(t('common.success'), t('settings.items.clear_all_data_success'));
                         } catch (error) {
-                          openAlert('Error', 'Failed to clear data.');
+                          openAlert(t('common.error'), t('settings.items.clear_all_data_fail'));
                         }
                       }
                     }
