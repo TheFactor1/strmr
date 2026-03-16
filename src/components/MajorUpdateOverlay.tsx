@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   visible: boolean;
@@ -17,7 +18,7 @@ interface Props {
 
 const MajorUpdateOverlay: React.FC<Props> = ({ visible, latestTag, releaseNotes, releaseUrl, onDismiss, onLater, onUpdateAction, isDownloading, downloadProgress }) => {
   const { currentTheme } = useTheme();
-
+  const {t} = useTranslation();
   if (!visible) return null;
 
   const progressPercent = downloadProgress ? Math.round(downloadProgress * 100) : 0;
@@ -30,9 +31,9 @@ const MajorUpdateOverlay: React.FC<Props> = ({ visible, latestTag, releaseNotes,
             <View style={[styles.iconCircle, { backgroundColor: `${currentTheme.colors.primary}22` }]}>
               <MaterialIcons name="new-releases" size={28} color={currentTheme.colors.primary} />
             </View>
-            <Text style={[styles.title, { color: currentTheme.colors.highEmphasis }]}>Major update available</Text>
+            <Text style={[styles.title, { color: currentTheme.colors.highEmphasis }]}>{t('major_update_overlay.major_update_available')}</Text>
             {!!latestTag && (
-              <Text style={[styles.version, { color: currentTheme.colors.mediumEmphasis }]}>Latest: {latestTag}</Text>
+              <Text style={[styles.version, { color: currentTheme.colors.mediumEmphasis }]}>{t('updates.latest')} {latestTag}</Text>
             )}
           </View>
 
@@ -53,17 +54,17 @@ const MajorUpdateOverlay: React.FC<Props> = ({ visible, latestTag, releaseNotes,
               >
                 <MaterialIcons name={isDownloading ? "downloading" : "system-update"} size={18} color="#fff" />
                 <Text style={styles.primaryText}>
-                  {isDownloading ? `Downloading... ${progressPercent}%` : (onUpdateAction ? 'Update Now' : 'View release')}
+                  {isDownloading ? `${t('updates.status_downloading')} ${progressPercent}%` : (onUpdateAction ? t('update_popup.update_now') : t('updates.view_release'))}
                 </Text>
               </TouchableOpacity>
             ) : null}
 
             <View style={styles.secondaryRow}>
               <TouchableOpacity style={[styles.secondaryBtn, { borderColor: currentTheme.colors.elevation3 }]} onPress={onLater}>
-                <Text style={[styles.secondaryText, { color: currentTheme.colors.mediumEmphasis }]}>Later</Text>
+                <Text style={[styles.secondaryText, { color: currentTheme.colors.mediumEmphasis }]}>{t('update_popup.later')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.secondaryBtn, { borderColor: currentTheme.colors.elevation3 }]} onPress={onDismiss}>
-                <Text style={[styles.secondaryText, { color: currentTheme.colors.mediumEmphasis }]}>Dismiss</Text>
+                <Text style={[styles.secondaryText, { color: currentTheme.colors.mediumEmphasis }]}>{t('update_popup.dismiss')}</Text>
               </TouchableOpacity>
             </View>
           </View>

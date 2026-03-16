@@ -1629,5 +1629,9 @@
         "api_key_cleared":"API Key Cleared",
         "api_key_saved":"API Key Saved",
         "api_key_invalid":"Invalid API Key"
+    },
+    "major_update_overlay":{
+        "major_update_available":"Major update available",
+        "update_now":"Update Now"
     }
 }
