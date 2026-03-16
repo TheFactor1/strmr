@@ -3,6 +3,7 @@
         "loading": "Loading...",
         "cancel": "Cancel",
         "save": "Save",
+        "clear":"Clear",
         "delete": "Delete",
         "edit": "Edit",
         "search": "Search",
@@ -624,7 +625,9 @@
         "popular": "Popular",
         "all_languages": "All Languages",
         "search_results": "Search Results",
-        "no_languages_found": "No languages found for \"{{query}}\"",
+        "no_languages_found": "No languages found for ",
+        "search_languages_placeholder":"Search Languages ...",
+        "fallback_to_available":"fallback to available",
         "clear_search": "Clear Search",
         "clear_cache_title": "Clear TMDB Cache",
         "clear_cache_msg": "This will clear all cached TMDB data ({{size}}). This may temporarily slow down loading until cache rebuilds.",
@@ -640,7 +643,11 @@
         "using_builtin_key": "Now using the built-in TMDb API key.",
         "using_custom_key": "Now using your custom TMDb API key.",
         "enter_custom_key": "Please enter and save your custom TMDb API key.",
-        "key_verified": "API key verified and saved successfully."
+        "key_verified": "API key verified and saved successfully.",
+        "current":"Current",
+        "disclaimer_part_1":"This product uses the TMDB API but is not",
+        "disclaimer_part_2":"endorsed or certified by TMDB.",
+        "done":"Done"
     },
     "settings": {
         "language": "Language",
