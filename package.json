@@ -92,6 +92,7 @@
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "^4.24.0",
     "react-native-svg": "^15.15.3",
+    "react-native-torrent-streamer": "^0.2.3",
     "react-native-url-polyfill": "^3.0.0",
     "react-native-vector-icons": "^10.3.0",
     "react-native-video": "^6.19.0",

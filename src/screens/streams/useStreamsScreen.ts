@@ -17,6 +17,7 @@ import { localScraperService } from '../../services/pluginService';
 import { VideoPlayerService } from '../../services/videoPlayerService';
 import { streamCacheService } from '../../services/streamCacheService';
 import { tmdbService } from '../../services/tmdbService';
+import { torrentService } from '../../services/torrentService';
 import { logger } from '../../utils/logger';
 import { TABLET_BREAKPOINT } from './constants';
 import {
@@ -463,10 +464,26 @@ export const useStreamsScreen = () => {
           });
         }
 
-        // Block magnet links
-        if (typeof stream.url === 'string' && stream.url.startsWith('magnet:')) {
-          openAlert('Not supported', 'Torrent streaming is not supported yet.');
-          return;
+        // Let external players handle magnet links
+        const isMagnet = typeof stream.url === 'string' && stream.url.startsWith('magnet:');
+        
+        // Process magnet links via the torrent service if using internal player
+        if (isMagnet && settings.preferredPlayer === 'internal' && !settings.useExternalPlayer) {
+          if (Platform.OS === 'android') {
+            try {
+              if (showInfo) showInfo('Starting Torrent Stream... Please wait.');
+              const localUrl = await torrentService.startStreaming(stream.url as string);
+              const torrentStream = { ...stream, url: localUrl };
+              navigateToPlayer(torrentStream);
+              return;
+            } catch (err) {
+              openAlert('Torrent Error', 'Failed to start the torrent stream.');
+              return;
+            }
+          } else {
+            openAlert('Not supported internally', 'Internal torrent streaming is only supported on Android. Please use an external player.');
+            return;
+          }
         }
 
         // iOS external player

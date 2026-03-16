@@ -29,11 +29,13 @@ export const VideoPlayerService = {
         options.releaseDate
       ].filter(Boolean).join(' - ');
 
-      // Launch the intent to play the video
+      // Launch the intent to play the video or handle the magnet link
+      const isMagnet = url.startsWith('magnet:');
+      
       await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
         data: url,
         flags: 1, // FLAG_ACTIVITY_NEW_TASK
-        type: 'video/*',
+        type: isMagnet ? 'application/x-bittorrent' : 'video/*',
         extra: {
           'android.intent.extra.TITLE': fullTitle,
           'position': 0, // Start from beginning
