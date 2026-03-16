@@ -421,7 +421,7 @@ const SettingsScreen: React.FC = () => {
             {isItemVisible('mal') && (
               <SettingItem
                 title="MyAnimeList"
-                description="Sync with MyAnimeList"
+                description={t('settings.mal_description')}
                 customIcon={<Image source={require('../../assets/rating-icons/mal-icon.png')} style={{ width: isTablet ? 24 : 20, height: isTablet ? 24 : 20, borderRadius: 4 }} resizeMode="contain" />}
                 renderControl={() => <ChevronRight />}
                 onPress={() => navigation.navigate('MalSettings')}
