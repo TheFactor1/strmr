@@ -286,8 +286,8 @@ const AISettingsScreen: React.FC = () => {
               </View>
               <Text style={[styles.description, { color: currentTheme.colors.mediumEmphasis }]}>
                 {useDefaultModel
-                  ? `Using ${DEFAULT_OPENROUTER_MODEL} (free automatic routing).`
-                  : 'Use a custom OpenRouter model ID (useful for paid plans).'}
+                  ? `${t('ai_settings.using')} ${DEFAULT_OPENROUTER_MODEL} (${t('ai_settings.free_routing')}).`
+                  : `${t('ai_settings.paid_plan')}`}
               </Text>
               {!useDefaultModel && (
                 <TextInput

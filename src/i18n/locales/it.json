@@ -909,7 +909,10 @@
         "confirm_remove_title": "Rimuovi Chiave API",
         "confirm_remove_msg": "Sei sicuro di voler rimuovere la tua chiave API OpenRouter? Questo disabiliterà le funzioni di chat IA.",
         "success_removed": "Chiave API rimossa con successo",
-        "error_remove": "Impossibile rimuovere la chiave API"
+        "error_remove": "Impossibile rimuovere la chiave API",
+        "using":"In uso",
+        "free_routing":"scelta modello gratuito automatica",
+        "paid_plan":"Usa un ID di un modello custom di OpenRouter (utile in caso di piani a pagamento)"
     },
     "catalog_settings": {
         "title": "Cataloghi",
