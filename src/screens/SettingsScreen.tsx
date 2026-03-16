@@ -334,18 +334,18 @@ const SettingsScreen: React.FC = () => {
 
   const handleClearMDBListCache = () => {
     openAlert(
-      'Clear MDBList Cache',
-      'Are you sure you want to clear all cached MDBList data? This cannot be undone.',
+      t('settings.clear_mdblist_cache'),
+      t('settings.clear_mdblist_cache_confirm'),
       [
-        { label: 'Cancel', onPress: () => { } },
+        { label: t('common.cancel'), onPress: () => { } },
         {
-          label: 'Clear',
+          label: t('common.clear'),
           onPress: async () => {
             try {
               await mmkvStorage.removeItem('mdblist_cache');
-              openAlert('Success', 'MDBList cache has been cleared.');
+              openAlert(t('common.success'), t('settings.clear_mdblist_cache_success'));
             } catch (error) {
-              openAlert('Error', 'Could not clear MDBList cache.');
+              openAlert(t('common.error'), t('settings.clear_mdblist_cache_error'));
               if (__DEV__) console.error('Error clearing MDBList cache:', error);
             }
           }
@@ -399,7 +399,7 @@ const SettingsScreen: React.FC = () => {
             {showTraktItem && (
               <SettingItem
                 title={t('trakt.title')}
-                description={isAuthenticated ? `@${userProfile?.username || 'User'}` : t('settings.sign_in_sync')}
+                description={isAuthenticated ? `@${userProfile?.username || t('settings.user')}` : t('settings.sign_in_sync')}
                 customIcon={<TraktIcon size={isTablet ? 24 : 20} />}
                 renderControl={() => <ChevronRight />}
                 onPress={() => navigation.navigate('TraktSettings')}
