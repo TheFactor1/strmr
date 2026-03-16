@@ -1551,5 +1551,27 @@
         "auto_sync_desc":"Aggiungi elementi dalla tua lista 'Watching' di MAL verso la tua libreria di Nuvio.",
         "allow_nsfw":"Includi Contenuti NSFW",
         "allow_nsfw_desc":"Consenti contenuti NSFW quando aggiorni i dati dalle tue liste MAL."
+    },
+    "auth_screen":{
+        "invalid_email":"Email non valida",
+        "invalid_email_desc":"Inserisci un indirizzo email valido",
+        "pw_short":"Password troppo corta",
+        "pw_short_desc":"La password deve avere almeno 6 caratteri",
+        "pw_no_match":"Le password non coincidono",
+        "auth_failed":"Autenticazione fallita",
+        "login_success":"Login effettuato con successo",
+        "sign_up_success":"Registrazione effetuata con successo",
+        "welcome_back":"Bentornato",
+        "create_account":"Crea il tuo account",
+        "sign_in_desc":"Sincronizza i tuoi addon, il progresso e le impostazioni fra i dispositivi",
+        "sign_in":"Accedi",
+        "sign_up":"Registrati",
+        "email_address_placeholder":"Indirizzo Email",
+        "password_placeholder":"Password (min 6 caratteri)",
+        "forgot_password":"Password dimenticata?",
+        "confirm_password":"Conferma password",
+        "dont_have_account":"Non hai un account?",
+        "already_have_account":"Hai un account?",
+        "continue_without_account":"Continua senza account"
     }
 }

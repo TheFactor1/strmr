@@ -9,6 +9,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { useToast } from '../contexts/ToastContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 const EMAIL_CONFIRMATION_REQUIRED_PREFIX = '__EMAIL_CONFIRMATION__';
 const AUTH_BG_GRADIENT = ['#07090F', '#0D1020', '#140B24'] as const;
@@ -51,7 +52,7 @@ const AuthScreen: React.FC = () => {
   const safeTopInset = Math.max(insets.top, Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0);
   const backButtonTop = safeTopInset + 8;
   const { showError, showSuccess } = useToast();
-
+  const {t} = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -161,23 +162,23 @@ const AuthScreen: React.FC = () => {
     if (loading) return;
 
     if (!isEmailValid) {
-      const msg = 'Enter a valid email address';
+      const msg = t('auth_screen.invalid_email_desc');
       setError(msg);
-      showError('Invalid Email', 'Enter a valid email address');
+      showError(t('auth_screen.invalid_email'), t('auth_screen.invalid_email_desc'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       return;
     }
     if (!isPasswordValid) {
-      const msg = 'Password must be at least 6 characters';
+      const msg = t('auth_screen.pw_short_desc');
       setError(msg);
-      showError('Password Too Short', 'Password must be at least 6 characters');
+      showError(t('auth_screen.pw_short'), t('auth_screen.pw_short_desc'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       return;
     }
     if (mode === 'signup' && !passwordsMatch) {
-      const msg = 'Passwords do not match';
+      const msg = t('auth_screen.pw_no_match');
       setError(msg);
-      showError('Passwords Don\'t Match', 'Passwords do not match');
+      showError(t('auth_screen.pw_no_match'),t('auth_screen.pw_no_match'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       return;
     }
@@ -197,11 +198,11 @@ const AuthScreen: React.FC = () => {
 
       const cleanError = normalizeAuthErrorMessage(err);
       setError(cleanError);
-      showError('Authentication Failed', cleanError);
+      showError(t('auth_screen.auth_failed'), cleanError);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
     } else {
-      const msg = mode === 'signin' ? 'Logged in successfully' : 'Sign up successful';
-      showSuccess('Success', msg);
+      const msg = mode === 'signin' ? t('auth_screen.login_success') : t('auth_screen.sign_up_success');
+      showSuccess(t('common.success'), msg);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
 
       // Navigate to main tabs after successful authentication
@@ -285,11 +286,11 @@ const AuthScreen: React.FC = () => {
               ]}
             >
               <Animated.Text style={[styles.heading, { color: currentTheme.colors.white, opacity: titleOpacity, transform: [{ translateY: titleTranslateY }] }]}>
-                {mode === 'signin' ? 'Welcome back' : 'Create your account'}
+                {mode === 'signin' ? t('auth_screen.welcome_back') : t('auth_screen.create_account')}
               </Animated.Text>
               {keyboardHeight === 0 && (
                 <Text style={[styles.subheading, { color: currentTheme.colors.textMuted }]}>
-                  Sync your addons, progress and settings across devices
+                  {t('auth_screen.sign_in_desc')}
                 </Text>
               )}
             </Animated.View>
@@ -339,7 +340,7 @@ const AuthScreen: React.FC = () => {
                   activeOpacity={0.8}
                 >
                   <Text style={[styles.switchText, { color: mode === 'signin' ? '#fff' : currentTheme.colors.textMuted }]}>
-                    Sign In
+                    {t('auth_screen.sign_in')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -353,7 +354,7 @@ const AuthScreen: React.FC = () => {
                       color: mode === 'signup' ? '#fff' : currentTheme.colors.textMuted
                     }
                   ]}>
-                    Sign Up
+                    {t('auth_screen.sign_up')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -373,7 +374,7 @@ const AuthScreen: React.FC = () => {
                     />
                   </View>
                   <TextInput
-                    placeholder="Email address"
+                    placeholder={t('auth_screen.email_address_placeholder')}
                     placeholderTextColor="rgba(255,255,255,0.4)"
                     style={[styles.input, { color: currentTheme.colors.white }]}
                     autoCapitalize="none"
@@ -403,7 +404,7 @@ const AuthScreen: React.FC = () => {
                     />
                   </View>
                   <TextInput
-                    placeholder="Password (min 6 characters)"
+                    placeholder={t('auth_screen.password_placeholder')}
                     placeholderTextColor="rgba(255,255,255,0.4)"
                     style={[styles.input, { color: currentTheme.colors.white }]}
                     autoCapitalize="none"
@@ -432,7 +433,7 @@ const AuthScreen: React.FC = () => {
                   activeOpacity={0.75}
                   style={styles.forgotPasswordButton}
                 >
-                  <Text style={[styles.forgotPasswordText, { color: currentTheme.colors.textMuted }]}>Forgot password?</Text>
+                  <Text style={[styles.forgotPasswordText, { color: currentTheme.colors.textMuted }]}>{t('auth_screen.forgot_password')}</Text>
                 </TouchableOpacity>
               )}
 
@@ -452,7 +453,7 @@ const AuthScreen: React.FC = () => {
                       />
                     </View>
                     <TextInput
-                      placeholder="Confirm password"
+                      placeholder={t('auth_screen.confirm_password')}
                       placeholderTextColor="rgba(255,255,255,0.4)"
                       style={[styles.input, { color: currentTheme.colors.white }]}
                       autoCapitalize="none"
@@ -523,7 +524,7 @@ const AuthScreen: React.FC = () => {
                     <ActivityIndicator color="#fff" size="small" />
                   ) : (
                     <Animated.Text style={[styles.ctaText, { opacity: ctaTextOpacity, transform: [{ translateY: ctaTextTranslateY }] }]}>
-                      {mode === 'signin' ? 'Sign In' : 'Create Account'}
+                      {mode === 'signin' ? t('auth_screen.sign_in') : t('auth_screen.create_account')}
                     </Animated.Text>
                   )}
                 </TouchableOpacity>
@@ -536,9 +537,9 @@ const AuthScreen: React.FC = () => {
                 style={{ marginTop: 16 }}
               >
                 <Text style={[styles.switchModeText, { color: currentTheme.colors.textMuted }]}>
-                  {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
+                  {mode === 'signin' ? t('auth_screen.dont_have_account') : t('auth_screen.already_have_account')}
                   <Text style={{ color: currentTheme.colors.primary, fontWeight: '600' }}>
-                    {mode === 'signin' ? 'Sign up' : 'Sign in'}
+                    {mode === 'signin' ? t('auth_screen.sign_up') : t('auth_screen.sign_in')}
                   </Text>
                 </Text>
               </TouchableOpacity>
@@ -563,7 +564,7 @@ const AuthScreen: React.FC = () => {
                   textAlign: 'center',
                   fontWeight: fromOnboarding ? '700' : '500',
                 }}>
-                  Continue without an account
+                  {t('auth_screen.continue_without_account')}
                 </Text>
               </TouchableOpacity>
             </Animated.View>

@@ -1567,5 +1567,27 @@
         "auto_sync_desc":"Automatically add items from your MAL 'Watching' list to your Nuvio Library.",
         "allow_nsfw":"Include NSFW Content",
         "allow_nsfw_desc":"Allow NSFW entries to be returned when fetching your MAL list."
+    },
+    "auth_screen":{
+        "invalid_email":"Invalid Email",
+        "invalid_email_desc":"Enter a valid email address",
+        "pw_short":"Password Too Short",
+        "pw_short_desc":"Password must be at least 6 characters",
+        "pw_no_match":"Passwords do not match",
+        "auth_failed":"Authentication Failed",
+        "login_success":"Logged in successfully",
+        "sign_up_success":"Sign up successful",
+        "welcome_back":"Welcome Back",
+        "create_account":"Create your account",
+        "sign_in_desc":"Sync your addons, progress and settings across devices",
+        "sign_in":"Sign In",
+        "sign_up":"Sign Up",
+        "email_address_placeholder":"Email address",
+        "password_placeholder":"Password (min 6 characters)",
+        "forgot_password":"Forgot password?",
+        "confirm_password":"Confirm password",
+        "dont_have_account":"Dont't have an account?",
+        "already_have_account":"Already have an account?",
+        "continue_without_account":"Continue without an account"
     }
 }
