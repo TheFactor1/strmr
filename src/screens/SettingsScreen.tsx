@@ -477,7 +477,7 @@ const SettingsScreen: React.FC = () => {
             />
             <SettingItem
               title={'Plugin Tester'}
-              description={'Run a plugin and inspect logs/streams'}
+              description={t('settings.items.plugin_tester_desc')}
               icon="terminal"
               onPress={() => navigation.navigate('PluginTester')}
               renderControl={() => <ChevronRight />}

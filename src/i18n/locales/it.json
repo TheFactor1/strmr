@@ -758,6 +758,7 @@
             "developer_tools": "Strumenti di Sviluppo",
             "developer_tools_desc": "Opzioni di test e debug",
             "test_onboarding": "Test Introduzione",
+            "plugin_tester_desc":"Esegui un plugin e visualizza log e flusso",
             "reset_onboarding": "Ripristina Introduzione",
             "test_announcement": "Test Annuncio",
             "test_announcement_desc": "Mostra l'overlay 'novità'",

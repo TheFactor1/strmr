@@ -773,6 +773,7 @@
             "developer_tools": "Developer Tools",
             "developer_tools_desc": "Testing and debug options",
             "test_onboarding": "Test Onboarding",
+            "plugin_tester_desc":"Run a plugin and inspect logs/streams",
             "reset_onboarding": "Reset Onboarding",
             "test_announcement": "Test Announcement",
             "test_announcement_desc": "Show what's new overlay",
