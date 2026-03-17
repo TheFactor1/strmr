@@ -18,6 +18,7 @@ import { RootStackParamList } from '../../navigation/AppNavigator';
 import { LinearGradient } from 'expo-linear-gradient';
 import FastImage from '@d11/react-native-fast-image';
 import { MaterialIcons, Entypo } from '@expo/vector-icons';
+import PlayerPlayIconBlack from '../../../assets/player-icons/ic_player_play_black.svg';
 import Animated, {
   FadeIn,
   FadeOut,
@@ -1316,11 +1317,19 @@ const AppleTVHero: React.FC<AppleTVHeroProps> = ({
               onPress={handlePlayAction}
               activeOpacity={0.85}
             >
-              <MaterialIcons
-                name={shouldResume ? "replay" : "play-arrow"}
-                size={24}
-                color="#000"
-              />
+              {shouldResume ? (
+                <MaterialIcons
+                  name="replay"
+                  size={24}
+                  color="#000"
+                />
+              ) : (
+                <PlayerPlayIconBlack
+                  width={24}
+                  height={24}
+                  style={{ transform: [{ scale: 0.85 }] }}
+                />
+              )}
               <Text style={styles.playButtonText}>{shouldResume ? t('home.resume') : t('home.play')}</Text>
             </TouchableOpacity>
 
@@ -1330,11 +1339,21 @@ const AppleTVHero: React.FC<AppleTVHeroProps> = ({
               onPress={handleSaveAction}
               activeOpacity={0.85}
             >
-              <MaterialIcons
-                name={inLibrary ? "bookmark" : "bookmark-outline"}
-                size={24}
-                color="white"
-              />
+              {Platform.OS === 'ios' ? (
+                <ExpoBlurView intensity={35} tint="light" style={styles.saveButtonBlur}>
+                  <MaterialIcons
+                    name={inLibrary ? "bookmark" : "bookmark-outline"}
+                    size={24}
+                    color="white"
+                  />
+                </ExpoBlurView>
+              ) : (
+                <MaterialIcons
+                  name={inLibrary ? "bookmark" : "bookmark-outline"}
+                  size={24}
+                  color="white"
+                />
+              )}
             </TouchableOpacity>
           </View>
 
@@ -1487,10 +1506,17 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 30,
     backgroundColor: 'rgba(255,255,255,0.2)',
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.3)',
+  },
+  saveButtonBlur: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   paginationContainer: {
     flexDirection: 'row',

@@ -46,10 +46,10 @@ import {
   MAX_RECENT_SEARCHES,
 } from '../components/search/searchUtils';
 import { searchStyles as styles } from '../components/search/searchStyles';
-import { SearchAnimation } from '../components/search/SearchAnimation';
 import { AddonSection } from '../components/search/AddonSection';
 import { DiscoverSection } from '../components/search/DiscoverSection';
 import { DiscoverBottomSheets } from '../components/search/DiscoverBottomSheets';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const { width } = Dimensions.get('window');
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
@@ -761,7 +761,9 @@ const SearchScreen = () => {
 
       <View style={styles.contentContainer}>
         {searching && results.byAddon.length === 0 ? (
-          <SearchAnimation />
+          <View style={styles.emptyContainer}>
+            <LoadingSpinner size="large" />
+          </View>
         ) : searched && !hasResultsToShow && !searching ? (
           <View style={styles.emptyContainer}>
             <MaterialIcons name="search-off" size={64} color={currentTheme.colors.lightGray} />
