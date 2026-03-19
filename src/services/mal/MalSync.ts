@@ -7,11 +7,7 @@ import { ArmSyncService } from './ArmSyncService';
 import { logger } from '../../utils/logger';
 import axios from 'axios';
 
-const MAPPING_PREFIX = 'mal_map_';
-const getTitleCacheKey = (title: string, type: 'movie' | 'series', season = 1) =>
-  `${MAPPING_PREFIX}${title.trim()}_${type}_${season}`;
-const getLegacyTitleCacheKey = (title: string, type: 'movie' | 'series') =>
-  `${MAPPING_PREFIX}${title.trim()}_${type}`;
+// MalSync.ts
 
 export const MalSync = {
   /**
@@ -387,13 +383,10 @@ export const MalSync = {
           }
           
           for (const item of allItems) {
-              const type = item.node.media_type === 'movie' ? 'movie' : 'series';
-              const title = item.node.title.trim();
-              mmkvStorage.setNumber(getTitleCacheKey(title, type, 1), item.node.id);
-              // Keep legacy key for backwards compatibility with old cache readers.
-              mmkvStorage.setNumber(getLegacyTitleCacheKey(title, type), item.node.id);
+              // No longer populating mapping cache here to prevent season mismatches.
+              // Logic is now real-time based on air dates.
           }
-          console.log(`[MalSync] Synced ${allItems.length} items to mapping cache.`);
+          console.log(`[MalSync] Synced ${allItems.length} items from MAL.`);
           
           // If auto-sync to library is enabled, also add 'watching' items to Nuvio Library
           if (mmkvStorage.getBoolean('mal_auto_sync_to_library') ?? false) {
@@ -452,25 +445,9 @@ export const MalSync = {
   },
 
   /**
-   * Manually map an ID if auto-detection fails
-   */
-  setMapping: (title: string, malId: number, type: 'movie' | 'series' = 'series', season: number = 1) => {
-      const cleanTitle = title.trim();
-      mmkvStorage.setNumber(getTitleCacheKey(cleanTitle, type, season), malId);
-      // Keep legacy key for compatibility.
-      mmkvStorage.setNumber(getLegacyTitleCacheKey(cleanTitle, type), malId);
-  },
-
-  /**
    * Get external IDs (IMDb, etc.) and season info from a MAL ID using MalSync API
    */
   getIdsFromMalId: async (malId: number): Promise<{ imdbId: string | null; season: number }> => {
-      const cacheKey = `mal_ext_ids_v2_${malId}`;
-      const cached = mmkvStorage.getString(cacheKey);
-      if (cached) {
-          return JSON.parse(cached);
-      }
-
       try {
           const response = await axios.get(`https://api.malsync.moe/mal/anime/${malId}`);
           const data = response.data;
@@ -486,9 +463,7 @@ export const MalSync = {
               }
           }
 
-          const result = { imdbId, season };
-          mmkvStorage.setString(cacheKey, JSON.stringify(result));
-          return result;
+          return { imdbId, season };
       } catch (e) {
           console.error('[MalSync] Failed to fetch external IDs:', e);
       }
