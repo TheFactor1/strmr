@@ -680,8 +680,9 @@ const MDBListSettingsScreen: React.FC = () => {
             />
           </View>
         </View>
-      
-        <View style={[styles.card, !isMdbListEnabled && styles. disabledCard]}>
+ {isMdbListEnabled && 
+        <>
+        <View style={[styles.card, !isMdbListEnabled && styles.disabledCard]}>
           <Text style={[styles.sectionTitle, { color: isDarkMode ? currentTheme.colors.mediumEmphasis : currentTheme.colors.textMutedDark }]}>
             {t('mdblist.api_section')}
           </Text>
@@ -865,7 +866,7 @@ const MDBListSettingsScreen: React.FC = () => {
             </Text>
           </TouchableOpacity>
         </View>
-        
+        </>}
       </ScrollView>
       <CustomAlert
         visible={alertVisible}

@@ -1396,7 +1396,9 @@ export class TraktService {
    */
   public async getPlaybackProgressWithImages(type?: 'movies' | 'shows'): Promise<TraktPlaybackItem[]> {
     try {
-      const endpoint = type ? `/sync/playback/${type}?extended=images` : '/sync/playback?extended=images';
+      // extended=full,images so we receive episode.first_aired (needed for the new-episode priority boost
+    // in mergeTraktContinueWatching.ts — brand-new/recently-aired episodes now jump to the top of Continue Watching).
+      const endpoint = type ? `/sync/playback/${type}?extended=full,images` : '/sync/playback?extended=full,images';
       return this.apiRequest<TraktPlaybackItem[]>(endpoint);
     } catch (error) {
       logger.error('[TraktService] Failed to get playback progress with images:', error);
