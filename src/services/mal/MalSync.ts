@@ -194,11 +194,11 @@ export const MalSync = {
           return;
       }
 
-      let malId: number | null = providedMalId || null;
+      let malId: number | null = null;
       let finalEpisodeNumber = episodeNumber;
 
-      // Strategy 1: TMDB-based Resolution (High Accuracy for Specials)
-      if (!malId && tmdbId && releaseDate) {
+      // Strategy 1: TMDB-based Resolution (High Accuracy for Specials/Seasons)
+      if (tmdbId && releaseDate) {
           const tmdbResult = await ArmSyncService.resolveByTmdb(tmdbId, releaseDate, dayIndex);
           if (tmdbResult) {
               malId = tmdbResult.malId;
@@ -296,11 +296,11 @@ export const MalSync = {
     try {
       if (!MalAuth.isAuthenticated()) return;
 
-      let malId: number | null = providedMalId || null;
+      let malId: number | null = null;
       let finalEpisodeNumber = episodeNumber;
 
       // Resolve ID using same strategies as scrobbling
-      if (!malId && tmdbId && releaseDate) {
+      if (tmdbId && releaseDate) {
           const tmdbResult = await ArmSyncService.resolveByTmdb(tmdbId, releaseDate, dayIndex);
           if (tmdbResult) {
               malId = tmdbResult.malId;

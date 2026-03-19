@@ -332,15 +332,10 @@ class WatchedService {
 
             // Sync to MAL
             if (MalAuth.isAuthenticated() && (showImdbId || malId || tmdbId)) {
-                // Strategy 0: Direct Match (if malId is provided)
                 let synced = false;
-                if (malId) {
-                    await MalSync.scrobbleDirect(malId, episode);
-                    synced = true;
-                }
 
                 // Strategy 1: TMDB-based Resolution (High Accuracy for Specials)
-                if (!synced && releaseDate && tmdbId) {
+                if (releaseDate && tmdbId) {
                     try {
                         const tmdbResult = await ArmSyncService.resolveByTmdb(tmdbId, releaseDate, dayIndex);
                         if (tmdbResult) {

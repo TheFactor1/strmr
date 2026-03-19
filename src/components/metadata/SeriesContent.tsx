@@ -724,18 +724,21 @@ const SeriesContentComponent: React.FC<SeriesContentProps> = ({
           const lastEp = Math.max(...episodeNumbers);
           const lastEpisodeData = seasonEpisodes.find(e => e.episode_number === lastEp);
           const totalEpisodes = Object.values(groupedEpisodes).reduce((acc, curr) => acc + (curr?.length || 0), 0);
-          
+          const showTmdbId = (metadata as any)?.tmdbId || (metadata as any)?.external_ids?.tmdb_id;
+
           MalSync.scrobbleEpisode(
-              metadata.name, 
-              lastEp, 
-              totalEpisodes, 
-              'series', 
-              currentSeason, 
+              metadata.name,
+              lastEp,
+              totalEpisodes,
+              'series',
+              currentSeason,
               imdbId,
-              lastEpisodeData?.air_date // Pass release date for accuracy
+              lastEpisodeData?.air_date, // Pass release date for accuracy
+              undefined, // Don't pass the base show malId, force it to resolve correct season
+              undefined, // No dayIndex for season completion
+              showTmdbId
           );
       }
-
       // Re-sync with source of truth
       loadEpisodesProgress();
 
