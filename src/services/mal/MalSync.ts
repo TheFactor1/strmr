@@ -19,23 +19,15 @@ export const MalSync = {
    */
   getMalIdFromImdb: async (imdbId: string): Promise<number | null> => {
     if (!imdbId) return null;
-    
-    // 1. Check Cache
-    const cacheKey = `${MAPPING_PREFIX}imdb_${imdbId}`;
-    const cachedId = mmkvStorage.getNumber(cacheKey);
-    if (cachedId) return cachedId;
 
-    // 2. Fetch from MAL-Sync API
+    // Fetch from MAL-Sync API
     try {
       // Ensure ID format
       const cleanId = imdbId.startsWith('tt') ? imdbId : `tt${imdbId}`;
       const response = await axios.get(`https://api.malsync.moe/mal/anime/imdb/${cleanId}`);
-      
+
       if (response.data && response.data.id) {
-        const malId = response.data.id;
-        // Save to cache
-        mmkvStorage.setNumber(cacheKey, malId);
-        return malId;
+        return response.data.id;
       }
     } catch (e) {
       // Ignore errors (404, etc.)
@@ -45,29 +37,16 @@ export const MalSync = {
 
   /**
    * Tries to find a MAL ID for a given anime title or IMDb ID.
-   * Caches the result to avoid repeated API calls.
    */
   getMalId: async (title: string, type: 'movie' | 'series' = 'series', year?: number, season?: number, imdbId?: string, episode: number = 1, releaseDate?: string, dayIndex?: number, tmdbId?: number): Promise<number | null> => {
     // Safety check: Never perform a MAL search for generic placeholders or empty strings.
-    // This prevents "cache poisoning" where a generic term matches a random anime.
     const cleanTitle = title.trim();
     const normalizedTitle = cleanTitle.toLowerCase();
     const isGenericTitle = !normalizedTitle || normalizedTitle === 'anime' || normalizedTitle === 'movie';
 
     const seasonNumber = season || 1;
-    const cacheKey = getTitleCacheKey(cleanTitle, type, seasonNumber);
-    const legacyCacheKey = getLegacyTitleCacheKey(cleanTitle, type);
-    const cachedId = mmkvStorage.getNumber(cacheKey) || mmkvStorage.getNumber(legacyCacheKey);
-    if (cachedId) {
-      // Backfill to season-aware key for future lookups.
-      if (!mmkvStorage.getNumber(cacheKey)) {
-        mmkvStorage.setNumber(cacheKey, cachedId);
-      }
-      return cachedId;
-    }
 
     if (isGenericTitle && !imdbId && !tmdbId) return null;
-
     // 1. Try TMDB-based Resolution (High Accuracy)
     if (tmdbId && releaseDate) {
         try {
@@ -159,9 +138,7 @@ export const MalSync = {
             }
         }
 
-        // Save to cache
-        mmkvStorage.setNumber(cacheKey, bestMatch.id);
-        mmkvStorage.setNumber(legacyCacheKey, bestMatch.id);
+        // Return best match directly
         return bestMatch.id;
       }
     } catch (e) {
