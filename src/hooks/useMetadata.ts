@@ -167,6 +167,7 @@ export const useMetadata = ({ id, type, addonId }: UseMetadataProps): UseMetadat
   const [addonResponseOrder, setAddonResponseOrder] = useState<string[]>([]);
   // Prevent re-initializing season selection repeatedly for the same series
   const initializedSeasonRef = useRef(false);
+  const resolvedTypeRef = useRef<string>(normalizedType); // stores TMDB-resolved type for loadStreams
 
   // Memory optimization: Track stream counts and implement cleanup (limits removed)
   const streamCountRef = useRef(0);
@@ -725,6 +726,7 @@ export const useMetadata = ({ id, type, addonId }: UseMetadataProps): UseMetadat
       // If normalizedType is not a known type (e.g. "other" from Gemini/AI search),
       // resolve the correct type via TMDB before fetching addon metadata.
       let effectiveType = normalizedType;
+      resolvedTypeRef.current = normalizedType; // reset each load
       if (normalizedType !== 'movie' && normalizedType !== 'series') {
         try {
           if (actualId.startsWith('tt')) {
@@ -734,6 +736,7 @@ export const useMetadata = ({ id, type, addonId }: UseMetadataProps): UseMetadat
             const resolved = await tmdbSvc.findTypeAndIdByIMDB(actualId);
             if (resolved) {
               effectiveType = resolved.type;
+              resolvedTypeRef.current = resolved.type;
               setTmdbId(resolved.tmdbId);
               if (__DEV__) console.log(`🔍 [useMetadata] Resolved unknown type "${normalizedType}" → "${effectiveType}" via TMDB /find`);
             }
@@ -751,6 +754,7 @@ export const useMetadata = ({ id, type, addonId }: UseMetadataProps): UseMetadat
               // Prefer series when both exist (anime/TV tagged as "other" is usually a series)
               if (hasSeries) effectiveType = 'series';
               else if (hasMovie) effectiveType = 'movie';
+              resolvedTypeRef.current = effectiveType;
               if (__DEV__) console.log(`🔍 [useMetadata] Resolved unknown type "${normalizedType}" → "${effectiveType}" via TMDB parallel check`);
             }
           }
@@ -1571,7 +1575,8 @@ export const useMetadata = ({ id, type, addonId }: UseMetadataProps): UseMetadat
       if (__DEV__) logger.log('🔍 [loadStreams] Getting TMDB ID for:', id);
       let tmdbId;
       let stremioId = id;
-      let effectiveStreamType: string = type;
+      // Use TMDB-resolved type if available — handles "other", "Movie", etc.
+      let effectiveStreamType: string = resolvedTypeRef.current || normalizedType;
 
       if (id.startsWith('tmdb:')) {
         tmdbId = id.split(':')[1];

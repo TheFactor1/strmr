@@ -210,6 +210,11 @@ export const useWatchProgress = (
             wasPausedRef.current = paused;
             if (becamePaused) {
                 void saveWatchProgress();
+            } else {
+                // Became unpaused — open/re-open the Trakt scrobble session
+                if (durationRef.current > 0) {
+                    void traktAutosyncRef.current.handlePlaybackStart(currentTimeRef.current, durationRef.current);
+                }
             }
         }
 
@@ -238,7 +243,8 @@ export const useWatchProgress = (
             setTimeout(() => {
                 if (id && type && durationRef.current > 0) {
                     saveWatchProgress();
-                    traktAutosync.handlePlaybackEnd(currentTimeRef.current, durationRef.current, 'unmount');
+                    // Use ref to avoid stale closure capturing an old traktAutosync instance
+                    traktAutosyncRef.current.handlePlaybackEnd(currentTimeRef.current, durationRef.current, 'unmount');
                 }
             }, 0);
         };
