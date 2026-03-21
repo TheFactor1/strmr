@@ -77,6 +77,9 @@ import BackdropGalleryScreen from '../screens/BackdropGalleryScreen';
 import BackupScreen from '../screens/BackupScreen';
 import ContinueWatchingSettingsScreen from '../screens/ContinueWatchingSettingsScreen';
 import ContributorsScreen from '../screens/ContributorsScreen';
+import CollectionManagementScreen from '../screens/CollectionManagementScreen';
+import CollectionEditorScreen from '../screens/CollectionEditorScreen';
+import FolderDetailScreen from '../screens/FolderDetailScreen';
 
 import {
   ContentDiscoverySettingsScreen,
@@ -224,6 +227,9 @@ export type RootStackParamList = {
   };
   ContinueWatchingSettings: undefined;
   Contributors: undefined;
+  Collections: undefined;
+  CollectionEditor: { collectionId?: string };
+  FolderDetail: { collectionId: string; folderId: string };
 
   // New organized settings screens
   ContentDiscoverySettings: undefined;
@@ -1897,6 +1903,42 @@ const InnerNavigator = ({ initialRouteName }: { initialRouteName?: keyof RootSta
           component={SyncSettingsScreen}
           options={{ headerShown: false }}
         />
+            <Stack.Screen
+              name="Collections"
+              component={CollectionManagementScreen as any}
+              options={{
+                animation: 'slide_from_right',
+                animationDuration: Platform.OS === 'android' ? 250 : 300,
+                headerShown: false,
+                contentStyle: {
+                  backgroundColor: currentTheme.colors.darkBackground,
+                },
+              }}
+            />
+            <Stack.Screen
+              name="CollectionEditor"
+              component={CollectionEditorScreen as any}
+              options={{
+                animation: 'slide_from_right',
+                animationDuration: Platform.OS === 'android' ? 250 : 300,
+                headerShown: false,
+                contentStyle: {
+                  backgroundColor: currentTheme.colors.darkBackground,
+                },
+              }}
+            />
+            <Stack.Screen
+              name="FolderDetail"
+              component={FolderDetailScreen as any}
+              options={{
+                animation: 'slide_from_right',
+                animationDuration: Platform.OS === 'android' ? 250 : 300,
+                headerShown: false,
+                contentStyle: {
+                  backgroundColor: currentTheme.colors.darkBackground,
+                },
+              }}
+            />
       </Stack.Navigator>
         </View>
       </PaperProvider>

@@ -120,6 +120,14 @@ export const ContentDiscoverySettingsContent: React.FC<ContentDiscoverySettingsC
                             isTablet={isTablet}
                         />
                     )}
+                    <SettingItem
+                        title="Collections"
+                        description="Organize catalogs into folders"
+                        icon="folder-open"
+                        renderControl={() => <ChevronRight />}
+                        onPress={() => navigation.navigate('Collections')}
+                        isTablet={isTablet}
+                    />
                     {isItemVisible('home_screen') && (
                         <SettingItem
                             title={t('settings.items.home_screen')}

@@ -71,6 +71,9 @@ import FirstTimeWelcome from '../components/FirstTimeWelcome';
 import { HeaderVisibility } from '../contexts/HeaderVisibility';
 import { useTrailer } from '../contexts/TrailerContext';
 import { useScrollToTop } from '../contexts/ScrollToTopContext';
+import CollectionRowSection from '../components/home/CollectionRowSection';
+import { useCollections } from '../hooks/useCollections';
+import { collectionsEmitter, COLLECTIONS_EVENTS } from '../services/collectionsService';
 
 // Constants
 const CATALOG_SETTINGS_KEY = 'catalog_settings';
@@ -117,6 +120,7 @@ type HomeScreenListItem =
   | { type: 'thisWeek'; key: string }
   | { type: 'continueWatching'; key: string }
   | { type: 'catalog'; catalog: CatalogContent; key: string }
+  | { type: 'collection'; collection: import('../types/collections').Collection; key: string }
   | { type: 'placeholder'; key: string }
   | { type: 'welcome'; key: string }
   | { type: 'loadMore'; key: string };
@@ -143,6 +147,7 @@ const HomeScreen = () => {
   const { lastUpdate } = useCatalogContext(); // Add catalog context to listen for addon changes
   const { showInfo } = useToast();
   const { setTrailerPlaying } = useTrailer();
+  const { collections } = useCollections();
   const [showHeroSection, setShowHeroSection] = useState(settings.showHeroSection);
   const [featuredContentSource, setFeaturedContentSource] = useState(settings.featuredContentSource);
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -758,14 +763,39 @@ const HomeScreen = () => {
     // Only show a limited number of catalogs initially for performance
     const catalogsToShow = catalogs.slice(0, visibleCatalogCount);
 
+    // Build catalog items first
+    const catalogItems: HomeScreenListItem[] = [];
     catalogsToShow.forEach((catalog, index) => {
       if (catalog) {
-        data.push({ type: 'catalog', catalog, key: `${catalog.addon}-${catalog.id}-${index}` });
+        catalogItems.push({ type: 'catalog', catalog, key: `${catalog.addon}-${catalog.id}-${index}` });
       } else if (catalogsLoading && pendingCatalogIndexes[index]) {
-        // Add a key for placeholders
-        data.push({ type: 'placeholder', key: `placeholder-${index}` });
+        catalogItems.push({ type: 'placeholder', key: `placeholder-${index}` });
       }
     });
+
+    // Interleave collections after the first 2 catalog rows, then after each subsequent collection
+    let catalogIndex = 0;
+    const collectionsToInsert = [...collections];
+    const INSERT_AFTER_ROW = 2; // Insert collections after 2nd catalog row
+
+    for (let i = 0; i < catalogItems.length; i++) {
+      data.push(catalogItems[i]);
+      catalogIndex++;
+
+      if (catalogIndex === INSERT_AFTER_ROW && collectionsToInsert.length > 0) {
+        for (const collection of collectionsToInsert) {
+          data.push({ type: 'collection', collection, key: `collection-${collection.id}` });
+        }
+        collectionsToInsert.length = 0;
+      }
+    }
+
+    // If we didn't reach INSERT_AFTER_ROW, append remaining collections at the end
+    if (collectionsToInsert.length > 0) {
+      for (const collection of collectionsToInsert) {
+        data.push({ type: 'collection', collection, key: `collection-${collection.id}` });
+      }
+    }
 
     // Add a "Load More" button if there are more catalogs to show
     if (catalogs.length > visibleCatalogCount && catalogs.filter(c => c).length > visibleCatalogCount) {
@@ -773,7 +803,7 @@ const HomeScreen = () => {
     }
 
     return data;
-  }, [hasAddons, catalogs, catalogsLoading, pendingCatalogIndexes, visibleCatalogCount, settings.showThisWeekSection]);
+  }, [hasAddons, catalogs, catalogsLoading, pendingCatalogIndexes, visibleCatalogCount, settings.showThisWeekSection, collections]);
 
   const handleLoadMoreCatalogs = useCallback(() => {
     setVisibleCatalogCount(prev => Math.min(prev + 3, catalogs.length));
@@ -865,6 +895,8 @@ const HomeScreen = () => {
         return null; // Moved to ListHeaderComponent to avoid remounts on scroll
       case 'catalog':
         return <CatalogSection catalog={item.catalog} />;
+      case 'collection':
+        return <CollectionRowSection collection={item.collection} />;
       case 'placeholder':
         return (
           <Animated.View>
