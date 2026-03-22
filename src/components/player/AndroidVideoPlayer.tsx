@@ -269,6 +269,7 @@ const AndroidVideoPlayer: React.FC = () => {
     debugMode: DEBUG_MODE,
   });
 
+
   const nextEpisodeHook = useNextEpisode(type, season, episode, groupedEpisodes, (metadataResult as any)?.groupedEpisodes, episodeId);
 
   const { segments: skipIntervals, outroSegment } = useSkipSegments({
