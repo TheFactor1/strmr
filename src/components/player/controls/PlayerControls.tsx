@@ -71,6 +71,7 @@ interface PlayerControlsProps {
   onEnterPictureInPicture?: () => void;
   isBuffering?: boolean;
   imdbId?: string;
+  onLock?: () => void;
 }
 
 export const PlayerControls: React.FC<PlayerControlsProps> = ({
@@ -120,6 +121,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   onEnterPictureInPicture,
   isBuffering = false,
   imdbId,
+  onLock,
 }) => {
   const { currentTheme } = useTheme();
   const { settings } = useSettings();
@@ -678,6 +680,16 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
                   onPress={() => setShowEpisodesModal(true)}
                 >
                   <PlayerEpisodesIcon width={24} height={24} />
+                </TouchableOpacity>
+              )}
+
+              {/* Lock Button */}
+              {onLock && (
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={onLock}
+                >
+                  <Ionicons name="lock-closed-outline" size={24} color="white" />
                 </TouchableOpacity>
               )}
             </View>
