@@ -13,20 +13,41 @@ export const MalSync = {
   /**
    * Tries to find a MAL ID using IMDb ID via MAL-Sync API.
    */
-  getMalIdFromImdb: async (imdbId: string): Promise<number | null> => {
-    if (!imdbId) return null;
-
-    // Fetch from MAL-Sync API
+  /**
+   * Tries to find a MAL ID using IMDb or TMDB ID via External APIs (MAL-Sync or ARM).
+   */
+  getMalIdFromExternal: async (id: string | number, source: 'imdb' | 'tmdb'): Promise<number | null> => {
+    if (!id) return null;
     try {
-      // Ensure ID format
-      const cleanId = imdbId.startsWith('tt') ? imdbId : `tt${imdbId}`;
-      const response = await axios.get(`https://api.malsync.moe/mal/anime/imdb/${cleanId}`);
+      // 1. Try ARM API (v2)
+      const endpoint = source === 'imdb' ? 'imdb' : 'tmdb';
+      const cleanId = source === 'imdb' && typeof id === 'string' && !id.startsWith('tt') ? `tt${id}` : id;
+      
+      try {
+          const armRes = await axios.get(`https://arm.haglund.dev/api/v2/${endpoint}`, {
+              params: { id: cleanId }
+          });
+          if (Array.isArray(armRes.data) && armRes.data.length > 0) {
+              const entry = armRes.data.find((e: any) => e.myanimelist);
+              if (entry && entry.myanimelist) return entry.myanimelist;
+          }
+      } catch (e) {
+          // Fallback to MAL-Sync for IMDb if ARM fails
+      }
 
-      if (response.data && response.data.id) {
-        return response.data.id;
+      // 2. Try MAL-Sync API (only for IMDb)
+      if (source === 'imdb') {
+          try {
+              const malSyncRes = await axios.get(`https://api.malsync.moe/mal/anime/imdb/${cleanId}`);
+              if (malSyncRes.data && malSyncRes.data.id) {
+                  return malSyncRes.data.id;
+              }
+          } catch (e) {
+              // Ignore
+          }
       }
     } catch (e) {
-      // Ignore errors (404, etc.)
+      // General error catch
     }
     return null;
   },
@@ -40,9 +61,21 @@ export const MalSync = {
     const normalizedTitle = cleanTitle.toLowerCase();
     const isGenericTitle = !normalizedTitle || normalizedTitle === 'anime' || normalizedTitle === 'movie';
 
-    const seasonNumber = season || 1;
-
     if (isGenericTitle && !imdbId && !tmdbId) return null;
+
+    // 0. Direct ID mapping for Movies (Skip date matching as movies are 1:1)
+    if (type === 'movie') {
+        if (tmdbId) {
+            const idFromExternal = await MalSync.getMalIdFromExternal(tmdbId, 'tmdb');
+            if (idFromExternal) return idFromExternal;
+        }
+        if (imdbId) {
+            const idFromExternal = await MalSync.getMalIdFromExternal(imdbId, 'imdb');
+            if (idFromExternal) return idFromExternal;
+        }
+        return null;
+    }
+
     // 1. Try TMDB-based Resolution (High Accuracy)
     if (tmdbId && releaseDate) {
         try {
@@ -62,12 +95,6 @@ export const MalSync = {
             const armResult = await ArmSyncService.resolveByDate(imdbId, releaseDate, dayIndex);
             if (armResult && armResult.malId) {
                 console.log(`[MalSync] Found ARM match: ${imdbId} (${releaseDate}) -> MAL ${armResult.malId} Ep ${armResult.episode}`);
-                // Note: ArmSyncService returns the *absolute* episode number for MAL (e.g. 76)
-                // but our 'episode' arg is usually relative (e.g. 1). 
-                // scrobbleEpisode uses the malId returned here, and potentially the episode number from ArmSync
-                // But getMalId just returns the ID. 
-                // Ideally, scrobbleEpisode should call ArmSyncService directly to get both ID and correct Episode number.
-                // For now, we return the ID.
                 return armResult.malId;
             }
         } catch (e) {
@@ -75,71 +102,9 @@ export const MalSync = {
         }
     }
 
-    // 2. Try IMDb ID mapping when it is likely to be accurate, or when title is generic.
-    if (imdbId && (type === 'movie' || seasonNumber <= 1 || isGenericTitle)) {
-      const idFromImdb = await MalSync.getMalIdFromImdb(imdbId);
-      if (idFromImdb) return idFromImdb;
-    }
-
     // 3. Search MAL (Skip if generic title)
-    if (isGenericTitle) return null;
-
-    try {
-      let searchQuery = cleanTitle;
-      // For Season 2+, explicitly search for that season
-      if (type === 'series' && season && season > 1) {
-          // Improve search query: "Attack on Titan Season 2" usually works better than just appending
-          searchQuery = `${cleanTitle} Season ${season}`;
-      } else if (type === 'series' && season === 0) {
-          // Improve Season 0 (Specials) lookup: "Attack on Titan Specials" or "Attack on Titan OVA"
-          // We search for both to find the most likely entry
-          searchQuery = `${cleanTitle} Specials`;
-      }
-
-      const result = await MalApiService.searchAnime(searchQuery, 10);
-      if (result.data.length > 0) {
-        let candidates = result.data;
-
-        // Filter by type first
-        if (type === 'movie') {
-            candidates = candidates.filter(r => r.node.media_type === 'movie');
-        } else if (season === 0) {
-            // For Season 0, prioritize specials, ovas, and onas
-            candidates = candidates.filter(r => r.node.media_type === 'special' || r.node.media_type === 'ova' || r.node.media_type === 'ona');
-            if (candidates.length === 0) {
-                // If no specific special types found, fallback to anything containing "Special" or "OVA" in title
-                candidates = result.data.filter(r => 
-                    r.node.title.toLowerCase().includes('special') || 
-                    r.node.title.toLowerCase().includes('ova') ||
-                    r.node.title.toLowerCase().includes('ona')
-                );
-            }
-        } else {
-            candidates = candidates.filter(r => r.node.media_type === 'tv' || r.node.media_type === 'ona' || r.node.media_type === 'special' || r.node.media_type === 'ova');
-        }
-
-        if (candidates.length === 0) candidates = result.data; // Fallback to all if type filtering removes everything
-
-        let bestMatch = candidates[0].node;
-
-        // If year is provided, try to find an exact start year match
-        if (year) {
-            const yearMatch = candidates.find(r => r.node.start_season?.year === year);
-            if (yearMatch) {
-                bestMatch = yearMatch.node;
-            } else {
-                // Fuzzy year match (+/- 1 year)
-                const fuzzyMatch = candidates.find(r => r.node.start_season?.year && Math.abs(r.node.start_season.year - year) <= 1);
-                if (fuzzyMatch) bestMatch = fuzzyMatch.node;
-            }
-        }
-
-        // Return best match directly
-        return bestMatch.id;
-      }
-    } catch (e) {
-      console.warn('MAL Search failed for', title);
-    }
+    // Disabled title-based search and IMDb mapping fallback for series to prevent inaccurate mappings.
+    // Real-time resolution via ARM/TMDB is now the primary path.
     return null;
   },
 
@@ -170,8 +135,23 @@ export const MalSync = {
       let malId: number | null = null;
       let finalEpisodeNumber = episodeNumber;
 
+      // Strategy 0: Direct Resolution for Movies (Skip date matching)
+      // We can trust providedMalId for movies as they are always 1:1.
+      if (type === 'movie') {
+          malId = providedMalId || null;
+          if (!malId && tmdbId) {
+              malId = await MalSync.getMalIdFromExternal(tmdbId, 'tmdb');
+          }
+          if (!malId && imdbId) {
+              malId = await MalSync.getMalIdFromExternal(imdbId, 'imdb');
+          }
+          if (malId) {
+              console.log(`[MalSync] Movie Resolved: ${animeTitle} -> MAL ${malId}`);
+          }
+      }
+
       // Strategy 1: TMDB-based Resolution (High Accuracy for Specials/Seasons)
-      if (tmdbId && releaseDate) {
+      if (!malId && tmdbId && releaseDate) {
           const tmdbResult = await ArmSyncService.resolveByTmdb(tmdbId, releaseDate, dayIndex);
           if (tmdbResult) {
               malId = tmdbResult.malId;
@@ -190,8 +170,9 @@ export const MalSync = {
           }
       }
 
-      // Fallback to standard lookup if ARM/TMDB failed and no ID provided
-      if (!malId) {
+      // Fallback to standard lookup for movies if direct resolution failed.
+      // For series, getMalId is now redundant as it repeats the same strategies.
+      if (!malId && type === 'movie') {
           malId = await MalSync.getMalId(animeTitle, type, undefined, season, imdbId, episodeNumber, releaseDate, dayIndex, tmdbId);
       }
       
@@ -272,8 +253,20 @@ export const MalSync = {
       let malId: number | null = null;
       let finalEpisodeNumber = episodeNumber;
 
+      // Strategy 0: Direct Resolution for Movies (Skip date matching)
+      // We can trust providedMalId for movies as they are always 1:1.
+      if (type === 'movie') {
+          malId = providedMalId || null;
+          if (!malId && tmdbId) {
+              malId = await MalSync.getMalIdFromExternal(tmdbId, 'tmdb');
+          }
+          if (!malId && imdbId) {
+              malId = await MalSync.getMalIdFromExternal(imdbId, 'imdb');
+          }
+      }
+
       // Resolve ID using same strategies as scrobbling
-      if (tmdbId && releaseDate) {
+      if (!malId && tmdbId && releaseDate) {
           const tmdbResult = await ArmSyncService.resolveByTmdb(tmdbId, releaseDate, dayIndex);
           if (tmdbResult) {
               malId = tmdbResult.malId;
@@ -289,7 +282,9 @@ export const MalSync = {
           }
       }
 
-      if (!malId) {
+      // Fallback to standard lookup for movies if direct resolution failed.
+      // For series, getMalId is now redundant as it repeats the same strategies.
+      if (!malId && type === 'movie') {
           malId = await MalSync.getMalId(animeTitle, type, undefined, season, imdbId, episodeNumber, releaseDate, dayIndex, tmdbId);
       }
 
