@@ -2,7 +2,7 @@ import { useCallback, useRef, useEffect } from 'react';
 import { useTraktIntegration } from './useTraktIntegration';
 import { useSimklIntegration } from './useSimklIntegration';
 import { useTraktAutosyncSettings } from './useTraktAutosyncSettings';
-import { TraktContentData } from '../services/traktService';
+import { TraktContentData, traktService } from '../services/traktService';
 import { SimklContentData } from '../services/simklService';
 import { storageService } from '../services/storageService';
 import { logger } from '../utils/logger';
@@ -335,7 +335,9 @@ export function useTraktAutosync(options: TraktAutosyncOptions) {
             // If this update crossed the completion threshold, Trakt will have silently
             // scrobbled it. Mark complete now so unmount/background don't fire a second
             // /scrobble/stop above threshold and create a duplicate history entry.
-            if (progressPercent >= autosyncSettings.completionThreshold) {
+            // Use traktService.completionThreshold (the actual API scrobble threshold)
+            // not autosyncSettings.completionThreshold which may be set higher (e.g. 95%).
+            if (progressPercent >= traktService.completionThreshold) {
               isSessionComplete.current = true;
               const ck = getContentKey(options);
               const existing = recentlyStoppedSessions.get(ck);
@@ -383,7 +385,9 @@ export function useTraktAutosync(options: TraktAutosyncOptions) {
             // If this periodic update crossed the completion threshold, Trakt will have
             // silently scrobbled it. Mark complete now so unmount/background don't fire
             // a second /scrobble/stop above threshold and create a duplicate history entry.
-            if (progressPercent >= autosyncSettings.completionThreshold) {
+            // Use traktService.completionThreshold (the actual API scrobble threshold)
+            // not autosyncSettings.completionThreshold which may be set higher (e.g. 95%).
+            if (progressPercent >= traktService.completionThreshold) {
               isSessionComplete.current = true;
               const ck = getContentKey(options);
               const existing = recentlyStoppedSessions.get(ck);
@@ -637,8 +641,11 @@ export function useTraktAutosync(options: TraktAutosyncOptions) {
       }
 
       if (overallSuccess) {
-        // Mark session as complete if >= user completion threshold
-        if (progressPercent >= autosyncSettings.completionThreshold) {
+        // Mark session as complete if >= traktService.completionThreshold (the actual API
+        // scrobble threshold). Using autosyncSettings.completionThreshold here would miss
+        // the window between 80% and the user's configured threshold (e.g. 95%), leaving
+        // isSessionComplete unset while Trakt has already created a history entry.
+        if (progressPercent >= traktService.completionThreshold) {
           isSessionComplete.current = true;
           // Update module-level map to reflect completion so a remount won't restart
           const ck = getContentKey(options);
