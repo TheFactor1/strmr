@@ -462,7 +462,15 @@ export function useTraktIntegration() {
             let success = false;
 
             if (isCompleted) {
-              // Item is completed - add to history with original watched date
+              // GUARD: If this item was already synced via the scrobble path (traktSynced=true),
+              // skip adding it to history again. The scrobble already created the history entry.
+              // Calling addToWatchedMovies/Episodes here would create a duplicate history entry.
+              if (item.progress.traktSynced) {
+                logger.log(`[useTraktIntegration] Skipping syncAllProgress for already-scrobbled item: ${item.type}:${item.id}`);
+                return true; // Count as synced, no action needed
+              }
+
+              // Item is completed and not yet scrobbled - add to history with original watched date
               const watchedAt = new Date(item.progress.lastUpdated);
               logger.log(`[useTraktIntegration] Syncing completed item to history with date ${watchedAt.toISOString()}: ${item.type}:${item.id}`);
 
