@@ -30,6 +30,7 @@ import { useSettings } from '../../hooks/useSettings';
 
 // Shared Components
 import { GestureControls, PauseOverlay, SpeedActivatedOverlay } from './components';
+import { LockOverlay, LockOverlayRef } from './modals/LockOverlay';
 import LoadingOverlay from './modals/LoadingOverlay';
 import PlayerControls from './controls/PlayerControls';
 import { AudioTrackModal } from './modals/AudioTrackModal';
@@ -91,6 +92,8 @@ const AndroidVideoPlayer: React.FC = () => {
   const mpvPlayerRef = useRef<MpvPlayerRef>(null);
   const exoPlayerRef = useRef<any>(null);
   const pinchRef = useRef(null);
+  const lockOverlayRef = useRef<LockOverlayRef>(null);
+  const [isLocked, setIsLocked] = useState(false);
   const tracksHook = usePlayerTracks();
 
   const [currentStreamUrl, setCurrentStreamUrl] = useState<string>(uri);
@@ -1050,29 +1053,31 @@ const AndroidVideoPlayer: React.FC = () => {
           controlsVisible={playerState.showControls}
           controlsExtraOffset={100}
         />
-        <GestureControls
-          screenDimensions={playerState.screenDimensions}
-          gestureControls={gestureControls}
-          onLongPressActivated={speedControl.activateSpeedBoost}
-          onLongPressEnd={speedControl.deactivateSpeedBoost}
-          onLongPressStateChange={(e) => {
-            const state = e.nativeEvent.state;
-            if (state === 5 || state === 3 || state === 1) { // END, CANCELLED, FAILED
-                speedControl.deactivateSpeedBoost();
-            }
-          }}
-          toggleControls={toggleControls}
-          showControls={playerState.showControls}
-          hideControls={hideControls}
-          volume={volume}
-          controlsTimeout={controlsTimeout}
-          resizeMode={playerState.resizeMode}
-          skip={controlsHook.skip}
-          currentTime={playerState.currentTime}
-          duration={playerState.duration}
-          seekToTime={controlsHook.seekToTime}
-          formatTime={formatTime}
-        />
+        <View pointerEvents={isLocked ? 'none' : 'box-none'} style={StyleSheet.absoluteFill}>
+          <GestureControls
+            screenDimensions={playerState.screenDimensions}
+            gestureControls={gestureControls}
+            onLongPressActivated={speedControl.activateSpeedBoost}
+            onLongPressEnd={speedControl.deactivateSpeedBoost}
+            onLongPressStateChange={(e) => {
+              const state = e.nativeEvent.state;
+              if (state === 5 || state === 3 || state === 1) { // END, CANCELLED, FAILED
+                  speedControl.deactivateSpeedBoost();
+              }
+            }}
+            toggleControls={toggleControls}
+            showControls={playerState.showControls}
+            hideControls={hideControls}
+            volume={volume}
+            controlsTimeout={controlsTimeout}
+            resizeMode={playerState.resizeMode}
+            skip={controlsHook.skip}
+            currentTime={playerState.currentTime}
+            duration={playerState.duration}
+            seekToTime={controlsHook.seekToTime}
+            formatTime={formatTime}
+          />
+        </View>
 
         {/* Buffering Indicator (Visible when controls are hidden) */}
         {playerState.isBuffering && !playerState.showControls && (
@@ -1081,58 +1086,73 @@ const AndroidVideoPlayer: React.FC = () => {
           </View>
         )}
 
-        <PlayerControls
-          showControls={playerState.showControls}
-          fadeAnim={fadeAnim}
-          paused={playerState.paused}
-          title={title}
-          episodeTitle={episodeTitle}
-          season={season}
-          episode={episode}
-          quality={currentQuality || quality}
-          year={year}
-          streamProvider={currentStreamProvider || streamProvider}
-          streamName={currentStreamName}
-          currentTime={playerState.currentTime}
-          duration={playerState.duration}
-          zoomScale={1}
-          currentResizeMode={playerState.resizeMode}
-          ksAudioTracks={tracksHook.ksAudioTracks}
-          selectedAudioTrack={tracksHook.computedSelectedAudioTrack}
-          availableStreams={availableStreams}
-          togglePlayback={controlsHook.togglePlayback}
-          skip={controlsHook.skip}
-          handleClose={handleClose}
-          cycleAspectRatio={cycleResizeMode}
-          cyclePlaybackSpeed={() => {
-            const speeds = [0.5, 1, 1.25, 1.5, 2];
-            const idx = speeds.indexOf(speedControl.playbackSpeed);
-            const next = speeds[(idx + 1) % speeds.length];
-            speedControl.setPlaybackSpeed(next);
+        <View pointerEvents={isLocked ? 'none' : 'box-none'} style={StyleSheet.absoluteFill}>
+          <PlayerControls
+            showControls={playerState.showControls}
+            fadeAnim={fadeAnim}
+            paused={playerState.paused}
+            title={title}
+            episodeTitle={episodeTitle}
+            season={season}
+            episode={episode}
+            quality={currentQuality || quality}
+            year={year}
+            streamProvider={currentStreamProvider || streamProvider}
+            streamName={currentStreamName}
+            currentTime={playerState.currentTime}
+            duration={playerState.duration}
+            zoomScale={1}
+            currentResizeMode={playerState.resizeMode}
+            ksAudioTracks={tracksHook.ksAudioTracks}
+            selectedAudioTrack={tracksHook.computedSelectedAudioTrack}
+            availableStreams={availableStreams}
+            togglePlayback={controlsHook.togglePlayback}
+            skip={controlsHook.skip}
+            handleClose={handleClose}
+            cycleAspectRatio={cycleResizeMode}
+            cyclePlaybackSpeed={() => {
+              const speeds = [0.5, 1, 1.25, 1.5, 2];
+              const idx = speeds.indexOf(speedControl.playbackSpeed);
+              const next = speeds[(idx + 1) % speeds.length];
+              speedControl.setPlaybackSpeed(next);
+            }}
+            currentPlaybackSpeed={speedControl.playbackSpeed}
+            setShowAudioModal={modals.setShowAudioModal}
+            setShowSubtitleModal={modals.setShowSubtitleModal}
+            setShowSpeedModal={modals.setShowSpeedModal}
+            setShowSubmitIntroModal={modals.setShowSubmitIntroModal}
+            isSubtitleModalOpen={modals.showSubtitleModal}
+            setShowSourcesModal={modals.setShowSourcesModal}
+            setShowEpisodesModal={type === 'series' ? modals.setShowEpisodesModal : undefined}
+            onSliderValueChange={(val) => { playerState.isDragging.current = true; }}
+            onSlidingStart={() => { playerState.isDragging.current = true; }}
+            onSlidingComplete={(val) => {
+              playerState.isDragging.current = false;
+              controlsHook.seekToTime(val);
+            }}
+            buffered={playerState.buffered}
+            formatTime={formatTime}
+            playerBackend={useExoPlayer ? 'ExoPlayer' : 'MPV'}
+            onSwitchToMPV={handleManualSwitchToMPV}
+            useExoPlayer={useExoPlayer}
+            canEnterPictureInPicture={canShowPipButton}
+            onEnterPictureInPicture={handleEnterPictureInPicture}
+            isBuffering={playerState.isBuffering}
+            imdbId={resolvedImdbId}
+            onLock={() => lockOverlayRef.current?.lock()}
+          />
+        </View>
+
+        <LockOverlay
+          ref={lockOverlayRef}
+          onHideControls={() => {
+            setIsLocked(true);
+            playerState.setShowControls(false);
           }}
-          currentPlaybackSpeed={speedControl.playbackSpeed}
-          setShowAudioModal={modals.setShowAudioModal}
-          setShowSubtitleModal={modals.setShowSubtitleModal}
-          setShowSpeedModal={modals.setShowSpeedModal}
-          setShowSubmitIntroModal={modals.setShowSubmitIntroModal}
-          isSubtitleModalOpen={modals.showSubtitleModal}
-          setShowSourcesModal={modals.setShowSourcesModal}
-          setShowEpisodesModal={type === 'series' ? modals.setShowEpisodesModal : undefined}
-          onSliderValueChange={(val) => { playerState.isDragging.current = true; }}
-          onSlidingStart={() => { playerState.isDragging.current = true; }}
-          onSlidingComplete={(val) => {
-            playerState.isDragging.current = false;
-            controlsHook.seekToTime(val);
+          onShowControls={() => {
+            setIsLocked(false);
+            playerState.setShowControls(true);
           }}
-          buffered={playerState.buffered}
-          formatTime={formatTime}
-          playerBackend={useExoPlayer ? 'ExoPlayer' : 'MPV'}
-          onSwitchToMPV={handleManualSwitchToMPV}
-          useExoPlayer={useExoPlayer}
-          canEnterPictureInPicture={canShowPipButton}
-          onEnterPictureInPicture={handleEnterPictureInPicture}
-          isBuffering={playerState.isBuffering}
-          imdbId={resolvedImdbId}
         />
 
         <SpeedActivatedOverlay
