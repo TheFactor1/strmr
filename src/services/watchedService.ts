@@ -233,7 +233,8 @@ class WatchedService {
         watchedAt: Date = new Date(),
         malId?: number,
         tmdbId?: number,
-        title?: string
+        title?: string,
+        skipTrakt: boolean = false // Skip Trakt sync if scrobble already handled it
     ): Promise<{ success: boolean; syncedToTrakt: boolean }> {
         try {
             logger.log(`[WatchedService] Marking movie as watched: ${imdbId} (${title || 'No title'})`);
@@ -241,8 +242,8 @@ class WatchedService {
             const isTraktAuth = await this.traktService.isAuthenticated();
             let syncedToTrakt = false;
 
-            // Sync to Trakt
-            if (isTraktAuth) {
+            // Sync to Trakt — skip if scrobble already created the history entry
+            if (isTraktAuth && !skipTrakt) {
                 syncedToTrakt = await this.traktService.addToWatchedMovies(imdbId, watchedAt);
                 logger.log(`[WatchedService] Trakt sync result for movie: ${syncedToTrakt}`);
             }
@@ -308,7 +309,8 @@ class WatchedService {
         showTitle?: string,
         malId?: number,
         dayIndex?: number,
-        tmdbId?: number
+        tmdbId?: number,
+        skipTrakt: boolean = false // Skip Trakt sync if scrobble already handled it
     ): Promise<{ success: boolean; syncedToTrakt: boolean }> {
         try {
             logger.log(`[WatchedService] Marking episode as watched: ${showImdbId} S${season}E${episode}`);
@@ -316,10 +318,10 @@ class WatchedService {
             const isTraktAuth = await this.traktService.isAuthenticated();
             let syncedToTrakt = false;
 
-            // Sync to Trakt
+            // Sync to Trakt — skip if scrobble already created the history entry
             // showId is the Stremio content ID — pass it as fallback so Trakt can resolve
             // anime/provider IDs (e.g. kitsu:123) that aren't valid IMDb IDs
-            if (isTraktAuth) {
+            if (isTraktAuth && !skipTrakt) {
                 syncedToTrakt = await this.traktService.addToWatchedEpisodes(
                     showImdbId,
                     season,
