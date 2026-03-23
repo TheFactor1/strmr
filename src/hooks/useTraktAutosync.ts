@@ -738,6 +738,7 @@ export function useTraktAutosync(options: TraktAutosyncOptions) {
     handleProgressUpdate,
     handlePlaybackEnd,
     resumeSession,
-    resetState
+    resetState,
+    isSessionComplete: () => isSessionComplete.current
   };
 }
