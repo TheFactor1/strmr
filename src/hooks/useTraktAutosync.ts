@@ -710,11 +710,27 @@ export function useTraktAutosync(options: TraktAutosyncOptions) {
     logger.log(`[TraktAutosync] Manual state reset for: ${options.title}`);
   }, [options.title]);
 
+  // Resume session after app foreground return — clears hasStopped so a fresh
+  // /scrobble/start can be sent without triggering the remount-duplicate guard.
+  // Only re-opens if session isn't complete (already scrobbled).
+  const resumeSession = useCallback(async (currentTime: number, duration: number) => {
+    if (isSessionComplete.current) {
+      logger.log(`[TraktAutosync] resumeSession: session complete, skipping`);
+      return;
+    }
+    if (isUnmounted.current) return;
+    logger.log(`[TraktAutosync] resumeSession: clearing hasStopped/hasStartedWatching and re-opening session`);
+    hasStopped.current = false;
+    hasStartedWatching.current = false;
+    await handlePlaybackStart(currentTime, duration);
+  }, [handlePlaybackStart]);
+
   return {
     isAuthenticated,
     handlePlaybackStart,
     handleProgressUpdate,
     handlePlaybackEnd,
+    resumeSession,
     resetState
   };
 }
