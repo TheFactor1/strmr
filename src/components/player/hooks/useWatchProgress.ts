@@ -84,11 +84,10 @@ export const useWatchProgress = (
     // AppState Listener for background save
     useEffect(() => {
         const subscription = AppState.addEventListener('change', async (nextAppState) => {
-            if (nextAppState.match(/inactive|background/)) {
-                if (id && type && durationRef.current > 0) {
-                    logger.log('[useWatchProgress] App backgrounded, saving progress');
-
-                    // Local save
+            if (id && type && durationRef.current > 0) {
+                if (nextAppState === 'background') {
+                    // App is truly backgrounded — save progress and end Trakt session
+                    logger.log('[useWatchProgress] App backgrounded, saving progress and ending Trakt session');
                     const progress = {
                         currentTime: currentTimeRef.current,
                         duration: durationRef.current,
@@ -101,14 +100,21 @@ export const useWatchProgress = (
                         if (isInPictureInPictureRef.current) {
                             logger.log('[useWatchProgress] In PiP mode, skipping background playback end sync');
                         } else {
-                            // Trakt sync (end session)
-                            // Use 'user_close' to force immediate sync
                             await traktAutosyncRef.current.handlePlaybackEnd(currentTimeRef.current, durationRef.current, 'user_close');
                         }
                     } catch (error) {
                         logger.error('[useWatchProgress] Error saving background progress:', error);
                     }
+                } else if (nextAppState === 'active') {
+                    // App returned to foreground — re-open the Trakt session if not complete.
+                    // Use resumeSession (not handlePlaybackStart) so hasStopped is cleared first.
+                    if (!isInPictureInPictureRef.current) {
+                        logger.log('[useWatchProgress] App foregrounded, re-opening Trakt session');
+                        traktAutosyncRef.current.resumeSession(currentTimeRef.current, durationRef.current);
+                    }
                 }
+                // 'inactive' is intentionally ignored — it fires for notification shade,
+                // screen dim, system dialogs etc. and should not end the Trakt session.
             }
         });
 
@@ -162,7 +168,7 @@ export const useWatchProgress = (
             };
             try {
                 await storageService.setWatchProgress(id, type, progress, episodeId);
-                await traktAutosync.handleProgressUpdate(currentTimeRef.current, durationRef.current);
+                await traktAutosyncRef.current.handleProgressUpdate(currentTimeRef.current, durationRef.current);
 
                 // Requirement 1: Auto Episode Tracking (>= 90% completion)
                 const progressPercent = (currentTimeRef.current / durationRef.current) * 100;
