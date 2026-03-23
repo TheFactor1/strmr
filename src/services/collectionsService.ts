@@ -4,6 +4,7 @@ import { logger } from '../utils/logger';
 import EventEmitter from 'eventemitter3';
 
 const COLLECTIONS_STORAGE_KEY = 'collections';
+const COLLECTION_SETTINGS_KEY = 'collection_settings';
 
 export const collectionsEmitter = new EventEmitter();
 export const COLLECTIONS_EVENTS = {
@@ -117,6 +118,39 @@ class CollectionsService {
     } catch (error) {
       logger.error('[CollectionsService] Import error:', error);
       throw error;
+    }
+  }
+
+  private async getSettingsKey(): Promise<string> {
+    const scope = await mmkvStorage.getItem('@user:current') || 'local';
+    return `@user:${scope}:${COLLECTION_SETTINGS_KEY}`;
+  }
+
+  async getCollectionSettings(): Promise<Record<string, boolean>> {
+    try {
+      const key = await this.getSettingsKey();
+      const json = await mmkvStorage.getItem(key);
+      if (!json) return {};
+      return JSON.parse(json);
+    } catch {
+      return {};
+    }
+  }
+
+  async isCollectionEnabled(id: string): Promise<boolean> {
+    const settings = await this.getCollectionSettings();
+    return settings[id] !== false; // default enabled
+  }
+
+  async setCollectionEnabled(id: string, enabled: boolean): Promise<void> {
+    try {
+      const settings = await this.getCollectionSettings();
+      settings[id] = enabled;
+      const key = await this.getSettingsKey();
+      await mmkvStorage.setItem(key, JSON.stringify(settings));
+      collectionsEmitter.emit(COLLECTIONS_EVENTS.CHANGED);
+    } catch {
+      // silent fail
     }
   }
 

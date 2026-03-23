@@ -74,6 +74,7 @@ import { useScrollToTop } from '../contexts/ScrollToTopContext';
 import CollectionRowSection from '../components/home/CollectionRowSection';
 import { useCollections } from '../hooks/useCollections';
 import { collectionsEmitter, COLLECTIONS_EVENTS } from '../services/collectionsService';
+import { catalogOrderService, catalogOrderEmitter, CATALOG_ORDER_EVENTS, CatalogOrderService } from '../services/catalogOrderService';
 
 // Constants
 const CATALOG_SETTINGS_KEY = 'catalog_settings';
@@ -147,7 +148,8 @@ const HomeScreen = () => {
   const { lastUpdate } = useCatalogContext(); // Add catalog context to listen for addon changes
   const { showInfo } = useToast();
   const { setTrailerPlaying } = useTrailer();
-  const { collections } = useCollections();
+  const { collections, enabledMap: collectionEnabledMap } = useCollections();
+  const [savedOrder, setSavedOrder] = useState<string[]>([]);
   const [showHeroSection, setShowHeroSection] = useState(settings.showHeroSection);
   const [featuredContentSource, setFeaturedContentSource] = useState(settings.featuredContentSource);
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -195,6 +197,14 @@ const HomeScreen = () => {
     }, 100);
     return () => clearTimeout(timer);
   }, [insets.top]);
+
+  // Load saved catalog/collection display order
+  useEffect(() => {
+    catalogOrderService.getOrder().then(setSavedOrder);
+    const handler = () => catalogOrderService.getOrder().then(setSavedOrder);
+    catalogOrderEmitter.on(CATALOG_ORDER_EVENTS.CHANGED, handler);
+    return () => { catalogOrderEmitter.off(CATALOG_ORDER_EVENTS.CHANGED, handler); };
+  }, []);
 
   const {
     featuredContent,
@@ -763,18 +773,66 @@ const HomeScreen = () => {
     // Only show a limited number of catalogs initially for performance
     const catalogsToShow = catalogs.slice(0, visibleCatalogCount);
 
-    // Show collections at the top, before catalog rows
+    // Build maps of available items keyed for ordering (filter out disabled collections)
+    const collectionMap = new Map<string, import('../types/collections').Collection>();
     for (const collection of collections) {
-      data.push({ type: 'collection', collection, key: `collection-${collection.id}` });
+      if (collectionEnabledMap[collection.id] === false) continue;
+      collectionMap.set(CatalogOrderService.collectionKey(collection.id), collection);
     }
 
+    const catalogMap = new Map<string, { catalog: CatalogContent; index: number }>();
     catalogsToShow.forEach((catalog, index) => {
       if (catalog) {
-        data.push({ type: 'catalog', catalog, key: `${catalog.addon}-${catalog.id}-${index}` });
-      } else if (catalogsLoading && pendingCatalogIndexes[index]) {
-        data.push({ type: 'placeholder', key: `placeholder-${index}` });
+        catalogMap.set(CatalogOrderService.catalogKey(catalog.addon, catalog.type, catalog.id), { catalog, index });
       }
     });
+
+    // Apply saved order if available
+    if (savedOrder.length > 0) {
+      const seen = new Set<string>();
+      for (const key of savedOrder) {
+        if (seen.has(key)) continue;
+        seen.add(key);
+        if (collectionMap.has(key)) {
+          const col = collectionMap.get(key)!;
+          data.push({ type: 'collection', collection: col, key: `collection-${col.id}` });
+        } else if (catalogMap.has(key)) {
+          const { catalog, index } = catalogMap.get(key)!;
+          data.push({ type: 'catalog', catalog, key: `${catalog.addon}-${catalog.id}-${index}` });
+        }
+      }
+      // Append any items not in the saved order
+      for (const [key, col] of collectionMap) {
+        if (!seen.has(key)) {
+          data.push({ type: 'collection', collection: col, key: `collection-${col.id}` });
+        }
+      }
+      for (const [key, { catalog, index }] of catalogMap) {
+        if (!seen.has(key)) {
+          data.push({ type: 'catalog', catalog, key: `${catalog.addon}-${catalog.id}-${index}` });
+        }
+      }
+    } else {
+      // Default order: enabled collections first, then catalogs
+      for (const collection of collections) {
+        if (collectionEnabledMap[collection.id] === false) continue;
+        data.push({ type: 'collection', collection, key: `collection-${collection.id}` });
+      }
+      catalogsToShow.forEach((catalog, index) => {
+        if (catalog) {
+          data.push({ type: 'catalog', catalog, key: `${catalog.addon}-${catalog.id}-${index}` });
+        }
+      });
+    }
+
+    // Show placeholders for loading catalogs (not part of ordering)
+    if (catalogsLoading) {
+      catalogsToShow.forEach((catalog, index) => {
+        if (!catalog && pendingCatalogIndexes[index]) {
+          data.push({ type: 'placeholder', key: `placeholder-${index}` });
+        }
+      });
+    }
 
     // Add a "Load More" button if there are more catalogs to show
     if (catalogs.length > visibleCatalogCount && catalogs.filter(c => c).length > visibleCatalogCount) {
@@ -782,7 +840,7 @@ const HomeScreen = () => {
     }
 
     return data;
-  }, [hasAddons, catalogs, catalogsLoading, pendingCatalogIndexes, visibleCatalogCount, settings.showThisWeekSection, collections]);
+  }, [hasAddons, catalogs, catalogsLoading, pendingCatalogIndexes, visibleCatalogCount, settings.showThisWeekSection, collections, collectionEnabledMap, savedOrder]);
 
   const handleLoadMoreCatalogs = useCallback(() => {
     setVisibleCatalogCount(prev => Math.min(prev + 3, catalogs.length));

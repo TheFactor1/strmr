@@ -80,6 +80,7 @@ import ContributorsScreen from '../screens/ContributorsScreen';
 import CollectionManagementScreen from '../screens/CollectionManagementScreen';
 import CollectionEditorScreen from '../screens/CollectionEditorScreen';
 import FolderDetailScreen from '../screens/FolderDetailScreen';
+import CatalogOrderScreen from '../screens/CatalogOrderScreen';
 
 import {
   ContentDiscoverySettingsScreen,
@@ -230,6 +231,7 @@ export type RootStackParamList = {
   Collections: undefined;
   CollectionEditor: { collectionId?: string };
   FolderDetail: { collectionId: string; folderId: string };
+  CatalogOrder: undefined;
 
   // New organized settings screens
   ContentDiscoverySettings: undefined;
@@ -1930,6 +1932,18 @@ const InnerNavigator = ({ initialRouteName }: { initialRouteName?: keyof RootSta
             <Stack.Screen
               name="FolderDetail"
               component={FolderDetailScreen as any}
+              options={{
+                animation: 'slide_from_right',
+                animationDuration: Platform.OS === 'android' ? 250 : 300,
+                headerShown: false,
+                contentStyle: {
+                  backgroundColor: currentTheme.colors.darkBackground,
+                },
+              }}
+            />
+            <Stack.Screen
+              name="CatalogOrder"
+              component={CatalogOrderScreen as any}
               options={{
                 animation: 'slide_from_right',
                 animationDuration: Platform.OS === 'android' ? 250 : 300,

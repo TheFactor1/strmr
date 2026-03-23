@@ -407,6 +407,9 @@ const CollectionEditorScreen = () => {
 
           {editingFolder.catalogSources.map((source, idx) => {
             const isMissing = !installedAddonIds.has(source.addonId);
+            const catalogInfo = availableCatalogs.find(
+              c => c.addonId === source.addonId && c.type === source.type && c.catalogId === source.catalogId
+            );
             return (
               <View
                 key={`${source.addonId}-${source.type}-${source.catalogId}`}
@@ -420,7 +423,7 @@ const CollectionEditorScreen = () => {
               >
                 <View style={styles.catalogSourceInfo}>
                   <Text style={[styles.catalogSourceName, { color: isMissing ? colors.error : colors.text }]} numberOfLines={1}>
-                    {source.catalogId}
+                    {catalogInfo?.name || source.catalogId}
                   </Text>
                   <Text style={[styles.catalogSourceMeta, { color: isMissing ? colors.error : colors.textMuted }]}>
                     {isMissing ? `Addon not installed: ${source.addonId}` : `${source.addonId} · ${source.type}`}

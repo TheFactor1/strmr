@@ -128,6 +128,14 @@ export const ContentDiscoverySettingsContent: React.FC<ContentDiscoverySettingsC
                         onPress={() => navigation.navigate('Collections')}
                         isTablet={isTablet}
                     />
+                    <SettingItem
+                        title="Display Order"
+                        description="Reorder catalogs and collections on home"
+                        icon="menu"
+                        renderControl={() => <ChevronRight />}
+                        onPress={() => navigation.navigate('CatalogOrder')}
+                        isTablet={isTablet}
+                    />
                     {isItemVisible('home_screen') && (
                         <SettingItem
                             title={t('settings.items.home_screen')}

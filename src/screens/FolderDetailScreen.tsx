@@ -55,11 +55,18 @@ const FolderDetailScreen = () => {
     if (!f) return;
     setFolder(f);
 
-    // Build tab labels
-    const labels = f.catalogSources.map(source => ({
-      name: source.catalogId,
-      type: source.type,
-    }));
+    // Build tab labels — resolve human-readable names from addon manifests
+    const addons = await stremioService.getInstalledAddonsAsync();
+    const labels = f.catalogSources.map(source => {
+      const addon = addons.find((a: any) => a.id === source.addonId);
+      const catalog = addon?.catalogs?.find(
+        (c: any) => c.id === source.catalogId && c.type === source.type
+      );
+      return {
+        name: catalog?.name || source.catalogId,
+        type: source.type,
+      };
+    });
     setTabLabels(labels);
 
     // Load first tab

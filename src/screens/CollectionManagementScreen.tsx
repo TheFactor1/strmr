@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   StatusBar,
+  Switch,
   Platform,
   Alert,
 } from 'react-native';
@@ -36,12 +37,24 @@ const CollectionManagementScreen = () => {
   const [alertTitle, setAlertTitle] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
   const [alertActions, setAlertActions] = useState<any[]>([]);
+  const [enabledMap, setEnabledMap] = useState<Record<string, boolean>>({});
+
+  const loadEnabledState = useCallback(async () => {
+    const settings = await collectionsService.getCollectionSettings();
+    setEnabledMap(settings);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       refresh();
-    }, [refresh])
+      loadEnabledState();
+    }, [refresh, loadEnabledState])
   );
+
+  const handleToggleEnabled = useCallback(async (id: string, value: boolean) => {
+    setEnabledMap(prev => ({ ...prev, [id]: value }));
+    await collectionsService.setCollectionEnabled(id, value);
+  }, []);
 
   const handleNewCollection = useCallback(() => {
     navigation.navigate('CollectionEditor' as any, {});
@@ -151,45 +164,62 @@ const CollectionManagementScreen = () => {
           </View>
         )}
 
-        {collections.map((collection, index) => (
-          <View
-            key={collection.id}
-            style={[styles.collectionCard, { backgroundColor: colors.elevation1, borderColor: colors.border }]}
-          >
-            <View style={styles.cardHeader}>
-              <View style={styles.cardTitleRow}>
-                <Text style={[styles.collectionTitle, { color: colors.text }]} numberOfLines={1}>
-                  {collection.title}
-                </Text>
-                <Text style={[styles.folderCount, { color: colors.textMuted }]}>
-                  {collection.folders.length} folder{collection.folders.length !== 1 ? 's' : ''}
-                </Text>
-              </View>
-              <View style={styles.cardActions}>
-                <TouchableOpacity
-                  onPress={() => handleMoveUp(collection.id)}
-                  disabled={index === 0}
-                  style={[styles.iconButton, index === 0 && styles.disabledButton]}
-                >
-                  <MaterialIcons name="arrow-upward" size={20} color={index === 0 ? colors.disabled : colors.text} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => handleMoveDown(collection.id)}
-                  disabled={index === collections.length - 1}
-                  style={[styles.iconButton, index === collections.length - 1 && styles.disabledButton]}
-                >
-                  <MaterialIcons name="arrow-downward" size={20} color={index === collections.length - 1 ? colors.disabled : colors.text} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleEdit(collection.id)} style={styles.iconButton}>
-                  <MaterialIcons name="edit" size={20} color={colors.primary} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDelete(collection)} style={styles.iconButton}>
-                  <MaterialIcons name="delete-outline" size={20} color={colors.error} />
-                </TouchableOpacity>
+        {collections.map((collection, index) => {
+          const isEnabled = enabledMap[collection.id] !== false;
+          return (
+            <View
+              key={collection.id}
+              style={[
+                styles.collectionCard,
+                {
+                  backgroundColor: colors.elevation1,
+                  borderColor: isEnabled ? colors.border : colors.border + '60',
+                  opacity: isEnabled ? 1 : 0.6,
+                },
+              ]}
+            >
+              <View style={styles.cardHeader}>
+                <View style={styles.cardTitleRow}>
+                  <Text style={[styles.collectionTitle, { color: colors.text }]} numberOfLines={1}>
+                    {collection.title}
+                  </Text>
+                  <Text style={[styles.folderCount, { color: colors.textMuted }]}>
+                    {collection.folders.length} folder{collection.folders.length !== 1 ? 's' : ''}{!isEnabled ? ' · Hidden' : ''}
+                  </Text>
+                </View>
+                <View style={styles.cardActions}>
+                  <Switch
+                    value={isEnabled}
+                    onValueChange={(value) => handleToggleEnabled(collection.id, value)}
+                    trackColor={{ false: colors.elevation3, true: colors.primary + '80' }}
+                    thumbColor={isEnabled ? colors.primary : colors.textMuted}
+                    style={styles.switch}
+                  />
+                  <TouchableOpacity
+                    onPress={() => handleMoveUp(collection.id)}
+                    disabled={index === 0}
+                    style={[styles.iconButton, index === 0 && styles.disabledButton]}
+                  >
+                    <MaterialIcons name="arrow-upward" size={20} color={index === 0 ? colors.disabled : colors.text} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleMoveDown(collection.id)}
+                    disabled={index === collections.length - 1}
+                    style={[styles.iconButton, index === collections.length - 1 && styles.disabledButton]}
+                  >
+                    <MaterialIcons name="arrow-downward" size={20} color={index === collections.length - 1 ? colors.disabled : colors.text} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleEdit(collection.id)} style={styles.iconButton}>
+                    <MaterialIcons name="edit" size={20} color={colors.primary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleDelete(collection)} style={styles.iconButton}>
+                    <MaterialIcons name="delete-outline" size={20} color={colors.error} />
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
-        ))}
+          );
+        })}
 
         {collections.length === 0 && (
           <View style={styles.importOnlyRow}>
@@ -301,6 +331,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  switch: {
+    transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }],
   },
   iconButton: {
     padding: 6,
