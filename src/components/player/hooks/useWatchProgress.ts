@@ -171,10 +171,15 @@ export const useWatchProgress = (
                 await traktAutosyncRef.current.handleProgressUpdate(currentTimeRef.current, durationRef.current);
 
                 // Requirement 1: Auto Episode Tracking (>= 90% completion)
+                // Only fires once per session via hasScrobbledRef.
+                // watchedService.markEpisodeAsWatched also syncs to Trakt via /sync/history.
+                // If the scrobble path already created the history entry (isSessionComplete=true),
+                // pass skipTrakt=true so we still sync MAL/Simkl but avoid a duplicate Trakt entry.
                 const progressPercent = (currentTimeRef.current / durationRef.current) * 100;
                 if (progressPercent >= 90 && !hasScrobbledRef.current) {
                     hasScrobbledRef.current = true;
-                    logger.log(`[useWatchProgress] 90% threshold reached, scrobbling to MAL...`);
+                    const skipTrakt = traktAutosyncRef.current.isSessionComplete?.() ?? false;
+                    logger.log(`[useWatchProgress] 90% threshold reached, syncing (skipTrakt=${skipTrakt})`);
                     
                     const currentImdbId = imdbIdRef.current;
                     const currentSeason = seasonRef.current;
@@ -187,19 +192,20 @@ export const useWatchProgress = (
 
                     if (type === 'series' && currentImdbId && currentSeason !== undefined && currentEpisode !== undefined) {
                         watchedService.markEpisodeAsWatched(
-                            currentImdbId, 
-                            id, 
-                            currentSeason, 
-                            currentEpisode, 
-                            new Date(), 
+                            currentImdbId,
+                            id,
+                            currentSeason,
+                            currentEpisode,
+                            new Date(),
                             currentReleaseDate,
                             undefined,
                             currentMalId,
                             currentDayIndex,
-                            currentTmdbId
+                            currentTmdbId,
+                            skipTrakt
                         );
                     } else if (type === 'movie' && currentImdbId) {
-                        watchedService.markMovieAsWatched(currentImdbId, new Date(), currentMalId, currentTmdbId, currentTitle);
+                        watchedService.markMovieAsWatched(currentImdbId, new Date(), currentMalId, currentTmdbId, currentTitle, skipTrakt);
                     }
                 }
             } catch (error) {
