@@ -123,7 +123,7 @@ export const ContentDiscoverySettingsContent: React.FC<ContentDiscoverySettingsC
                     <SettingItem
                         title="Collections"
                         description="Organize catalogs into folders"
-                        icon="folder-open"
+                        icon="folder"
                         renderControl={() => <ChevronRight />}
                         onPress={() => navigation.navigate('Collections')}
                         isTablet={isTablet}

@@ -763,39 +763,18 @@ const HomeScreen = () => {
     // Only show a limited number of catalogs initially for performance
     const catalogsToShow = catalogs.slice(0, visibleCatalogCount);
 
-    // Build catalog items first
-    const catalogItems: HomeScreenListItem[] = [];
+    // Show collections at the top, before catalog rows
+    for (const collection of collections) {
+      data.push({ type: 'collection', collection, key: `collection-${collection.id}` });
+    }
+
     catalogsToShow.forEach((catalog, index) => {
       if (catalog) {
-        catalogItems.push({ type: 'catalog', catalog, key: `${catalog.addon}-${catalog.id}-${index}` });
+        data.push({ type: 'catalog', catalog, key: `${catalog.addon}-${catalog.id}-${index}` });
       } else if (catalogsLoading && pendingCatalogIndexes[index]) {
-        catalogItems.push({ type: 'placeholder', key: `placeholder-${index}` });
+        data.push({ type: 'placeholder', key: `placeholder-${index}` });
       }
     });
-
-    // Interleave collections after the first 2 catalog rows, then after each subsequent collection
-    let catalogIndex = 0;
-    const collectionsToInsert = [...collections];
-    const INSERT_AFTER_ROW = 2; // Insert collections after 2nd catalog row
-
-    for (let i = 0; i < catalogItems.length; i++) {
-      data.push(catalogItems[i]);
-      catalogIndex++;
-
-      if (catalogIndex === INSERT_AFTER_ROW && collectionsToInsert.length > 0) {
-        for (const collection of collectionsToInsert) {
-          data.push({ type: 'collection', collection, key: `collection-${collection.id}` });
-        }
-        collectionsToInsert.length = 0;
-      }
-    }
-
-    // If we didn't reach INSERT_AFTER_ROW, append remaining collections at the end
-    if (collectionsToInsert.length > 0) {
-      for (const collection of collectionsToInsert) {
-        data.push({ type: 'collection', collection, key: `collection-${collection.id}` });
-      }
-    }
 
     // Add a "Load More" button if there are more catalogs to show
     if (catalogs.length > visibleCatalogCount && catalogs.filter(c => c).length > visibleCatalogCount) {

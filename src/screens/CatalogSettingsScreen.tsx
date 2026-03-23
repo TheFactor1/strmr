@@ -26,6 +26,7 @@ import { clearCustomNameCache } from '../utils/catalogNameUtils';
 import { BlurView } from 'expo-blur';
 import CustomAlert from '../components/CustomAlert';
 import { useTranslation } from 'react-i18next';
+import { useCollections } from '../hooks/useCollections';
 
 // Optional iOS Glass effect (expo-glass-effect) with safe fallback for CatalogSettingsScreen
 let GlassViewComp: any = null;
@@ -265,6 +266,7 @@ const createStyles = (colors: any) => StyleSheet.create({
 });
 
 const CatalogSettingsScreen = () => {
+  const { collections } = useCollections();
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<CatalogSetting[]>([]);
   const [groupedSettings, setGroupedSettings] = useState<GroupedCatalogs>({});
@@ -614,6 +616,41 @@ const CatalogSettingsScreen = () => {
                   ios_backgroundColor="#505050"
                 />
               </View>
+            </View>
+          </View>
+        )}
+
+        {/* Collections Section */}
+        {collections.length > 0 && (
+          <View style={styles.addonSection}>
+            <Text style={styles.addonTitle}>COLLECTIONS</Text>
+            <View style={styles.card}>
+              <TouchableOpacity
+                style={styles.groupHeader}
+                onPress={() => navigation.navigate('Collections' as any)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.groupTitle}>
+                  {collections.length} collection{collections.length !== 1 ? 's' : ''}
+                </Text>
+                <View style={styles.groupHeaderRight}>
+                  <Text style={[styles.enabledCount, { color: colors.primary }]}>Manage</Text>
+                  <MaterialIcons name="keyboard-arrow-right" size={24} color={colors.primary} />
+                </View>
+              </TouchableOpacity>
+              {collections.map((collection) => (
+                <View
+                  key={collection.id}
+                  style={styles.catalogItem}
+                >
+                  <View style={styles.catalogInfo}>
+                    <Text style={styles.catalogName}>{collection.title}</Text>
+                    <Text style={styles.catalogType}>
+                      {collection.folders.length} folder{collection.folders.length !== 1 ? 's' : ''}
+                    </Text>
+                  </View>
+                </View>
+              ))}
             </View>
           </View>
         )}
