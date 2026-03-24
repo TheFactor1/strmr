@@ -49,8 +49,8 @@ interface SeriesContentProps {
     mal_id?: number;
     external_ids?: {
       mal_id?: number;
-      seasons?: Array<{ season: number; poster?: string; }>;
     }
+    seasons?: Array<{ season: number; poster?: string; }>;
   };
   imdbId?: string; // IMDb ID for Trakt sync
 }
