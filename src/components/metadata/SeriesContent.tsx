@@ -49,6 +49,7 @@ interface SeriesContentProps {
     mal_id?: number;
     external_ids?: {
       mal_id?: number;
+      seasons?: Array<{ season: number; poster?: string; }>;
     }
   };
   imdbId?: string; // IMDb ID for Trakt sync
@@ -839,7 +840,7 @@ const SeriesContentComponent: React.FC<SeriesContentProps> = ({
     );
   }
 
-  const renderSeasonSelector = () => {
+  const  = () => {
     // Show selector if we have grouped episodes data or can derive from episodes
     if (!groupedEpisodes || Object.keys(groupedEpisodes).length <= 1) {
       return null;
@@ -929,11 +930,24 @@ const SeriesContentComponent: React.FC<SeriesContentProps> = ({
 
             // Get season poster URL (needed for both views)
             let seasonPoster = DEFAULT_PLACEHOLDER;
+            // 1. Highest Priority: TMDB poster via episode data
             if (seasonEpisodes[0]?.season_poster_path) {
               const tmdbUrl = tmdbService.getImageUrl(seasonEpisodes[0].season_poster_path, 'original');
-              if (tmdbUrl) seasonPoster = tmdbUrl;
-            } else if (metadata?.poster) {
-              seasonPoster = metadata.poster;
+              if (tmdbUrl) {
+                seasonPoster = tmdbUrl;
+              }
+            }
+            // If TMDB didn't return a valid poster, check priorities 2 and 3
+            if (seasonPoster === DEFAULT_PLACEHOLDER) {
+              // Try to find a custom poster matching the current season number
+              const customSeasonPoster = metadata?.seasons?.find(s => s.season === season)?.poster;
+              if (customSeasonPoster) {
+                // 2. Secondary Priority: Custom Addon Poster
+                seasonPoster = customSeasonPoster;
+              } else if (metadata?.poster) {
+                // 3. Fallback Priority: Main Series Poster
+                seasonPoster = metadata.poster;
+              }
             }
 
             if (seasonViewMode === 'text') {
