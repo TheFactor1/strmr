@@ -488,6 +488,10 @@ const AndroidVideoPlayer: React.FC = () => {
         }
       }, 300);
     }
+
+    if (videoDuration > 0) {
+      traktAutosync.handlePlaybackStart(0, videoDuration);
+    }
   }, [id, type, episodeId, playerState.isMounted, watchProgress.initialPosition, useExoPlayer]);
 
   const handleProgress = useCallback((data: any) => {
@@ -943,7 +947,7 @@ const AndroidVideoPlayer: React.FC = () => {
                     addonId: currentStreamProvider
                   }, episodeId);
                 }
-                traktAutosync.handleProgressUpdate(data.currentTime, playerState.duration, true);
+                traktAutosync.handlePlaybackStart(data.currentTime, playerState.duration);
               }
             }}
             onEnd={() => {

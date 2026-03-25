@@ -17,6 +17,11 @@ if (!TRAKT_CLIENT_ID || !TRAKT_CLIENT_SECRET) {
   logger.warn('[TraktService] Missing Trakt env vars. Trakt integration will be disabled.');
 }
 
+// Trakt API scrobble threshold — hardcoded per API spec.
+// /scrobble/stop with progress >= 80% → scrobble (marks watched).
+// /scrobble/stop with progress 1-79% → pause (saves playback progress).
+const TRAKT_SCROBBLE_THRESHOLD = 80;
+
 // Types
 export interface TraktUser {
   username: string;
@@ -1871,21 +1876,24 @@ export class TraktService {
    */
   public async startWatching(contentData: TraktContentData, progress: number): Promise<TraktScrobbleResponse | null> {
     try {
-      // Validate content data before making API call
       const validation = this.validateContentData(contentData);
       if (!validation.isValid) {
-        logger.error('[TraktService] Invalid content data for start watching:', validation.errors);
+        console.log('[TraktService] /scrobble/start INVALID content:', validation.errors);
         return null;
       }
 
       const payload = await this.buildScrobblePayload(contentData, progress);
       if (!payload) {
+        console.log('[TraktService] /scrobble/start payload is null');
         return null;
       }
 
-      return this.apiRequest<TraktScrobbleResponse>('/scrobble/start', 'POST', payload);
+      console.log('[TraktService] /scrobble/start PAYLOAD:', JSON.stringify(payload));
+      const response = await this.apiRequest<TraktScrobbleResponse>('/scrobble/start', 'POST', payload);
+      console.log('[TraktService] /scrobble/start RESPONSE:', JSON.stringify(response));
+      return response;
     } catch (error) {
-      logger.error('[TraktService] Failed to start watching:', error);
+      console.log('[TraktService] /scrobble/start ERROR:', error);
       return null;
     }
   }
@@ -1927,21 +1935,24 @@ export class TraktService {
    */
   public async stopWatching(contentData: TraktContentData, progress: number): Promise<TraktScrobbleResponse | null> {
     try {
-      // Validate content data before making API call
       const validation = this.validateContentData(contentData);
       if (!validation.isValid) {
-        logger.error('[TraktService] Invalid content data for stop watching:', validation.errors);
+        console.log('[TraktService] /scrobble/stop INVALID content:', validation.errors);
         return null;
       }
 
       const payload = await this.buildScrobblePayload(contentData, progress);
       if (!payload) {
+        console.log('[TraktService] /scrobble/stop payload is null');
         return null;
       }
 
-      return this.apiRequest<TraktScrobbleResponse>('/scrobble/stop', 'POST', payload);
+      console.log('[TraktService] /scrobble/stop PAYLOAD:', JSON.stringify(payload));
+      const response = await this.apiRequest<TraktScrobbleResponse>('/scrobble/stop', 'POST', payload);
+      console.log('[TraktService] /scrobble/stop RESPONSE:', JSON.stringify(response));
+      return response;
     } catch (error) {
-      logger.error('[TraktService] Failed to stop watching:', error);
+      console.log('[TraktService] /scrobble/stop ERROR:', error);
       return null;
     }
   }
@@ -2239,31 +2250,28 @@ export class TraktService {
   public async scrobbleStart(contentData: TraktContentData, progress: number): Promise<boolean> {
     try {
       if (!await this.isAuthenticated()) {
+        console.log('[TraktService] scrobbleStart: not authenticated');
         return false;
       }
 
       const watchingKey = this.getWatchingKey(contentData);
+      console.log(`[TraktService] scrobbleStart: key=${watchingKey} recentlyScrobbled=${this.isRecentlyScrobbled(contentData)} scrobbled=${this.scrobbledItems.has(watchingKey)} currentlyWatching=${this.currentlyWatching.has(watchingKey)}`);
 
-      // Check if this content was recently scrobbled (to prevent duplicates from component remounts)
       if (this.isRecentlyScrobbled(contentData)) {
-        logger.log(`[TraktService] Content was recently scrobbled, skipping start: ${contentData.title}`);
+        console.log(`[TraktService] scrobbleStart BLOCKED: recently scrobbled`);
         return true;
       }
 
-      // ENHANCED PROTECTION: Check if we recently stopped this content with high progress
-      // This prevents restarting sessions for content that was just completed
-      const lastStopTime = this.lastStopCalls.get(watchingKey);
-      if (lastStopTime && (Date.now() - lastStopTime) < 30000) { // 30 seconds
-        logger.log(`[TraktService] Recently stopped this content (${((Date.now() - lastStopTime) / 1000).toFixed(1)}s ago), preventing restart: ${contentData.title}`);
-        return true;
+      if (this.scrobbledItems.has(watchingKey)) {
+        const scrobbledTime = this.scrobbledTimestamps.get(watchingKey);
+        if (scrobbledTime && (Date.now() - scrobbledTime) < 30000) {
+          console.log(`[TraktService] scrobbleStart BLOCKED: scrobbled ${((Date.now() - scrobbledTime) / 1000).toFixed(1)}s ago`);
+          return true;
+        }
       }
 
-      // Debug log removed to reduce terminal noise
-
-      // Only start if not already watching this content
       if (this.currentlyWatching.has(watchingKey)) {
-        logger.log(`[TraktService] Already watching this content, skipping start: ${contentData.title}`);
-        return true; // Already started
+        this.currentlyWatching.delete(watchingKey);
       }
 
       const result = await this.queueRequest(async () => {
@@ -2272,13 +2280,14 @@ export class TraktService {
 
       if (result) {
         this.currentlyWatching.add(watchingKey);
-        logger.log(`[TraktService] Started watching ${contentData.type}: ${contentData.title}`);
+        console.log(`[TraktService] scrobbleStart SUCCESS: ${contentData.title}`);
         return true;
       }
 
+      console.log(`[TraktService] scrobbleStart FAILED: result was null`);
       return false;
     } catch (error) {
-      logger.error('[TraktService] Failed to start scrobbling:', error);
+      console.log('[TraktService] scrobbleStart ERROR:', error);
       return false;
     }
   }
@@ -2327,7 +2336,11 @@ export class TraktService {
   }
 
   /**
-   * Stop watching content (use when playback ends or stops)
+   * Stop watching content (use when playback ends, pauses, or stops)
+   * Always sends /scrobble/stop — Trakt API automatically handles:
+   *   - progress >= 80% → scrobble (marks as watched)
+   *   - progress 1-79% → pause (saves playback progress)
+   *   - progress < 1% → 422 ignored
    */
   public async scrobbleStop(contentData: TraktContentData, progress: number): Promise<boolean> {
     try {
@@ -2338,52 +2351,48 @@ export class TraktService {
       const watchingKey = this.getWatchingKey(contentData);
       const now = Date.now();
 
-      // IMMEDIATE SYNC: Reduce debouncing for instant sync, only prevent truly duplicate calls (< 1 second)
+      if (this.isRecentlyScrobbled(contentData)) {
+        logger.log(`[TraktService] Already scrobbled, skipping stop: ${contentData.title}`);
+        return true;
+      }
+
+      // Prevent truly duplicate calls (< 1 second)
       const lastStopTime = this.lastStopCalls.get(watchingKey);
       if (lastStopTime && (now - lastStopTime) < 1000) {
         logger.log(`[TraktService] Ignoring duplicate stop call for ${contentData.title} (last stop ${((now - lastStopTime) / 1000).toFixed(1)}s ago)`);
-        return true; // Return success to avoid error handling
+        return true;
       }
 
-      // Record this stop attempt
       this.lastStopCalls.set(watchingKey, now);
 
-      // Use pause if below user threshold, stop only when ready to scrobble
-      const useStop = progress >= this.completionThreshold;
+      // Always use /scrobble/stop — Trakt decides pause vs scrobble based on progress
       const result = await this.queueRequest(async () => {
-        return useStop
-          ? await this.stopWatching(contentData, progress)
-          : await this.pauseWatching(contentData, progress);
+        return await this.stopWatching(contentData, progress);
       });
 
       if (result) {
         this.currentlyWatching.delete(watchingKey);
 
-        // Mark as scrobbled if >= user threshold to prevent future duplicates and restarts
-        if (progress >= this.completionThreshold) {
+        // Mark as scrobbled if >= 80% to prevent future duplicates
+        if (progress >= TRAKT_SCROBBLE_THRESHOLD) {
           this.scrobbledItems.add(watchingKey);
           this.scrobbledTimestamps.set(watchingKey, Date.now());
-          logger.log(`[TraktService] Marked as scrobbled to prevent restarts: ${watchingKey}`);
+          logger.log(`[TraktService] Scrobbled (>= 80%): ${watchingKey}`);
         }
 
-        // Action reflects actual endpoint used based on user threshold
-        const action = progress >= this.completionThreshold ? 'scrobbled' : 'paused';
-        logger.log(`[TraktService] Stopped watching ${contentData.type}: ${contentData.title} (${progress.toFixed(1)}% - ${action})`);
-
+        const action = progress >= TRAKT_SCROBBLE_THRESHOLD ? 'scrobbled' : 'paused';
+        logger.log(`[TraktService] /scrobble/stop sent: ${contentData.title} (${progress.toFixed(1)}% - ${action})`);
         return true;
       } else {
-        // If failed, remove from lastStopCalls so we can try again
         this.lastStopCalls.delete(watchingKey);
       }
 
       return false;
     } catch (error) {
-      // Handle rate limiting errors more gracefully
       if (error instanceof Error && error.message.includes('429')) {
         logger.warn('[TraktService] Rate limited, will retry later');
         return true;
       }
-
       logger.error('[TraktService] Failed to stop scrobbling:', error);
       return false;
     }
@@ -2429,6 +2438,7 @@ export class TraktService {
 
   /**
    * Immediate scrobble stop - bypasses queue for instant user feedback
+   * Always sends /scrobble/stop — Trakt handles pause vs scrobble based on progress.
    */
   public async scrobbleStopImmediate(contentData: TraktContentData, progress: number): Promise<boolean> {
     try {
@@ -2438,7 +2448,12 @@ export class TraktService {
 
       const watchingKey = this.getWatchingKey(contentData);
 
-      // MINIMAL DEDUPLICATION: Only prevent calls within 200ms for immediate actions
+      if (this.isRecentlyScrobbled(contentData)) {
+        logger.log(`[TraktService] Already scrobbled, skipping immediate stop: ${contentData.title}`);
+        return true;
+      }
+
+      // Prevent calls within 200ms for immediate actions
       const lastStopTime = this.lastStopCalls.get(watchingKey);
       if (lastStopTime && (Date.now() - lastStopTime) < 200) {
         return true;
@@ -2446,24 +2461,19 @@ export class TraktService {
 
       this.lastStopCalls.set(watchingKey, Date.now());
 
-      // BYPASS QUEUE: Use pause if below user threshold, stop only when ready to scrobble
-      const useStop = progress >= this.completionThreshold;
-      const result = useStop
-        ? await this.stopWatching(contentData, progress)
-        : await this.pauseWatching(contentData, progress);
+      // Always use /scrobble/stop — Trakt decides pause vs scrobble based on progress
+      const result = await this.stopWatching(contentData, progress);
 
       if (result) {
         this.currentlyWatching.delete(watchingKey);
 
-        // Mark as scrobbled if >= user threshold to prevent future duplicates and restarts
-        if (progress >= this.completionThreshold) {
+        if (progress >= TRAKT_SCROBBLE_THRESHOLD) {
           this.scrobbledItems.add(watchingKey);
           this.scrobbledTimestamps.set(watchingKey, Date.now());
         }
 
-        // Action reflects actual endpoint used based on user threshold
-        const action = progress >= this.completionThreshold ? 'scrobbled' : 'paused';
-        logger.log(`[TraktService] IMMEDIATE: Stopped watching ${contentData.type}: ${contentData.title} (${progress.toFixed(1)}% - ${action})`);
+        const action = progress >= TRAKT_SCROBBLE_THRESHOLD ? 'scrobbled' : 'paused';
+        logger.log(`[TraktService] IMMEDIATE /scrobble/stop: ${contentData.title} (${progress.toFixed(1)}% - ${action})`);
 
         return true;
       }
