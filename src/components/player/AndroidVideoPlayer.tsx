@@ -271,8 +271,6 @@ const AndroidVideoPlayer: React.FC = () => {
 
   const nextEpisodeHook = useNextEpisode(type, season, episode, groupedEpisodes, (metadataResult as any)?.groupedEpisodes, episodeId);
 
-  const currentTmdbId = (metadata as any)?.tmdbId || (metadata as any)?.external_ids?.tmdb_id;
-
   const { segments: skipIntervals, outroSegment } = useSkipSegments({
     imdbId: resolvedImdbId || (id?.startsWith('tt') ? id : undefined),
     type,
@@ -489,6 +487,10 @@ const AndroidVideoPlayer: React.FC = () => {
           console.warn('[AndroidVideoPlayer] No player ref available for resume seek');
         }
       }, 300);
+    }
+
+    if (videoDuration > 0) {
+      traktAutosync.handlePlaybackStart(0, videoDuration);
     }
   }, [id, type, episodeId, playerState.isMounted, watchProgress.initialPosition, useExoPlayer]);
 
@@ -945,7 +947,7 @@ const AndroidVideoPlayer: React.FC = () => {
                     addonId: currentStreamProvider
                   }, episodeId);
                 }
-                traktAutosync.handleProgressUpdate(data.currentTime, playerState.duration, true);
+                traktAutosync.handlePlaybackStart(data.currentTime, playerState.duration);
               }
             }}
             onEnd={() => {

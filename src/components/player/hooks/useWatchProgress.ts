@@ -162,7 +162,6 @@ export const useWatchProgress = (
             };
             try {
                 await storageService.setWatchProgress(id, type, progress, episodeId);
-                await traktAutosync.handleProgressUpdate(currentTimeRef.current, durationRef.current);
 
                 // Requirement 1: Auto Episode Tracking (>= 90% completion)
                 const progressPercent = (currentTimeRef.current / durationRef.current) * 100;
@@ -204,20 +203,24 @@ export const useWatchProgress = (
 
     
     useEffect(() => {
-        // Handle pause transitions (upstream)
         if (wasPausedRef.current !== paused) {
             const becamePaused = paused;
             wasPausedRef.current = paused;
             if (becamePaused) {
                 void saveWatchProgress();
+                if (durationRef.current > 0) {
+                    void traktAutosyncRef.current.handlePlaybackEnd(currentTimeRef.current, durationRef.current, 'user_close');
+                }
+            } else {
+                if (durationRef.current > 0) {
+                    void traktAutosyncRef.current.handlePlaybackStart(currentTimeRef.current, durationRef.current);
+                }
             }
         }
 
-        // Handle periodic save when playing (MAL branch)
         if (id && type && !paused) {
             if (progressSaveInterval) clearInterval(progressSaveInterval);
 
-            // Use refs inside the interval so we don't need to restart it on every second
             const interval = setInterval(() => {
                 saveWatchProgress();
             }, 10000);
@@ -238,7 +241,8 @@ export const useWatchProgress = (
             setTimeout(() => {
                 if (id && type && durationRef.current > 0) {
                     saveWatchProgress();
-                    traktAutosync.handlePlaybackEnd(currentTimeRef.current, durationRef.current, 'unmount');
+                    // Use ref to avoid stale closure capturing an old traktAutosync instance
+                    traktAutosyncRef.current.handlePlaybackEnd(currentTimeRef.current, durationRef.current, 'unmount');
                 }
             }, 0);
         };

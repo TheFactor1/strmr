@@ -242,6 +242,7 @@ const KSPlayerCore: React.FC = () => {
         duration,
         lastUpdated: Date.now()
       }, episodeId);
+      traktAutosync.handlePlaybackStart(timeInSeconds, duration);
     }
   });
 
@@ -650,9 +651,6 @@ const KSPlayerCore: React.FC = () => {
     if (isSyncingBeforeClose.current) return;
     isSyncingBeforeClose.current = true;
 
-    // Fire and forget - don't block navigation on async operations
-    // The useWatchProgress and useTraktAutosync hooks handle cleanup on unmount
-    traktAutosync.handleProgressUpdate(currentTime, duration, true);
     traktAutosync.handlePlaybackEnd(currentTime, duration, 'user_close');
 
     navigation.goBack();
