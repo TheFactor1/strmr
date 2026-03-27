@@ -783,7 +783,7 @@
             "description": "Sincroniza tus datos en todos tus dispositivos de forma segura",
             "hero_title": "Sincronización en la nube",
             "hero_desc": "Mantén tu progreso y preferencias sincronizados en todos tus dispositivos",
-            "hero_subtitle": "Mantén tus complementos, progreso y biblioteca alineados en todos tus dispositivos.",
+            "hero_subtitle": "Mantén tus complementos, progreso y biblioteca sincronizados en todos tus dispositivos.",
             "auth": {
                 "account": "Cuenta",
                 "not_configured": "Supabase no configurado",
@@ -1035,7 +1035,7 @@
     },
     "debrid": {
         "title": "Integración de Debrid",
-        "description_torbox": "Conecta Torbox para usar tus preferencias de source basadas en la cuenta. Introduce tu clave API a continuación para configurar la integración.",
+        "description_torbox": "Vincula Torbox para usar los ajustes de fuente de tu cuenta. Introduce tu clave API debajo para completar la configuración.",
         "description_torrentio": "Configura Torrentio como integración de fuente externa en tus ajustes",
         "tab_torbox": "TorBox",
         "tab_torrentio": "Torrentio",
