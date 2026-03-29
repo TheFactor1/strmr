@@ -161,8 +161,8 @@ const SpecialMentionCard: React.FC<SpecialMentionCardProps> = ({ mention, curren
         // Fallback: show alert with Discord info
         Alert.alert(
           mention.name,
-          `Discord: @${mention.username}\n\nDo you want to open Discord and search for this user?`,
-          [{ text: 'OK' }]
+          t('mal.discord_open_prompt', { username: mention.username }),
+          [{ text: t('common.ok') }]
         );
       }
     });

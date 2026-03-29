@@ -9,6 +9,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { useToast } from '../contexts/ToastContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 const EMAIL_CONFIRMATION_REQUIRED_PREFIX = '__EMAIL_CONFIRMATION__';
 const AUTH_BG_GRADIENT = ['#07090F', '#0D1020', '#140B24'] as const;
@@ -51,6 +52,7 @@ const AuthScreen: React.FC = () => {
   const safeTopInset = Math.max(insets.top, Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0);
   const backButtonTop = safeTopInset + 8;
   const { showError, showSuccess } = useToast();
+  const { t } = useTranslation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -163,21 +165,21 @@ const AuthScreen: React.FC = () => {
     if (!isEmailValid) {
       const msg = 'Enter a valid email address';
       setError(msg);
-      showError('Invalid Email', 'Enter a valid email address');
+      showError(t('auth.invalid_email'), t('auth.invalid_email_msg'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       return;
     }
     if (!isPasswordValid) {
       const msg = 'Password must be at least 6 characters';
       setError(msg);
-      showError('Password Too Short', 'Password must be at least 6 characters');
+      showError(t('auth.password_short'), t('auth.password_short_msg'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       return;
     }
     if (mode === 'signup' && !passwordsMatch) {
       const msg = 'Passwords do not match';
       setError(msg);
-      showError('Passwords Don\'t Match', 'Passwords do not match');
+      showError(t('auth.passwords_mismatch'), t('auth.passwords_mismatch_msg'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       return;
     }
@@ -197,11 +199,11 @@ const AuthScreen: React.FC = () => {
 
       const cleanError = normalizeAuthErrorMessage(err);
       setError(cleanError);
-      showError('Authentication Failed', cleanError);
+      showError(t('auth.auth_failed'), cleanError);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
     } else {
-      const msg = mode === 'signin' ? 'Logged in successfully' : 'Sign up successful';
-      showSuccess('Success', msg);
+      const msg = mode === 'signin' ? t('auth.login_success') : t('auth.signup_success');
+      showSuccess(t('common.success'), msg);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
 
       // Navigate to main tabs after successful authentication

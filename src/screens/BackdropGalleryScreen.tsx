@@ -15,6 +15,7 @@ import FastImage from '@d11/react-native-fast-image';
 import { MaterialIcons } from '@expo/vector-icons';
 import { TMDBService } from '../services/tmdbService';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import { useSettings } from '../hooks/useSettings';
 
 const { width } = Dimensions.get('window');
@@ -40,6 +41,7 @@ const BackdropGalleryScreen: React.FC = () => {
   const navigation = useNavigation();
   const { tmdbId, type, title } = route.params as RouteParams;
   const { currentTheme } = useTheme();
+  const { t } = useTranslation();
   const { settings } = useSettings();
 
   const [backdrops, setBackdrops] = useState<BackdropItem[]>([]);
@@ -75,10 +77,10 @@ const BackdropGalleryScreen: React.FC = () => {
         if (images && images.backdrops && images.backdrops.length > 0) {
           setBackdrops(images.backdrops);
         } else {
-          setError('No backdrops found');
+          setError(t('metadata.no_backdrops'));
         }
       } catch (err) {
-        setError('Failed to load backdrops');
+        setError(t('metadata.error_backdrops'));
         console.error('Backdrop fetch error:', err);
       } finally {
         setLoading(false);

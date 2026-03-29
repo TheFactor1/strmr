@@ -16,6 +16,7 @@ import QualityBadge from './metadata/QualityBadge';
 import { useSettings } from '../hooks/useSettings';
 import { useDownloads } from '../contexts/DownloadsContext';
 import { useToast } from '../contexts/ToastContext';
+import { useTranslation } from 'react-i18next';
 
 interface StreamCardProps {
   stream: Stream;
@@ -63,6 +64,7 @@ const StreamCard = memo(({
   const { settings } = useSettings();
   const { startDownload } = useDownloads();
   const { showSuccess, showInfo } = useToast();
+  const { t } = useTranslation();
 
   // Handle long press to copy stream URL to clipboard
   const handleLongPress = useCallback(async () => {
@@ -72,10 +74,10 @@ const StreamCard = memo(({
 
         // Use toast for Android, custom alert for iOS
         if (Platform.OS === 'android') {
-          showSuccess('URL Copied', 'Stream URL copied to clipboard!');
+          showSuccess(t('stream_card.url_copied'), t('stream_card.url_copied_msg'));
         } else {
           // iOS uses custom alert
-          showAlert('Copied!', 'Stream URL has been copied to clipboard.');
+          showAlert(t('stream_card.copied'), t('stream_card.copied_msg'));
         }
       } catch (error) {
         // Fallback: show URL in alert if clipboard fails
@@ -131,7 +133,7 @@ const StreamCard = memo(({
       try {
         const downloadsModule = require('../contexts/DownloadsContext');
         if (downloadsModule && downloadsModule.isDownloadingUrl && downloadsModule.isDownloadingUrl(url)) {
-          showAlert('Already Downloading', 'This download has already started for this exact link.');
+          showAlert(t('stream_card.already_downloading'), t('stream_card.already_downloading_msg'));
           return;
         }
       } catch { }
@@ -178,9 +180,9 @@ const StreamCard = memo(({
         imdbId: parentImdbId || parent.imdbId || undefined,
         tmdbId: tmdbId,
       });
-      showAlert('Download Started', 'Your download has been added to the queue.');
+      showAlert(t('stream_card.download_started'), t('stream_card.download_started_msg'));
     } catch (e: any) {
-      showAlert('Download Failed', e.message || 'Could not start download.');
+      showAlert(t('stream_card.download_failed'), e.message || t('stream_card.download_failed'));
     }
   }, [startDownload, stream.url, stream.headers, streamInfo.quality, showAlert, stream.name, stream.title, parentId, parentImdbId, parentTitle, parentType, parentSeason, parentEpisode, parentEpisodeTitle, parentPosterUrl, providerName]);
 

@@ -186,7 +186,7 @@ const SettingsScreen: React.FC = () => {
   ) => {
     setAlertTitle(title);
     setAlertMessage(message);
-    setAlertActions(actions && actions.length > 0 ? actions : [{ label: 'OK', onPress: () => { } }]);
+    setAlertActions(actions && actions.length > 0 ? actions : [{ label: t('common.ok'), onPress: () => { } }]);
     setAlertVisible(true);
   };
 
@@ -334,18 +334,18 @@ const SettingsScreen: React.FC = () => {
 
   const handleClearMDBListCache = () => {
     openAlert(
-      'Clear MDBList Cache',
-      'Are you sure you want to clear all cached MDBList data? This cannot be undone.',
+      t('settings.clear_mdblist_cache_title'),
+      t('settings.clear_mdblist_cache_confirm'),
       [
-        { label: 'Cancel', onPress: () => { } },
+        { label: t('common.cancel'), onPress: () => { } },
         {
-          label: 'Clear',
+          label: t('common.delete'),
           onPress: async () => {
             try {
               await mmkvStorage.removeItem('mdblist_cache');
-              openAlert('Success', 'MDBList cache has been cleared.');
+              openAlert(t('common.success'), t('settings.clear_mdblist_cache_success'));
             } catch (error) {
-              openAlert('Error', 'Could not clear MDBList cache.');
+              openAlert(t('common.error'), t('settings.clear_mdblist_cache_error'));
               if (__DEV__) console.error('Error clearing MDBList cache:', error);
             }
           }
@@ -420,8 +420,8 @@ const SettingsScreen: React.FC = () => {
             )}
             {isItemVisible('mal') && (
               <SettingItem
-                title="MyAnimeList"
-                description="Sync with MyAnimeList"
+                title={t('mal.title')}
+                description={t('mal.description')}
                 customIcon={<Image source={require('../../assets/rating-icons/mal-icon.png')} style={{ width: isTablet ? 24 : 20, height: isTablet ? 24 : 20, borderRadius: 4 }} resizeMode="contain" />}
                 renderControl={() => <ChevronRight />}
                 onPress={() => navigation.navigate('MalSettings')}
@@ -438,7 +438,7 @@ const SettingsScreen: React.FC = () => {
       case 'appearance':
         return (
           <>
-            <SettingsCard title="GENERAL" isTablet={isTablet}>
+            <SettingsCard title={t('settings.sections.general')} isTablet={isTablet}>
               <SettingItem
                 title={t('settings.language')}
                 description={t(`settings.${LOCALES.find(l => l.code === i18n.language)?.key}`)}
@@ -476,8 +476,8 @@ const SettingsScreen: React.FC = () => {
               isTablet={isTablet}
             />
             <SettingItem
-              title={'Plugin Tester'}
-              description={'Run a plugin and inspect logs/streams'}
+              title={t('settings.plugin_tester')}
+              description={t('settings.plugin_tester_desc')}
               icon="terminal"
               onPress={() => navigation.navigate('PluginTester')}
               renderControl={() => <ChevronRight />}
@@ -489,9 +489,9 @@ const SettingsScreen: React.FC = () => {
               onPress={async () => {
                 try {
                   await mmkvStorage.removeItem('hasCompletedOnboarding');
-                  openAlert('Success', 'Onboarding has been reset. Restart the app to see the onboarding flow.');
+                  openAlert(t('common.success'), t('settings.reset_onboarding_success'));
                 } catch (error) {
-                  openAlert('Error', 'Failed to reset onboarding.');
+                  openAlert(t('common.error'), t('settings.reset_onboarding_error'));
                 }
               }}
               renderControl={() => <ChevronRight />}
@@ -503,7 +503,7 @@ const SettingsScreen: React.FC = () => {
               icon="refresh-cw"
               onPress={async () => {
                 await campaignService.resetCampaigns();
-                openAlert('Success', 'Campaign history reset. Restart app to see posters again.');
+                openAlert(t('common.success'), t('settings.reset_campaigns_success'));
               }}
               renderControl={() => <ChevronRight />}
               isTablet={isTablet}
@@ -516,15 +516,15 @@ const SettingsScreen: React.FC = () => {
                   t('settings.clear_data'),
                   t('settings.clear_data_desc'),
                   [
-                    { label: 'Cancel', onPress: () => { } },
+                    { label: t('common.cancel'), onPress: () => { } },
                     {
-                      label: 'Clear',
+                      label: t('common.delete'),
                       onPress: async () => {
                         try {
                           await mmkvStorage.clear();
-                          openAlert('Success', 'All data cleared. Please restart the app.');
+                          openAlert(t('common.success'), t('settings.clear_data_success'));
                         } catch (error) {
-                          openAlert('Error', 'Failed to clear data.');
+                          openAlert(t('common.error'), t('settings.clear_data_error'));
                         }
                       }
                     }
@@ -717,8 +717,8 @@ const SettingsScreen: React.FC = () => {
               <SettingsCard title={t('settings.account').toUpperCase()}>
                 {showCloudSyncItem && (
                   <SettingItem
-                    title="Nuvio Sync"
-                    description="Sync data across your Nuvio devices"
+                    title={t('settings.cloud_sync.title')}
+                    description={t('settings.cloud_sync.description')}
                     customIcon={
                       <FastImage
                         source={require('../../assets/nuvio-sync-icon-og.png')}
@@ -753,8 +753,8 @@ const SettingsScreen: React.FC = () => {
                 )}
                 {isItemVisible('mal') && (
                   <SettingItem
-                    title="MyAnimeList"
-                    description="Sync with MyAnimeList"
+                    title={t('mal.title')}
+                    description={t('mal.description')}
                     customIcon={<Image source={require('../../assets/rating-icons/mal-icon.png')} style={{ width: 20, height: 20, borderRadius: 4 }} resizeMode="contain" />}
                     renderControl={() => <ChevronRight />}
                     onPress={() => navigation.navigate('MalSettings')}
@@ -771,7 +771,7 @@ const SettingsScreen: React.FC = () => {
               (settingsConfig?.categories?.['integrations']?.visible !== false) ||
               (settingsConfig?.categories?.['playback']?.visible !== false)
             ) && (
-                <SettingsCard title="GENERAL">
+                <SettingsCard title={t('settings.sections.general')}>
                   <SettingItem
                     title={t('settings.language')}
                     description={t(`settings.${LOCALES.find(l => l.code === i18n.language)?.key}`)
@@ -825,11 +825,11 @@ const SettingsScreen: React.FC = () => {
               (settingsConfig?.categories?.['backup']?.visible !== false) ||
               (settingsConfig?.categories?.['updates']?.visible !== false)
             ) && (
-                <SettingsCard title="DATA">
+                <SettingsCard title={t('settings.sections.data')}>
                   {(settingsConfig?.categories?.['backup']?.visible !== false) && (
                     <SettingItem
                       title={t('settings.backup_restore')}
-                      description="Create and restore app backups"
+                      description={t('settings.backup_restore_desc')}
                       icon="archive"
                       renderControl={() => <ChevronRight />}
                       onPress={() => navigation.navigate('Backup')}

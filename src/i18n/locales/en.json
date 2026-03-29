@@ -176,7 +176,12 @@
         "added_to_collection": "Added to Collection",
         "added_to_collection_desc": "Added to your Trakt collection",
         "removed_from_collection": "Removed from Collection",
-        "removed_from_collection_desc": "Removed from your Trakt collection"
+        "removed_from_collection_desc": "Removed from your Trakt collection",
+        "sync_failed": "Sync Failed",
+        "sync_connect_first": "Please connect to Trakt first",
+        "sync_complete": "Sync Complete",
+        "sync_up_to_date": "Library is up to date",
+        "sync_error": "Unable to sync. Please try again."
     },
     "metadata": {
         "unable_to_load": "Unable to Load Content",
@@ -275,7 +280,9 @@
         "removed_from_collection_hero": "Removed from Collection",
         "removed_from_collection_desc_hero": "Removed from your Trakt collection",
         "mark_as_watched": "Mark as Watched",
-        "mark_as_unwatched": "Mark as Unwatched"
+        "mark_as_unwatched": "Mark as Unwatched",
+        "no_backdrops": "No backdrops found",
+        "error_backdrops": "Failed to load backdrops"
     },
     "cast": {
         "biography": "Biography",
@@ -334,7 +341,10 @@
         "unavailable": "Trailer Unavailable",
         "unavailable_desc": "This trailer could not be loaded at this time. Please try again later.",
         "unable_to_play": "Unable to play trailer. Please try again.",
-        "watch_on_youtube": "Watch on YouTube"
+        "watch_on_youtube": "Watch on YouTube",
+        "error_play": "Failed to play trailer",
+        "error_ios_format": "This trailer format is not supported on iOS.",
+        "error_retry": "Unable to play trailer. Please try again."
     },
     "catalog": {
         "no_content_found": "No content found",
@@ -360,7 +370,9 @@
         "still_fetching": "Still fetching streams…",
         "no_streams_available": "No streams available",
         "starting_best_stream": "Starting best stream...",
-        "loading_more_sources": "Loading more sources..."
+        "loading_more_sources": "Loading more sources...",
+        "torrent_not_supported": "Not supported",
+        "torrent_not_supported_msg": "Torrent streaming is not supported yet."
     },
     "player_ui": {
         "via": "via {{name}}",
@@ -469,13 +481,13 @@
             "profanity": "Profanity",
             "alcohol": "Alcohol/Drugs",
             "frightening": "Frightening"
-    },
+        },
         "severity": {
             "severe": "Severe",
             "moderate": "Moderate",
             "mild": "Mild",
             "none": "None"
-    }
+        }
     },
     "addons": {
         "title": "Addons",
@@ -542,7 +554,12 @@
         "sign_out_error": "Failed to sign out of Trakt.",
         "sync_complete_title": "Sync Complete",
         "sync_success_msg": "Successfully synced your watch progress with Trakt.",
-        "sync_error_msg": "Sync failed. Please try again."
+        "sync_error_msg": "Sync failed. Please try again.",
+        "conflict_title": "Conflict",
+        "conflict_simkl_msg": "You cannot connect to Trakt while Simkl is connected. Please disconnect Simkl first.",
+        "library_sync_updated": "Library Sync Mode Updated",
+        "library_sync_updated_msg": "Trakt library sync is now set to: {{mode}}",
+        "library_sync_error": "Failed to update library sync mode"
     },
     "simkl": {
         "title": "Simkl Settings",
@@ -707,7 +724,9 @@
             "media": "MEDIA",
             "notifications": "NOTIFICATIONS",
             "testing": "TESTING",
-            "danger_zone": "DANGER ZONE"
+            "danger_zone": "DANGER ZONE",
+            "data": "DATA",
+            "general": "GENERAL"
         },
         "items": {
             "legal": "Legal & Disclaimer",
@@ -840,7 +859,18 @@
                 "env_warning": "Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to enable sync."
             },
             "connection": "Connection"
-        }
+        },
+        "clear_mdblist_cache_title": "Clear MDBList Cache",
+        "clear_mdblist_cache_confirm": "Are you sure you want to clear all cached MDBList data? This cannot be undone.",
+        "clear_mdblist_cache_success": "MDBList cache has been cleared.",
+        "clear_mdblist_cache_error": "Could not clear MDBList cache.",
+        "reset_onboarding_success": "Onboarding has been reset. Restart the app to see the onboarding flow.",
+        "reset_onboarding_error": "Failed to reset onboarding.",
+        "reset_campaigns_success": "Campaign history reset. Restart app to see posters again.",
+        "clear_data_success": "All data cleared. Please restart the app.",
+        "clear_data_error": "Failed to clear data.",
+        "plugin_tester": "Plugin Tester",
+        "plugin_tester_desc": "Run a plugin and inspect logs/streams"
     },
     "privacy": {
         "title": "Privacy & Data",
@@ -915,7 +945,8 @@
         "confirm_remove_title": "Remove API Key",
         "confirm_remove_msg": "Are you sure you want to remove your OpenRouter API key? This will disable AI chat features.",
         "success_removed": "API key removed successfully",
-        "error_remove": "Failed to remove API key"
+        "error_remove": "Failed to remove API key",
+        "error_load_context": "Failed to load content details for AI chat"
     },
     "catalog_settings": {
         "title": "Catalogs",
@@ -1378,7 +1409,20 @@
         "got_it": "Got it!",
         "repo_format_hint": "Format: https://raw.githubusercontent.com/username/repo/refs/heads/branch",
         "cancel": "Cancel",
-        "add": "Add"
+        "add": "Add",
+        "error_update_extensions": "Failed to update extensions",
+        "error_valid_url": "Please enter a valid repository URL",
+        "error_valid_url_format": "Please use a valid GitHub raw URL format:\n\nhttps://raw.githubusercontent.com/user/repo/refs/heads/branch",
+        "error_update_repo": "Failed to update repository",
+        "error_remove_repo": "Failed to remove repository",
+        "error_save_repo": "Failed to save repository URL",
+        "error_set_repo_first": "Please set a repository URL first",
+        "error_repo": "Repository Error",
+        "error_update_status": "Failed to update extension status",
+        "error_clear_extensions": "Failed to clear extensions",
+        "error_clear_cache": "Failed to clear repository cache",
+        "showbox_saved": "Saved",
+        "showbox_saved_msg": "ShowBox settings updated"
     },
     "theme": {
         "title": "App Themes",
@@ -1504,5 +1548,84 @@
             "provider_logs": "Provider Logs",
             "no_logs_captured": "No logs captured."
         }
+    },
+    "mal": {
+        "title": "MyAnimeList",
+        "connect_title": "Connect MyAnimeList",
+        "connect_desc": "Sync your watch history and manage your anime list.",
+        "sign_in": "Sign In with MAL",
+        "sign_out": "Sign Out",
+        "sign_out_confirm": "Are you sure you want to disconnect?",
+        "sync_button": "Sync",
+        "connected": "Connected to MyAnimeList",
+        "error_connect": "Failed to connect to MyAnimeList",
+        "error_sign_in": "An error occurred during sign in: {{message}}",
+        "sync_complete": "Sync Complete",
+        "sync_complete_msg": "MAL data has been refreshed.",
+        "sync_failed": "Sync Failed",
+        "sync_failed_msg": "Could not refresh MAL data.",
+        "sync_settings": "Sync Settings",
+        "enable_sync": "Enable MAL Sync",
+        "enable_sync_desc": "Global switch to enable or disable all MyAnimeList features.",
+        "auto_episode": "Auto Episode Update",
+        "auto_episode_desc": "Automatically update your progress on MAL when you finish watching an episode (>=90% completion).",
+        "auto_add": "Auto Add Anime",
+        "auto_add_desc": "If an anime is not in your MAL list, it will be added automatically when you start watching.",
+        "auto_sync_library": "Auto-Sync to Library",
+        "auto_sync_library_desc": "Automatically add items from your MAL 'Watching' list to your Nuvio Library.",
+        "include_nsfw": "Include NSFW Content",
+        "include_nsfw_desc": "Allow NSFW entries to be returned when fetching your MAL list.",
+        "stat_total": "Total",
+        "stat_days": "Days",
+        "stat_mean": "Mean",
+        "watching": "Watching",
+        "completed": "Completed",
+        "on_hold": "On Hold",
+        "dropped": "Dropped",
+        "plan_to_watch": "Plan to Watch",
+        "edit_title": "Edit {{title}}",
+        "updated": "Updated",
+        "updated_msg": "{{title}} status updated on MAL",
+        "update_failed": "Update Failed",
+        "update_failed_msg": "Could not update MAL status",
+        "remove_title": "Remove from List",
+        "remove_confirm": "Are you sure you want to remove {{title}} from your MyAnimeList?",
+        "removed": "Removed",
+        "removed_msg": "{{title}} removed from MAL",
+        "remove_failed": "Remove Failed",
+        "remove_failed_msg": "Could not remove from MAL",
+        "description": "Sync with MyAnimeList",
+        "discord_open_prompt": "Discord: @{{username}}\n\nDo you want to open Discord and search for this user?"
+    },
+    "profiles": {
+        "error_load": "Failed to load profiles",
+        "error_save": "Failed to save profiles",
+        "error_empty_name": "Please enter a profile name",
+        "error_delete_active": "Cannot delete the active profile. Switch to another profile first.",
+        "error_delete_only": "Cannot delete the only profile",
+        "delete_title": "Delete Profile",
+        "delete_confirm": "Are you sure you want to delete this profile? This action cannot be undone."
+    },
+    "auth": {
+        "invalid_email": "Invalid Email",
+        "invalid_email_msg": "Enter a valid email address",
+        "password_short": "Password Too Short",
+        "password_short_msg": "Password must be at least 6 characters",
+        "passwords_mismatch": "Passwords Don't Match",
+        "passwords_mismatch_msg": "Passwords do not match",
+        "auth_failed": "Authentication Failed",
+        "login_success": "Logged in successfully",
+        "signup_success": "Sign up successful"
+    },
+    "stream_card": {
+        "url_copied": "URL Copied",
+        "url_copied_msg": "Stream URL copied to clipboard!",
+        "copied": "Copied!",
+        "copied_msg": "Stream URL has been copied to clipboard.",
+        "already_downloading": "Already Downloading",
+        "already_downloading_msg": "This download has already started for this exact link.",
+        "download_started": "Download Started",
+        "download_started_msg": "Your download has been added to the queue.",
+        "download_failed": "Download Failed"
     }
 }

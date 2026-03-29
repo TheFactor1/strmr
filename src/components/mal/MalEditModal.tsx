@@ -17,6 +17,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { MalApiService } from '../../services/mal/MalApi';
 import { MalListStatus, MalAnimeNode } from '../../types/mal';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../../contexts/ToastContext';
 
 interface MalEditModalProps {
@@ -33,6 +34,7 @@ export const MalEditModal: React.FC<MalEditModalProps> = ({
   onUpdateSuccess,
 }) => {
   const { currentTheme } = useTheme();
+  const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
   
   const [status, setStatus] = useState<MalListStatus>(anime.list_status.status);
@@ -62,11 +64,11 @@ export const MalEditModal: React.FC<MalEditModalProps> = ({
       
       await MalApiService.updateStatus(anime.node.id, status, epNum, scoreNum, isRewatching);
       
-      showSuccess('Updated', `${anime.node.title} status updated on MAL`);
+      showSuccess(t('mal.updated'), t('mal.updated_msg', { title: anime.node.title }));
       onUpdateSuccess();
       onClose();
     } catch (error) {
-      showError('Update Failed', 'Could not update MAL status');
+      showError(t('mal.update_failed'), t('mal.update_failed_msg'));
     } finally {
       setIsUpdating(false);
     }
@@ -74,22 +76,22 @@ export const MalEditModal: React.FC<MalEditModalProps> = ({
 
   const handleRemove = async () => {
     Alert.alert(
-      'Remove from List',
-      `Are you sure you want to remove ${anime.node.title} from your MyAnimeList?`,
+      t('mal.remove_title'),
+      t('mal.remove_confirm', { title: anime.node.title }),
       [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Remove', 
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             setIsRemoving(true);
             try {
               await MalApiService.removeFromList(anime.node.id);
-              showSuccess('Removed', `${anime.node.title} removed from MAL`);
+              showSuccess(t('mal.removed'), t('mal.removed_msg', { title: anime.node.title }));
               onUpdateSuccess();
               onClose();
             } catch (error) {
-              showError('Remove Failed', 'Could not remove from MAL');
+              showError(t('mal.remove_failed'), t('mal.remove_failed_msg'));
             } finally {
               setIsRemoving(false);
             }
@@ -100,11 +102,11 @@ export const MalEditModal: React.FC<MalEditModalProps> = ({
   };
 
   const statusOptions: { label: string; value: MalListStatus }[] = [
-    { label: 'Watching', value: 'watching' },
-    { label: 'Completed', value: 'completed' },
-    { label: 'On Hold', value: 'on_hold' },
-    { label: 'Dropped', value: 'dropped' },
-    { label: 'Plan to Watch', value: 'plan_to_watch' },
+    { label: t('mal.watching'), value: 'watching' },
+    { label: t('mal.completed'), value: 'completed' },
+    { label: t('mal.on_hold'), value: 'on_hold' },
+    { label: t('mal.dropped'), value: 'dropped' },
+    { label: t('mal.plan_to_watch'), value: 'plan_to_watch' },
   ];
 
   return (
@@ -122,7 +124,7 @@ export const MalEditModal: React.FC<MalEditModalProps> = ({
           <View style={[styles.modalContent, { backgroundColor: currentTheme.colors.darkGray || '#1A1A1A' }]}>
             <View style={styles.header}>
               <Text style={[styles.title, { color: currentTheme.colors.highEmphasis }]} numberOfLines={1}>
-                Edit {anime.node.title}
+                {t('mal.edit_title', { title: anime.node.title })}
               </Text>
               <TouchableOpacity onPress={onClose}>
                 <MaterialIcons name="close" size={24} color={currentTheme.colors.mediumEmphasis} />

@@ -464,7 +464,7 @@ const LibraryScreen = () => {
   // Sync Trakt watchlist to local library
   const syncTraktWatchlistToLibrary = useCallback(async () => {
     if (!traktAuthenticated) {
-      showError('Sync Failed', 'Please connect to Trakt first');
+      showError(t('library.sync_failed'), t('library.sync_connect_first'));
       return;
     }
 
@@ -667,11 +667,11 @@ const LibraryScreen = () => {
         showInfo('Sync Complete', message);
         logger.log(`[LibraryScreen] Sync complete: ${message}`);
       } else {
-        showInfo('Sync Complete', 'Library is up to date');
+        showInfo(t('library.sync_complete'), t('library.sync_up_to_date'));
       }
     } catch (error) {
       logger.error('[LibraryScreen] Sync failed:', error);
-      showError('Sync Failed', 'Unable to sync. Please try again.');
+      showError(t('library.sync_failed'), t('library.sync_error'));
     } finally {
       setIsSyncing(false);
     }

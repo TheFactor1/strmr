@@ -9,6 +9,7 @@ import { useMetadataAssets } from '../../hooks/useMetadataAssets';
 import { useSettings } from '../../hooks/useSettings';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTrailer } from '../../contexts/TrailerContext';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../../contexts/ToastContext';
 import { useDominantColor } from '../../hooks/useDominantColor';
 import { Stream } from '../../types/metadata';
@@ -49,6 +50,7 @@ export const useStreamsScreen = () => {
   const { currentTheme } = useTheme();
   const { colors } = currentTheme;
   const { pauseTrailer, resumeTrailer } = useTrailer();
+  const { t } = useTranslation();
   const { showSuccess, showInfo } = useToast();
 
   // Dimension tracking
@@ -465,7 +467,7 @@ export const useStreamsScreen = () => {
 
         // Block magnet links
         if (typeof stream.url === 'string' && stream.url.startsWith('magnet:')) {
-          openAlert('Not supported', 'Torrent streaming is not supported yet.');
+          openAlert(t('streams.torrent_not_supported'), t('streams.torrent_not_supported_msg'));
           return;
         }
 
