@@ -154,6 +154,57 @@ class CollectionsService {
     }
   }
 
+  validateCollectionsJson(json: string): { valid: boolean; error?: string; collectionCount: number; folderCount: number } {
+    try {
+      const parsed = JSON.parse(json);
+      if (!Array.isArray(parsed)) {
+        return { valid: false, error: 'Invalid format: expected an array of collections', collectionCount: 0, folderCount: 0 };
+      }
+      if (parsed.length === 0) {
+        return { valid: false, error: 'Empty array: no collections found', collectionCount: 0, folderCount: 0 };
+      }
+      let folderCount = 0;
+      const validTileShapes = ['poster', 'wide', 'square', 'POSTER', 'LANDSCAPE', 'SQUARE'];
+      for (let i = 0; i < parsed.length; i++) {
+        const item = parsed[i];
+        if (!item || typeof item.id !== 'string' || !item.id.trim()) {
+          return { valid: false, error: `Collection ${i + 1}: missing or invalid "id"`, collectionCount: 0, folderCount: 0 };
+        }
+        if (typeof item.title !== 'string') {
+          return { valid: false, error: `Collection "${item.id}": missing or invalid "title"`, collectionCount: 0, folderCount: 0 };
+        }
+        if (!Array.isArray(item.folders)) {
+          return { valid: false, error: `Collection "${item.title || item.id}": "folders" must be an array`, collectionCount: 0, folderCount: 0 };
+        }
+        for (let j = 0; j < item.folders.length; j++) {
+          const folder = item.folders[j];
+          if (!folder || typeof folder.id !== 'string' || !folder.id.trim()) {
+            return { valid: false, error: `Collection "${item.title}", folder ${j + 1}: missing or invalid "id"`, collectionCount: 0, folderCount: 0 };
+          }
+          if (typeof folder.title !== 'string') {
+            return { valid: false, error: `Collection "${item.title}", folder "${folder.id}": missing or invalid "title"`, collectionCount: 0, folderCount: 0 };
+          }
+          if (!Array.isArray(folder.catalogSources)) {
+            return { valid: false, error: `Collection "${item.title}", folder "${folder.title || folder.id}": "catalogSources" must be an array`, collectionCount: 0, folderCount: 0 };
+          }
+          if (folder.tileShape && !validTileShapes.includes(folder.tileShape)) {
+            return { valid: false, error: `Collection "${item.title}", folder "${folder.title}": invalid tileShape "${folder.tileShape}"`, collectionCount: 0, folderCount: 0 };
+          }
+          for (let k = 0; k < folder.catalogSources.length; k++) {
+            const source = folder.catalogSources[k];
+            if (!source || typeof source.addonId !== 'string' || typeof source.type !== 'string' || typeof source.catalogId !== 'string') {
+              return { valid: false, error: `Collection "${item.title}", folder "${folder.title}", source ${k + 1}: missing required fields (addonId, type, catalogId)`, collectionCount: 0, folderCount: 0 };
+            }
+          }
+          folderCount++;
+        }
+      }
+      return { valid: true, collectionCount: parsed.length, folderCount };
+    } catch (e: any) {
+      return { valid: false, error: `JSON parse error: ${e.message}`, collectionCount: 0, folderCount: 0 };
+    }
+  }
+
   generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   }

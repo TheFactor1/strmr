@@ -9,8 +9,14 @@ import {
   Switch,
   Platform,
   Alert,
+  Modal,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import * as DocumentPicker from 'expo-document-picker';
+import { cacheDirectory, writeAsStringAsync, readAsStringAsync, EncodingType } from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import { useNavigation, useFocusEffect, NavigationProp } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
@@ -38,6 +44,14 @@ const CollectionManagementScreen = () => {
   const [alertMessage, setAlertMessage] = useState('');
   const [alertActions, setAlertActions] = useState<any[]>([]);
   const [enabledMap, setEnabledMap] = useState<Record<string, boolean>>({});
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importTab, setImportTab] = useState<'paste' | 'file' | 'url'>('paste');
+  const [importText, setImportText] = useState('');
+  const [importUrl, setImportUrl] = useState('');
+  const [importLoading, setImportLoading] = useState(false);
+  const [importPreview, setImportPreview] = useState<{ collectionCount: number; folderCount: number } | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [pendingJson, setPendingJson] = useState<string | null>(null);
 
   const loadEnabledState = useCallback(async () => {
     const settings = await collectionsService.getCollectionSettings();
@@ -92,26 +106,125 @@ const CollectionManagementScreen = () => {
   const handleExport = useCallback(async () => {
     try {
       const json = await collectionsService.exportToJson();
-      await Clipboard.setStringAsync(json);
-      showInfo('Copied to clipboard');
+      const fileUri = cacheDirectory + 'nuvio-collections.json';
+      await writeAsStringAsync(fileUri, json, { encoding: EncodingType.UTF8 });
+      await Sharing.shareAsync(fileUri, {
+        mimeType: 'application/json',
+        dialogTitle: 'Export Collections',
+        UTI: 'public.json',
+      });
     } catch {
       showError('Export failed');
     }
-  }, [showInfo, showError]);
+  }, [showError]);
 
-  const handleImport = useCallback(async () => {
+  const resetImportState = useCallback(() => {
+    setImportText('');
+    setImportUrl('');
+    setImportError(null);
+    setImportPreview(null);
+    setPendingJson(null);
+    setImportLoading(false);
+    setImportTab('paste');
+  }, []);
+
+  const handleOpenImport = useCallback(() => {
+    resetImportState();
+    setShowImportModal(true);
+  }, [resetImportState]);
+
+  const handleCloseImport = useCallback(() => {
+    setShowImportModal(false);
+    resetImportState();
+  }, [resetImportState]);
+
+  const validateAndPreview = useCallback((json: string) => {
+    const result = collectionsService.validateCollectionsJson(json);
+    if (result.valid) {
+      setImportError(null);
+      setImportPreview({ collectionCount: result.collectionCount, folderCount: result.folderCount });
+      setPendingJson(json);
+    } else {
+      setImportError(result.error || 'Invalid data');
+      setImportPreview(null);
+      setPendingJson(null);
+    }
+  }, []);
+
+  const handlePasteValidate = useCallback(async () => {
+    const text = await Clipboard.getStringAsync();
+    if (!text?.trim()) {
+      setImportError('Clipboard is empty');
+      return;
+    }
+    setImportText(text);
+    validateAndPreview(text);
+  }, [validateAndPreview]);
+
+  const handleTextValidate = useCallback(() => {
+    if (!importText.trim()) {
+      setImportError('Please paste or type JSON');
+      return;
+    }
+    validateAndPreview(importText);
+  }, [importText, validateAndPreview]);
+
+  const handleFilePick = useCallback(async () => {
     try {
-      const text = await Clipboard.getStringAsync();
-      if (!text?.trim()) {
-        showError('Clipboard is empty');
+      setImportLoading(true);
+      setImportError(null);
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'application/json',
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled) {
+        setImportLoading(false);
         return;
       }
-      const result = await collectionsService.importFromJson(text);
-      showInfo(`Imported: ${result.added} added, ${result.updated} updated`);
+      const fileUri = result.assets[0].uri;
+      const content = await readAsStringAsync(fileUri, { encoding: EncodingType.UTF8 });
+      setImportText(content);
+      validateAndPreview(content);
     } catch {
-      showError('Invalid collection data');
+      setImportError('Failed to read file');
+    } finally {
+      setImportLoading(false);
     }
-  }, [showInfo, showError]);
+  }, [validateAndPreview]);
+
+  const handleUrlFetch = useCallback(async () => {
+    if (!importUrl.trim()) {
+      setImportError('Please enter a URL');
+      return;
+    }
+    try {
+      setImportLoading(true);
+      setImportError(null);
+      const response = await fetch(importUrl.trim());
+      if (!response.ok) {
+        setImportError(`Failed to fetch: HTTP ${response.status}`);
+        return;
+      }
+      const text = await response.text();
+      setImportText(text);
+      validateAndPreview(text);
+    } catch {
+      setImportError('Failed to fetch URL');
+    } finally {
+      setImportLoading(false);
+    }
+  }, [importUrl, validateAndPreview]);
+
+  const handleConfirmImport = useCallback(async () => {
+    if (!pendingJson) return;
+    try {
+      const result = await collectionsService.importFromJson(pendingJson);
+      showInfo(`Imported: ${result.added} added, ${result.updated} updated`);
+      handleCloseImport();
+    } catch {
+      showError('Import failed');
+    }
+  }, [pendingJson, showInfo, showError, handleCloseImport]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.darkBackground }]}>
@@ -144,7 +257,7 @@ const CollectionManagementScreen = () => {
             <TouchableOpacity
               style={[styles.actionButton, { backgroundColor: colors.elevation3 }]}
               activeOpacity={0.7}
-              onPress={handleImport}
+              onPress={handleOpenImport}
             >
               <MaterialIcons name="file-download" size={18} color={colors.text} />
               <Text style={[styles.actionButtonText, { color: colors.text }]}>Import</Text>
@@ -226,14 +339,163 @@ const CollectionManagementScreen = () => {
             <TouchableOpacity
               style={[styles.actionButton, { backgroundColor: colors.elevation3 }]}
               activeOpacity={0.7}
-              onPress={handleImport}
+              onPress={handleOpenImport}
             >
               <MaterialIcons name="file-download" size={18} color={colors.text} />
-              <Text style={[styles.actionButtonText, { color: colors.text }]}>Import from Clipboard</Text>
+              <Text style={[styles.actionButtonText, { color: colors.text }]}>Import</Text>
             </TouchableOpacity>
           </View>
         )}
       </ScrollView>
+
+      {/* Import Modal */}
+      <Modal visible={showImportModal} animationType="slide" transparent>
+        <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
+          <View style={[styles.importModal, { backgroundColor: colors.darkBackground }]}>
+            {/* Header */}
+            <View style={styles.importModalHeader}>
+              <Text style={[styles.importModalTitle, { color: colors.text }]}>Import Collections</Text>
+              <TouchableOpacity onPress={handleCloseImport}>
+                <MaterialIcons name="close" size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Tab Selector */}
+            <View style={styles.importTabRow}>
+              {([
+                { key: 'paste' as const, label: 'Paste JSON', icon: 'content-paste' as const },
+                { key: 'file' as const, label: 'Pick File', icon: 'folder-open' as const },
+                { key: 'url' as const, label: 'From URL', icon: 'link' as const },
+              ]).map(tab => (
+                <TouchableOpacity
+                  key={tab.key}
+                  style={[
+                    styles.importTab,
+                    {
+                      backgroundColor: importTab === tab.key ? colors.primary : colors.elevation1,
+                      borderColor: importTab === tab.key ? colors.primary : colors.border,
+                    },
+                  ]}
+                  onPress={() => { setImportTab(tab.key); setImportError(null); setImportPreview(null); setPendingJson(null); }}
+                >
+                  <MaterialIcons name={tab.icon} size={16} color={importTab === tab.key ? '#fff' : colors.textMuted} />
+                  <Text style={[styles.importTabText, { color: importTab === tab.key ? '#fff' : colors.text }]}>{tab.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <ScrollView style={styles.importModalBody} contentContainerStyle={{ paddingBottom: 20 }}>
+              {/* Paste Tab */}
+              {importTab === 'paste' && (
+                <View>
+                  <TouchableOpacity
+                    style={[styles.importActionBtn, { backgroundColor: colors.elevation1, borderColor: colors.border }]}
+                    onPress={handlePasteValidate}
+                  >
+                    <MaterialIcons name="content-paste" size={18} color={colors.primary} />
+                    <Text style={[styles.importActionBtnText, { color: colors.text }]}>Paste from Clipboard</Text>
+                  </TouchableOpacity>
+                  <Text style={[styles.importOrText, { color: colors.textMuted }]}>or type/paste below:</Text>
+                  <TextInput
+                    style={[styles.importTextInput, { backgroundColor: colors.elevation1, color: colors.text, borderColor: importError ? colors.error : colors.border }]}
+                    value={importText}
+                    onChangeText={(text) => { setImportText(text); setImportError(null); setImportPreview(null); setPendingJson(null); }}
+                    placeholder="Paste collections JSON here..."
+                    placeholderTextColor={colors.disabled}
+                    multiline
+                    textAlignVertical="top"
+                  />
+                  {!importPreview && !importError && importText.trim().length > 0 && (
+                    <TouchableOpacity
+                      style={[styles.validateBtn, { backgroundColor: colors.elevation1, borderColor: colors.border }]}
+                      onPress={handleTextValidate}
+                    >
+                      <Text style={[styles.validateBtnText, { color: colors.primary }]}>Validate</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+
+              {/* File Tab */}
+              {importTab === 'file' && (
+                <TouchableOpacity
+                  style={[styles.importActionBtn, { backgroundColor: colors.elevation1, borderColor: colors.border }]}
+                  onPress={handleFilePick}
+                  disabled={importLoading}
+                >
+                  {importLoading ? (
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  ) : (
+                    <MaterialIcons name="folder-open" size={18} color={colors.primary} />
+                  )}
+                  <Text style={[styles.importActionBtnText, { color: colors.text }]}>
+                    {importLoading ? 'Reading file...' : 'Choose .json File'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {/* URL Tab */}
+              {importTab === 'url' && (
+                <View>
+                  <TextInput
+                    style={[styles.importUrlInput, { backgroundColor: colors.elevation1, color: colors.text, borderColor: importError ? colors.error : colors.border }]}
+                    value={importUrl}
+                    onChangeText={(text) => { setImportUrl(text); setImportError(null); setImportPreview(null); setPendingJson(null); }}
+                    placeholder="https://example.com/collections.json"
+                    placeholderTextColor={colors.disabled}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    keyboardType="url"
+                  />
+                  <TouchableOpacity
+                    style={[styles.importActionBtn, { backgroundColor: colors.elevation1, borderColor: colors.border, marginTop: 10 }]}
+                    onPress={handleUrlFetch}
+                    disabled={importLoading}
+                  >
+                    {importLoading ? (
+                      <ActivityIndicator size="small" color={colors.primary} />
+                    ) : (
+                      <MaterialIcons name="download" size={18} color={colors.primary} />
+                    )}
+                    <Text style={[styles.importActionBtnText, { color: colors.text }]}>
+                      {importLoading ? 'Fetching...' : 'Fetch & Validate'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Error */}
+              {importError && (
+                <View style={[styles.importResultBox, { backgroundColor: colors.error + '15', borderColor: colors.error }]}>
+                  <MaterialIcons name="error-outline" size={18} color={colors.error} />
+                  <Text style={[styles.importResultText, { color: colors.error }]}>{importError}</Text>
+                </View>
+              )}
+
+              {/* Preview */}
+              {importPreview && (
+                <View style={[styles.importResultBox, { backgroundColor: colors.primary + '15', borderColor: colors.primary }]}>
+                  <MaterialIcons name="check-circle" size={18} color={colors.primary} />
+                  <Text style={[styles.importResultText, { color: colors.text }]}>
+                    Valid: {importPreview.collectionCount} collection{importPreview.collectionCount !== 1 ? 's' : ''}, {importPreview.folderCount} folder{importPreview.folderCount !== 1 ? 's' : ''}
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
+
+            {/* Import Button */}
+            {importPreview && pendingJson && (
+              <TouchableOpacity
+                style={[styles.confirmImportBtn, { backgroundColor: colors.primary }]}
+                onPress={handleConfirmImport}
+              >
+                <MaterialIcons name="file-download" size={20} color="#fff" />
+                <Text style={styles.confirmImportBtnText}>Import {importPreview.collectionCount} Collection{importPreview.collectionCount !== 1 ? 's' : ''}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </Modal>
 
       <CustomAlert
         visible={alertVisible}
@@ -340,6 +602,120 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.4,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  importModal: {
+    width: '92%',
+    maxHeight: '85%',
+    borderRadius: 16,
+    padding: 20,
+  },
+  importModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  importModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  importTabRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  importTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  importTabText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  importModalBody: {
+    flexGrow: 0,
+  },
+  importActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  importActionBtnText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  importOrText: {
+    textAlign: 'center',
+    fontSize: 12,
+    marginVertical: 10,
+  },
+  importTextInput: {
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 13,
+    minHeight: 150,
+    maxHeight: 250,
+  },
+  importUrlInput: {
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 14,
+  },
+  validateBtn: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 10,
+  },
+  validateBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  importResultBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 12,
+  },
+  importResultText: {
+    fontSize: 13,
+    flex: 1,
+  },
+  confirmImportBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 14,
+    borderRadius: 12,
+    marginTop: 12,
+  },
+  confirmImportBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

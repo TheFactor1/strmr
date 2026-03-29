@@ -255,6 +255,20 @@ const CollectionEditorScreen = () => {
     setShowEmojiPicker(false);
   }, [editingFolder]);
 
+  const handleMoveCatalogSourceUp = useCallback((index: number) => {
+    if (!editingFolder || index <= 0) return;
+    const sources = [...editingFolder.catalogSources];
+    [sources[index - 1], sources[index]] = [sources[index], sources[index - 1]];
+    setEditingFolder({ ...editingFolder, catalogSources: sources });
+  }, [editingFolder]);
+
+  const handleMoveCatalogSourceDown = useCallback((index: number) => {
+    if (!editingFolder || index >= editingFolder.catalogSources.length - 1) return;
+    const sources = [...editingFolder.catalogSources];
+    [sources[index], sources[index + 1]] = [sources[index + 1], sources[index]];
+    setEditingFolder({ ...editingFolder, catalogSources: sources });
+  }, [editingFolder]);
+
   const handleToggleCatalogSource = useCallback((source: CollectionCatalogSource) => {
     if (!editingFolder) return;
     const existing = editingFolder.catalogSources.find(
@@ -429,12 +443,20 @@ const CollectionEditorScreen = () => {
                     {isMissing ? `Addon not installed: ${source.addonId}` : `${source.addonId} · ${source.type}`}
                   </Text>
                 </View>
-                <TouchableOpacity
-                  onPress={() => handleToggleCatalogSource(source)}
-                  style={styles.removeCatalogButton}
-                >
-                  <MaterialIcons name="close" size={20} color={colors.error} />
-                </TouchableOpacity>
+                <View style={styles.catalogSourceActions}>
+                  <TouchableOpacity onPress={() => handleMoveCatalogSourceUp(idx)} disabled={idx === 0} style={styles.iconBtn}>
+                    <MaterialIcons name="arrow-upward" size={18} color={idx === 0 ? colors.disabled : colors.text} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleMoveCatalogSourceDown(idx)} disabled={idx === editingFolder.catalogSources.length - 1} style={styles.iconBtn}>
+                    <MaterialIcons name="arrow-downward" size={18} color={idx === editingFolder.catalogSources.length - 1 ? colors.disabled : colors.text} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleToggleCatalogSource(source)}
+                    style={styles.removeCatalogButton}
+                  >
+                    <MaterialIcons name="close" size={20} color={colors.error} />
+                  </TouchableOpacity>
+                </View>
               </View>
             );
           })}
@@ -756,6 +778,11 @@ const styles = StyleSheet.create({
   catalogSourceMeta: {
     fontSize: 12,
     marginTop: 2,
+  },
+  catalogSourceActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
   },
   removeCatalogButton: {
     padding: 6,
