@@ -161,7 +161,7 @@ const TrailerModal: React.FC<TrailerModalProps> = memo(({
   }, [onClose, resumeTrailer]);
 
   const handleTrailerError = useCallback(() => {
-    setError('Failed to play trailer');
+    setError(t('trailers.error_play'));
     setIsPlaying(false);
   }, []);
 
@@ -171,7 +171,7 @@ const TrailerModal: React.FC<TrailerModalProps> = memo(({
 
     if (isUnsupportedIosMediaFormat(error)) {
       logger.error('TrailerModal', 'Unsupported iOS trailer format:', error);
-      setError('This trailer format is not supported on iOS.');
+      setError(t('trailers.error_ios_format'));
       setLoading(false);
       setIsPlaying(false);
       return;
@@ -187,7 +187,7 @@ const TrailerModal: React.FC<TrailerModalProps> = memo(({
     }
 
     logger.error('TrailerModal', 'Video error after retries:', error);
-    setError('Unable to play trailer. Please try again.');
+    setError(t('trailers.error_retry'));
     setLoading(false);
   }, [retryCount, loadTrailer, trailer?.key]);
 

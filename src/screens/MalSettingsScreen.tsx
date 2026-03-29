@@ -98,24 +98,24 @@ const MalSettingsScreen: React.FC = () => {
         const result = await MalAuth.login();
         if (result === true) {
             await checkAuthStatus();
-            openAlert('Success', 'Connected to MyAnimeList');
+            openAlert(t('common.success'), t('mal.connected'));
         } else {
-            const errorMessage = typeof result === 'string' ? result : 'Failed to connect to MyAnimeList';
-            openAlert('Error', errorMessage);
+            const errorMessage = typeof result === 'string' ? result : t('mal.error_connect');
+            openAlert(t('common.error'), errorMessage);
         }
     } catch (e: any) {
         console.error(e);
-        openAlert('Error', `An error occurred during sign in: ${e.message || 'Unknown error'}`);
+        openAlert(t('common.error'), t('mal.error_sign_in', { message: e.message || t('common.unknown') }));
     } finally {
         setIsLoading(false);
     }
   };
 
   const handleSignOut = () => {
-      openAlert('Sign Out', 'Are you sure you want to disconnect?', [
-          { label: 'Cancel', onPress: () => setAlertVisible(false) },
-          { 
-              label: 'Sign Out', 
+      openAlert(t('mal.sign_out'), t('mal.sign_out_confirm'), [
+          { label: t('common.cancel'), onPress: () => setAlertVisible(false) },
+          {
+              label: t('mal.sign_out'), 
               onPress: () => {
                   MalAuth.clearToken();
                   setIsAuthenticated(false);
@@ -168,13 +168,13 @@ const MalSettingsScreen: React.FC = () => {
             color={currentTheme.colors.highEmphasis}
           />
           <Text style={[styles.backText, { color: currentTheme.colors.highEmphasis }]}>
-            Settings
+            {t('common.settings')}
           </Text>
         </TouchableOpacity>
       </View>
 
       <Text style={[styles.headerTitle, { color: currentTheme.colors.highEmphasis }]}>
-        MyAnimeList
+        {t('mal.title')}
       </Text>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
@@ -232,47 +232,47 @@ const MalSettingsScreen: React.FC = () => {
                                     <Text style={[styles.statValue, { color: currentTheme.colors.primary }]}>
                                         {userProfile.anime_statistics.num_items}
                                     </Text>
-                                    <Text style={[styles.statLabel, { color: currentTheme.colors.mediumEmphasis }]}>Total</Text>
+                                    <Text style={[styles.statLabel, { color: currentTheme.colors.mediumEmphasis }]}>{t('mal.stat_total')}</Text>
                                 </View>
                                 <View style={styles.statBox}>
                                     <Text style={[styles.statValue, { color: currentTheme.colors.primary }]}>
                                         {userProfile.anime_statistics.num_days_watched.toFixed(1)}
                                     </Text>
-                                    <Text style={[styles.statLabel, { color: currentTheme.colors.mediumEmphasis }]}>Days</Text>
+                                    <Text style={[styles.statLabel, { color: currentTheme.colors.mediumEmphasis }]}>{t('mal.stat_days')}</Text>
                                 </View>
                                 <View style={styles.statBox}>
                                     <Text style={[styles.statValue, { color: currentTheme.colors.primary }]}>
                                         {userProfile.anime_statistics.mean_score.toFixed(1)}
                                     </Text>
-                                    <Text style={[styles.statLabel, { color: currentTheme.colors.mediumEmphasis }]}>Mean</Text>
+                                    <Text style={[styles.statLabel, { color: currentTheme.colors.mediumEmphasis }]}>{t('mal.stat_mean')}</Text>
                                 </View>
                             </View>
                             
                             <View style={[styles.statGrid, { borderColor: currentTheme.colors.border }]}>
                                 <View style={styles.statGridItem}>
                                     <View style={[styles.statusDot, { backgroundColor: '#2DB039' }]} />
-                                    <Text style={[styles.statGridLabel, { color: currentTheme.colors.highEmphasis }]}>Watching</Text>
+                                    <Text style={[styles.statGridLabel, { color: currentTheme.colors.highEmphasis }]}>{t('mal.watching')}</Text>
                                     <Text style={[styles.statGridValue, { color: currentTheme.colors.highEmphasis }]}>
                                         {userProfile.anime_statistics.num_items_watching}
                                     </Text>
                                 </View>
                                 <View style={styles.statGridItem}>
                                     <View style={[styles.statusDot, { backgroundColor: '#26448F' }]} />
-                                    <Text style={[styles.statGridLabel, { color: currentTheme.colors.highEmphasis }]}>Completed</Text>
+                                    <Text style={[styles.statGridLabel, { color: currentTheme.colors.highEmphasis }]}>{t('mal.completed')}</Text>
                                     <Text style={[styles.statGridValue, { color: currentTheme.colors.highEmphasis }]}>
                                         {userProfile.anime_statistics.num_items_completed}
                                     </Text>
                                 </View>
                                 <View style={styles.statGridItem}>
                                     <View style={[styles.statusDot, { backgroundColor: '#F9D457' }]} />
-                                    <Text style={[styles.statGridLabel, { color: currentTheme.colors.highEmphasis }]}>On Hold</Text>
+                                    <Text style={[styles.statGridLabel, { color: currentTheme.colors.highEmphasis }]}>{t('mal.on_hold')}</Text>
                                     <Text style={[styles.statGridValue, { color: currentTheme.colors.highEmphasis }]}>
                                         {userProfile.anime_statistics.num_items_on_hold}
                                     </Text>
                                 </View>
                                 <View style={styles.statGridItem}>
                                     <View style={[styles.statusDot, { backgroundColor: '#A12F31' }]} />
-                                    <Text style={[styles.statGridLabel, { color: currentTheme.colors.highEmphasis }]}>Dropped</Text>
+                                    <Text style={[styles.statGridLabel, { color: currentTheme.colors.highEmphasis }]}>{t('mal.dropped')}</Text>
                                     <Text style={[styles.statGridValue, { color: currentTheme.colors.highEmphasis }]}>
                                         {userProfile.anime_statistics.num_items_dropped}
                                     </Text>
@@ -289,26 +289,26 @@ const MalSettingsScreen: React.FC = () => {
                                 try {
                                     const synced = await MalSync.syncMalToLibrary();
                                     if (synced) {
-                                        openAlert('Sync Complete', 'MAL data has been refreshed.');
+                                        openAlert(t('mal.sync_complete'), t('mal.sync_complete_msg'));
                                     } else {
-                                        openAlert('Sync Failed', 'Could not refresh MAL data.');
+                                        openAlert(t('mal.sync_failed'), t('mal.sync_failed_msg'));
                                     }
                                 } catch {
-                                    openAlert('Sync Failed', 'Could not refresh MAL data.');
+                                    openAlert(t('mal.sync_failed'), t('mal.sync_failed_msg'));
                                 } finally {
                                     setIsLoading(false);
                                 }
                             }}
                         >
                             <MaterialIcons name="sync" size={18} color="white" style={{ marginRight: 6 }} />
-                            <Text style={styles.buttonText}>Sync</Text>
+                            <Text style={styles.buttonText}>{t('mal.sync_button')}</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
                             style={[styles.smallButton, { backgroundColor: currentTheme.colors.error, width: 100 }]}
                             onPress={handleSignOut}
                         >
-                            <Text style={styles.buttonText}>Sign Out</Text>
+                            <Text style={styles.buttonText}>{t('mal.sign_out')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -320,16 +320,16 @@ const MalSettingsScreen: React.FC = () => {
                         resizeMode="contain"
                     />
                     <Text style={[styles.signInTitle, { color: currentTheme.colors.highEmphasis }]}>
-                        Connect MyAnimeList
+                        {t('mal.connect_title')}
                     </Text>
                     <Text style={[styles.signInDescription, { color: currentTheme.colors.mediumEmphasis }]}>
-                        Sync your watch history and manage your anime list.
+                        {t('mal.connect_desc')}
                     </Text>
                     <TouchableOpacity
                         style={[styles.button, { backgroundColor: currentTheme.colors.primary }]}
                         onPress={handleSignIn}
                     >
-                        <Text style={styles.buttonText}>Sign In with MAL</Text>
+                        <Text style={styles.buttonText}>{t('mal.sign_in')}</Text>
                     </TouchableOpacity>
                 </View>
             )}
@@ -339,17 +339,17 @@ const MalSettingsScreen: React.FC = () => {
             <View style={[styles.card, { backgroundColor: currentTheme.colors.elevation2 }]}>
                 <View style={styles.settingsSection}>
                     <Text style={[styles.sectionTitle, { color: currentTheme.colors.highEmphasis }]}>
-                        Sync Settings
+                        {t('mal.sync_settings')}
                     </Text>
                     
                     <View style={styles.settingItem}>
                         <View style={styles.settingContent}>
                             <View style={styles.settingTextContainer}>
                                 <Text style={[styles.settingLabel, { color: currentTheme.colors.highEmphasis }]}>
-                                    Enable MAL Sync
+                                    {t('mal.enable_sync')}
                                 </Text>
                                 <Text style={[styles.settingDescription, { color: currentTheme.colors.mediumEmphasis }]}>
-                                    Global switch to enable or disable all MyAnimeList features.
+                                    {t('mal.enable_sync_desc')}
                                 </Text>
                             </View>
                             <Switch
@@ -365,10 +365,10 @@ const MalSettingsScreen: React.FC = () => {
                         <View style={styles.settingContent}>
                             <View style={styles.settingTextContainer}>
                                 <Text style={[styles.settingLabel, { color: currentTheme.colors.highEmphasis }]}>
-                                    Auto Episode Update
+                                    {t('mal.auto_episode')}
                                 </Text>
                                 <Text style={[styles.settingDescription, { color: currentTheme.colors.mediumEmphasis }]}>
-                                    Automatically update your progress on MAL when you finish watching an episode (&gt;=90% completion).
+                                    {t('mal.auto_episode_desc')}
                                 </Text>
                             </View>
                             <Switch
@@ -384,10 +384,10 @@ const MalSettingsScreen: React.FC = () => {
                         <View style={styles.settingContent}>
                             <View style={styles.settingTextContainer}>
                                 <Text style={[styles.settingLabel, { color: currentTheme.colors.highEmphasis }]}>
-                                    Auto Add Anime
+                                    {t('mal.auto_add')}
                                 </Text>
                                 <Text style={[styles.settingDescription, { color: currentTheme.colors.mediumEmphasis }]}>
-                                    If an anime is not in your MAL list, it will be added automatically when you start watching.
+                                    {t('mal.auto_add_desc')}
                                 </Text>
                             </View>
                             <Switch
@@ -403,10 +403,10 @@ const MalSettingsScreen: React.FC = () => {
                         <View style={styles.settingContent}>
                             <View style={styles.settingTextContainer}>
                                 <Text style={[styles.settingLabel, { color: currentTheme.colors.highEmphasis }]}>
-                                    Auto-Sync to Library
+                                    {t('mal.auto_sync_library')}
                                 </Text>
                                 <Text style={[styles.settingDescription, { color: currentTheme.colors.mediumEmphasis }]}>
-                                    Automatically add items from your MAL 'Watching' list to your Nuvio Library.
+                                    {t('mal.auto_sync_library_desc')}
                                 </Text>
                             </View>
                             <Switch
@@ -422,10 +422,10 @@ const MalSettingsScreen: React.FC = () => {
                         <View style={styles.settingContent}>
                             <View style={styles.settingTextContainer}>
                                 <Text style={[styles.settingLabel, { color: currentTheme.colors.highEmphasis }]}>
-                                    Include NSFW Content
+                                    {t('mal.include_nsfw')}
                                 </Text>
                                 <Text style={[styles.settingDescription, { color: currentTheme.colors.mediumEmphasis }]}>
-                                    Allow NSFW entries to be returned when fetching your MAL list.
+                                    {t('mal.include_nsfw_desc')}
                                 </Text>
                             </View>
                             <Switch

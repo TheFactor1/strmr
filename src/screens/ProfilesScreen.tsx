@@ -14,6 +14,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import { useTraktContext } from '../contexts/TraktContext';
 import { mmkvStorage } from '../services/mmkvStorage';
 import CustomAlert from '../components/CustomAlert';
@@ -33,6 +34,7 @@ const ProfilesScreen: React.FC = () => {
   const navigation = useNavigation();
   const { currentTheme } = useTheme();
   const { isAuthenticated, userProfile, refreshAuthStatus } = useTraktContext();
+  const { t } = useTranslation();
 
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -76,7 +78,7 @@ const ProfilesScreen: React.FC = () => {
       }
     } catch (error) {
       if (__DEV__) console.error('Error loading profiles:', error);
-      openAlert('Error', 'Failed to load profiles');
+      openAlert(t('common.error'), t('profiles.error_load'));
     } finally {
       setIsLoading(false);
     }
@@ -102,7 +104,7 @@ const ProfilesScreen: React.FC = () => {
       await mmkvStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(updatedProfiles));
     } catch (error) {
       if (__DEV__) console.error('Error saving profiles:', error);
-      openAlert('Error', 'Failed to save profiles');
+      openAlert(t('common.error'), t('profiles.error_save'));
     }
   }, []);
 
@@ -118,7 +120,7 @@ const ProfilesScreen: React.FC = () => {
 
   const handleAddProfile = useCallback(() => {
     if (!newProfileName.trim()) {
-      openAlert('Error', 'Please enter a profile name');
+      openAlert(t('common.error'), t('profiles.error_empty_name'));
       return;
     }
 
@@ -150,23 +152,23 @@ const ProfilesScreen: React.FC = () => {
     // Prevent deleting the active profile
     const isActiveProfile = profiles.find(p => p.id === id)?.isActive;
     if (isActiveProfile) {
-      openAlert('Error', 'Cannot delete the active profile. Switch to another profile first.');
+      openAlert(t('common.error'), t('profiles.error_delete_active'));
       return;
     }
 
     // Prevent deleting the last profile
     if (profiles.length <= 1) {
-      openAlert('Error', 'Cannot delete the only profile');
+      openAlert(t('common.error'), t('profiles.error_delete_only'));
       return;
     }
 
     openAlert(
-      'Delete Profile',
-      'Are you sure you want to delete this profile? This action cannot be undone.',
+      t('profiles.delete_title'),
+      t('profiles.delete_confirm'),
       [
-        { label: 'Cancel', onPress: () => { } },
+        { label: t('common.cancel'), onPress: () => { } },
         {
-          label: 'Delete',
+          label: t('common.delete'),
           onPress: () => {
             const updatedProfiles = profiles.filter(profile => profile.id !== id);
             setProfiles(updatedProfiles);

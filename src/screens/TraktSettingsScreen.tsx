@@ -233,7 +233,7 @@ const TraktSettingsScreen: React.FC = () => {
 
   const handleSignIn = () => {
     if (isSimklAuthenticated) {
-      openAlert('Conflict', 'You cannot connect to Trakt while Simkl is connected. Please disconnect Simkl first.');
+      openAlert(t('trakt.conflict_title'), t('trakt.conflict_simkl_msg'));
       return;
     }
     promptAsync(); // Trigger the authentication flow
@@ -289,18 +289,18 @@ const TraktSettingsScreen: React.FC = () => {
       // Show confirmation
       const modeLabel = LIBRARY_SYNC_MODE_OPTIONS.find(o => o.value === mode)?.label || mode;
       openAlert(
-        'Library Sync Mode Updated',
-        `Trakt library sync is now set to: ${modeLabel}`
+        t('trakt.library_sync_updated'),
+        t('trakt.library_sync_updated_msg', { mode: modeLabel })
       );
     } catch (error) {
       logger.error('[TraktSettingsScreen] Failed to save library sync mode:', error);
-      openAlert('Error', 'Failed to update library sync mode');
+      openAlert(t('common.error'), t('trakt.library_sync_error'));
     }
   };
 
   const getLibrarySyncModeLabel = (mode: string): string => {
     const option = LIBRARY_SYNC_MODE_OPTIONS.find(o => o.value === mode);
-    return option?.label || 'Off';
+    return option?.label || t('common.disable');
   };
 
   return (

@@ -917,16 +917,16 @@ const PluginsScreen: React.FC = () => {
       // Small delay to ensure UI is ready
       setTimeout(() => {
         openAlert(
-          'Add Repository',
-          `Do you want to add the repository from:\n${url}`,
+          t('plugins.add_repo'),
+          t('plugins.add_repo_confirm', { url }),
           [
             {
-              label: 'Cancel',
+              label: t('common.cancel'),
               onPress: () => { },
               style: { color: colors.error }
             },
             {
-              label: 'Add',
+              label: t('plugins.add'),
               onPress: () => {
                 handleAddRepository(url);
               }
@@ -950,7 +950,7 @@ const PluginsScreen: React.FC = () => {
   ) => {
     setAlertTitle(title);
     setAlertMessage(message);
-    setAlertActions(actions && actions.length > 0 ? actions : [{ label: 'OK', onPress: () => { } }]);
+    setAlertActions(actions && actions.length > 0 ? actions : [{ label: t('common.ok'), onPress: () => { } }]);
     setAlertVisible(true);
   };
 
@@ -1060,7 +1060,7 @@ const PluginsScreen: React.FC = () => {
       openAlert(t('plugins.success'), `${enabled ? t('plugins.enabled') : t('plugins.disabled')} ${filteredPlugins.length} extensions`);
     } catch (error) {
       logger.error('[PluginSettings] Failed to bulk toggle:', error);
-      openAlert(t('plugins.error'), 'Failed to update extensions');
+      openAlert(t('plugins.error'), t('plugins.error_update_extensions'));
     } finally {
       setIsRefreshing(false);
     }
@@ -1076,7 +1076,7 @@ const PluginsScreen: React.FC = () => {
     const inputUrl = validUrlOverride || newRepositoryUrl;
 
     if (!inputUrl.trim()) {
-      openAlert('Error', 'Please enter a valid repository URL');
+      openAlert(t('common.error'), t('plugins.error_valid_url'));
       return;
     }
 
@@ -1085,7 +1085,7 @@ const PluginsScreen: React.FC = () => {
     if (!url.startsWith('https://raw.githubusercontent.com/') && !url.startsWith('http://')) {
       openAlert(
         t('plugins.alert_invalid_url'),
-        'Please use a valid GitHub raw URL format:\n\nhttps://raw.githubusercontent.com/username/repo/refs/heads/branch\n\nor include manifest.json:\nhttps://raw.githubusercontent.com/username/repo/refs/heads/branch/manifest.json\n\nExample:\nhttps://raw.githubusercontent.com/your-username/your-repo/refs/heads/main'
+        t('plugins.error_valid_url_format')
       );
       return;
     }
@@ -1166,7 +1166,7 @@ const PluginsScreen: React.FC = () => {
       openAlert(t('plugins.success'), `Repository "${repo?.name || t('plugins.unknown')}" ${enabled ? t('plugins.enabled').toLowerCase() : t('plugins.disabled').toLowerCase()} successfully`);
     } catch (error) {
       logger.error('[PluginSettings] Failed to toggle repository:', error);
-      openAlert(t('plugins.error'), 'Failed to update repository');
+      openAlert(t('plugins.error'), t('plugins.error_update_repo'));
     } finally {
       setSwitchingRepository(null);
     }
@@ -1179,30 +1179,30 @@ const PluginsScreen: React.FC = () => {
     // Special handling for the last repository
     const isLastRepository = repositories.length === 1;
 
-    const alertTitle = isLastRepository ? 'Remove Last Repository' : 'Remove Repository';
+    const alertTitleText = isLastRepository ? t('plugins.remove_last_repo') : t('plugins.remove_repo');
     const alertMessage = isLastRepository
-      ? `Are you sure you want to remove "${repo.name}"? This is your only repository, so you'll have no extensions available until you add a new repository.`
-      : `Are you sure you want to remove "${repo.name}"? This will also remove all extensions from this repository.`;
+      ? t('plugins.remove_last_repo_desc', { name: repo.name })
+      : t('plugins.remove_repo_desc', { name: repo.name });
 
     openAlert(
-      alertTitle,
+      alertTitleText,
       alertMessage,
       [
-        { label: 'Cancel', onPress: () => { } },
+        { label: t('common.cancel'), onPress: () => { } },
         {
-          label: 'Remove',
+          label: t('plugins.remove'),
           onPress: async () => {
             try {
               await pluginService.removeRepository(repoId);
               await loadRepositories();
               await loadPlugins();
               const successMessage = isLastRepository
-                ? 'Repository removed successfully. You can add a new repository using the "Add Repository" button.'
-                : 'Repository removed successfully';
-              openAlert('Success', successMessage);
+                ? t('plugins.remove_last_repo_success')
+                : t('plugins.remove_repo_success');
+              openAlert(t('common.success'), successMessage);
             } catch (error) {
               logger.error('[PluginSettings] Failed to remove repository:', error);
-              openAlert('Error', error instanceof Error ? error.message : 'Failed to remove repository');
+              openAlert(t('common.error'), error instanceof Error ? error.message : t('plugins.error_remove_repo'));
             }
           },
         },
@@ -1282,7 +1282,7 @@ const PluginsScreen: React.FC = () => {
 
   const handleSaveRepository = async () => {
     if (!repositoryUrl.trim()) {
-      openAlert('Error', 'Please enter a valid repository URL');
+      openAlert(t('common.error'), t('plugins.error_valid_url'));
       return;
     }
 
@@ -1290,8 +1290,8 @@ const PluginsScreen: React.FC = () => {
     const url = repositoryUrl.trim();
     if (!url.startsWith('https://raw.githubusercontent.com/') && !url.startsWith('http://')) {
       openAlert(
-        'Invalid URL Format',
-        'Please use a valid GitHub raw URL format:\n\nhttps://raw.githubusercontent.com/username/repo/refs/heads/branch\n\nExample:\nhttps://raw.githubusercontent.com/your-username/your-repo/refs/heads/main'
+        t('plugins.alert_invalid_url'),
+        t('plugins.error_valid_url_format')
       );
       return;
     }
@@ -1304,7 +1304,7 @@ const PluginsScreen: React.FC = () => {
       openAlert(t('plugins.success'), t('plugins.alert_repo_saved'));
     } catch (error) {
       logger.error('[PluginSettings] Failed to save repository:', error);
-      openAlert(t('plugins.error'), 'Failed to save repository URL');
+      openAlert(t('plugins.error'), t('plugins.error_save_repo'));
     } finally {
       setIsLoading(false);
     }
@@ -1312,7 +1312,7 @@ const PluginsScreen: React.FC = () => {
 
   const handleRefreshRepository = async () => {
     if (!repositoryUrl.trim()) {
-      openAlert('Error', 'Please set a repository URL first');
+      openAlert(t('common.error'), t('plugins.error_set_repo_first'));
       return;
     }
 
@@ -1331,8 +1331,8 @@ const PluginsScreen: React.FC = () => {
       logger.error('[PluginsScreen] Failed to refresh repository:', error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       openAlert(
-        'Repository Error',
-        `Failed to refresh repository: ${errorMessage}\n\nPlease ensure your URL is correct and follows this format:\nhttps://raw.githubusercontent.com/username/repo/refs/heads/branch`
+        t('plugins.error_repo'),
+        t('plugins.error_refresh_repo', { error: errorMessage })
       );
     } finally {
       setIsRefreshing(false);
@@ -1358,7 +1358,7 @@ const PluginsScreen: React.FC = () => {
       await loadPlugins();
     } catch (error) {
       logger.error('[PluginSettings] Failed to toggle plugin:', error);
-      openAlert(t('plugins.error'), 'Failed to update extension status');
+      openAlert(t('plugins.error'), t('plugins.error_update_status'));
       setIsRefreshing(false);
     }
   };
@@ -1368,9 +1368,9 @@ const PluginsScreen: React.FC = () => {
       t('plugins.clear_all'),
       t('plugins.clear_all_desc'),
       [
-        { label: 'Cancel', onPress: () => { } },
+        { label: t('common.cancel'), onPress: () => { } },
         {
-          label: 'Clear',
+          label: t('plugins.clear'),
           onPress: async () => {
             try {
               await pluginService.clearScrapers();
@@ -1378,7 +1378,7 @@ const PluginsScreen: React.FC = () => {
               openAlert(t('plugins.success'), t('plugins.alert_plugins_cleared'));
             } catch (error) {
               logger.error('[PluginSettings] Failed to clear plugins:', error);
-              openAlert(t('plugins.error'), 'Failed to clear extensions');
+              openAlert(t('plugins.error'), t('plugins.error_clear_extensions'));
             }
           },
         },
@@ -1391,9 +1391,9 @@ const PluginsScreen: React.FC = () => {
       t('plugins.clear_cache'),
       t('plugins.clear_cache_desc'),
       [
-        { label: 'Cancel', onPress: () => { } },
+        { label: t('common.cancel'), onPress: () => { } },
         {
-          label: 'Clear Cache',
+          label: t('plugins.clear_cache'),
           onPress: async () => {
             try {
               await pluginService.clearScrapers();
@@ -1405,7 +1405,7 @@ const PluginsScreen: React.FC = () => {
               openAlert(t('plugins.success'), t('plugins.alert_cache_cleared'));
             } catch (error) {
               logger.error('[PluginSettings] Failed to clear cache:', error);
-              openAlert(t('plugins.error'), 'Failed to clear repository cache');
+              openAlert(t('plugins.error'), t('plugins.error_clear_cache'));
             }
           },
         },
@@ -1927,7 +1927,7 @@ const PluginsScreen: React.FC = () => {
                                 });
                               }
                               setShowboxSavedToken(showboxUiToken);
-                              openAlert('Saved', 'ShowBox settings updated');
+                              openAlert(t('plugins.showbox_saved'), t('plugins.showbox_saved_msg'));
                             }}
                           >
                             <Text style={styles.buttonText}>{t('plugins.save')}</Text>

@@ -16,6 +16,7 @@ import {
 import CustomAlert from '../components/CustomAlert';
 import { useRoute, useNavigation, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import FastImage from '@d11/react-native-fast-image';
 import { BlurView as ExpoBlurView } from 'expo-blur';
@@ -428,6 +429,7 @@ const SuggestionChip: React.FC<SuggestionChipProps> = React.memo(({ text, onPres
 }, (prev, next) => prev.text === next.text && prev.onPress === next.onPress && prev.index === next.index);
 
 const AIChatScreen: React.FC = () => {
+  const { t } = useTranslation();
   // CustomAlert state
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertTitle, setAlertTitle] = useState('');
@@ -597,7 +599,7 @@ const AIChatScreen: React.FC = () => {
       }
     } catch (error) {
       if (__DEV__) console.error('Error loading context:', error);
-      openAlert('Error', 'Failed to load content details for AI chat');
+      openAlert(t('common.error'), t('ai_settings.error_load_context'));
     } finally {
       setIsLoadingContext(false);
       {/* CustomAlert at root */ }

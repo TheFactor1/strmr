@@ -176,7 +176,12 @@
         "added_to_collection": "Ajouté à la collection",
         "added_to_collection_desc": "Ajouté à votre collection Trakt",
         "removed_from_collection": "Retiré de la collection",
-        "removed_from_collection_desc": "Retiré de votre collection Trakt"
+        "removed_from_collection_desc": "Retiré de votre collection Trakt",
+        "sync_failed": "Échec de la synchronisation",
+        "sync_connect_first": "Connecte-toi d'abord à Trakt",
+        "sync_complete": "Synchronisation terminée",
+        "sync_up_to_date": "La bibliothèque est à jour",
+        "sync_error": "Impossible de synchroniser. Réessaie."
     },
     "metadata": {
         "unable_to_load": "Impossible de charger le contenu",
@@ -275,7 +280,9 @@
         "removed_from_collection_hero": "Retiré de la collection",
         "removed_from_collection_desc_hero": "Retiré de votre collection Trakt",
         "mark_as_watched": "Marquer comme vu",
-        "mark_as_unwatched": "Marquer comme non vu"
+        "mark_as_unwatched": "Marquer comme non vu",
+        "no_backdrops": "Aucun fond d'écran trouvé",
+        "error_backdrops": "Échec du chargement des fonds d'écran"
     },
     "cast": {
         "biography": "Biographie",
@@ -334,7 +341,10 @@
         "unavailable": "Bande-annonce indisponible",
         "unavailable_desc": "Cette bande-annonce n'a pas pu être chargée pour le moment. Veuillez réessayer plus tard.",
         "unable_to_play": "Impossible de lire la bande-annonce. Veuillez réessayer.",
-        "watch_on_youtube": "Regarder sur YouTube"
+        "watch_on_youtube": "Regarder sur YouTube",
+        "error_play": "Échec de la lecture de la bande-annonce",
+        "error_ios_format": "Ce format de bande-annonce n'est pas supporté sur iOS.",
+        "error_retry": "Impossible de lire la bande-annonce. Réessaie."
     },
     "catalog": {
         "no_content_found": "Aucun contenu trouvé",
@@ -360,7 +370,9 @@
         "still_fetching": "Récupération des flux en cours...",
         "no_streams_available": "Aucun flux disponible",
         "starting_best_stream": "Démarrage du meilleur flux...",
-        "loading_more_sources": "Chargement d'autres sources..."
+        "loading_more_sources": "Chargement d'autres sources...",
+        "torrent_not_supported": "Non supporté",
+        "torrent_not_supported_msg": "Le streaming par torrent n'est pas encore supporté."
     },
     "player_ui": {
         "via": "via {{name}}",
@@ -419,7 +431,12 @@
         "timing_offset": "Décalage temporel (s)",
         "visual_sync": "Synchronisation visuelle",
         "timing_hint": "Avancez (-) ou retardez (+) les sous-titres pour synchroniser si nécessaire.",
-        "reset_defaults": "Réinitialiser les paramètres"
+        "reset_defaults": "Réinitialiser les paramètres",
+        "mark_intro_start": "Marquer le début de l'intro",
+        "mark_intro_end": "Marquer la fin de l'intro",
+        "intro_start_marked": "Début de l'intro marqué",
+        "intro_submitted": "Intro soumise avec succès",
+        "intro_submit_failed": "Échec de la soumission de l'intro"
     },
     "downloads": {
         "title": "Téléchargements",
@@ -522,7 +539,12 @@
         "sign_out_error": "Échec de la déconnexion de Trakt.",
         "sync_complete_title": "Synchronisation terminée",
         "sync_success_msg": "Votre progression a été synchronisée avec succès avec Trakt.",
-        "sync_error_msg": "La synchronisation a échoué. Veuillez réessayer."
+        "sync_error_msg": "La synchronisation a échoué. Veuillez réessayer.",
+        "conflict_title": "Conflit",
+        "conflict_simkl_msg": "Tu ne peux pas connecter Trakt tant que Simkl est connecté. Déconnecte d'abord Simkl.",
+        "library_sync_updated": "Mode de synchronisation mis à jour",
+        "library_sync_updated_msg": "La synchronisation Trakt est maintenant réglée sur : {{mode}}",
+        "library_sync_error": "Échec de la mise à jour du mode de synchronisation"
     },
     "simkl": {
         "title": "Paramètres Simkl",
@@ -685,7 +707,9 @@
             "media": "MÉDIA",
             "notifications": "NOTIFICATIONS",
             "testing": "TESTS",
-            "danger_zone": "ZONE DE DANGER"
+            "danger_zone": "ZONE DE DANGER",
+            "data": "DONNÉES",
+            "general": "GÉNÉRAL"
         },
         "items": {
             "legal": "Mentions Légales",
@@ -818,7 +842,20 @@
                 "env_warning": "Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to enable sync."
             },
             "connection": "Connection"
-        }
+        },
+        "clear_mdblist_cache_title": "Effacer le cache MDBList",
+        "clear_mdblist_cache_confirm": "Es-tu sûr de vouloir effacer toutes les données MDBList en cache ? Cette action est irréversible.",
+        "clear_mdblist_cache_success": "Le cache MDBList a été effacé.",
+        "clear_mdblist_cache_error": "Impossible d'effacer le cache MDBList.",
+        "reset_onboarding_success": "L'accueil a été réinitialisé. Redémarre l'application pour voir le flux d'accueil.",
+        "reset_onboarding_error": "Échec de la réinitialisation de l'accueil.",
+        "reset_campaigns_success": "Historique des campagnes réinitialisé. Redémarre l'application pour revoir les affiches.",
+        "clear_data_success": "Toutes les données ont été effacées. Redémarre l'application.",
+        "clear_data_error": "Échec de l'effacement des données.",
+        "plugin_tester": "Testeur de plugin",
+        "plugin_tester_desc": "Exécuter un plugin et inspecter les logs/flux",
+        "vietnamese": "Vietnamien",
+        "backup_restore_desc": "Créer et restaurer des sauvegardes"
     },
     "privacy": {
         "title": "Confidentialité et Données",
@@ -893,7 +930,8 @@
         "confirm_remove_title": "Supprimer la clé API",
         "confirm_remove_msg": "Êtes-vous sûr de vouloir supprimer votre clé API OpenRouter ? Cela désactivera les fonctionnalités de chat IA.",
         "success_removed": "Clé API supprimée avec succès",
-        "error_remove": "Échec de la suppression de la clé API"
+        "error_remove": "Échec de la suppression de la clé API",
+        "error_load_context": "Échec du chargement des détails pour le chat IA"
     },
     "catalog_settings": {
         "title": "Catalogues",
@@ -1069,7 +1107,9 @@
             "error_load": "Échec du chargement des catalogues",
             "movies": "Films",
             "tv_shows": "Séries TV"
-        }
+        },
+        "prefer_external_meta": "Préférer les métadonnées externes",
+        "prefer_external_meta_desc": "Utiliser les métadonnées externes sur la page de détails"
     },
     "calendar": {
         "title": "Calendrier",
@@ -1354,7 +1394,20 @@
         "got_it": "Compris !",
         "repo_format_hint": "Format : https://raw.githubusercontent.com/user/repo/branch",
         "cancel": "Annuler",
-        "add": "Ajouter"
+        "add": "Ajouter",
+        "error_update_extensions": "Échec de la mise à jour des extensions",
+        "error_valid_url": "Entre une URL de dépôt valide",
+        "error_valid_url_format": "Utilise une URL GitHub raw valide :\n\nhttps://raw.githubusercontent.com/user/repo/refs/heads/branch",
+        "error_update_repo": "Échec de la mise à jour du dépôt",
+        "error_remove_repo": "Échec de la suppression du dépôt",
+        "error_save_repo": "Échec de l'enregistrement de l'URL du dépôt",
+        "error_set_repo_first": "Définis d'abord une URL de dépôt",
+        "error_repo": "Erreur de dépôt",
+        "error_update_status": "Échec de la mise à jour du statut de l'extension",
+        "error_clear_extensions": "Échec de la suppression des extensions",
+        "error_clear_cache": "Échec du vidage du cache du dépôt",
+        "showbox_saved": "Enregistré",
+        "showbox_saved_msg": "Paramètres ShowBox mis à jour"
     },
     "theme": {
         "title": "Thèmes de l'App",
@@ -1479,6 +1532,100 @@
             "tried_url": "Essayé : {{url}}",
             "provider_logs": "Logs du Fournisseur",
             "no_logs_captured": "Aucun log capturé."
+        }
+    },
+    "mal": {
+        "title": "MyAnimeList",
+        "connect_title": "Connecter MyAnimeList",
+        "connect_desc": "Synchronise ton historique et gère ta liste d'anime.",
+        "sign_in": "Se connecter avec MAL",
+        "sign_out": "Se déconnecter",
+        "sign_out_confirm": "Es-tu sûr de vouloir te déconnecter ?",
+        "sync_button": "Synchroniser",
+        "connected": "Connecté à MyAnimeList",
+        "error_connect": "Échec de la connexion à MyAnimeList",
+        "error_sign_in": "Une erreur est survenue lors de la connexion : {{message}}",
+        "sync_complete": "Synchronisation terminée",
+        "sync_complete_msg": "Les données MAL ont été actualisées.",
+        "sync_failed": "Échec de la synchronisation",
+        "sync_failed_msg": "Impossible d'actualiser les données MAL.",
+        "sync_settings": "Paramètres de synchronisation",
+        "enable_sync": "Activer la synchronisation MAL",
+        "enable_sync_desc": "Interrupteur global pour activer ou désactiver toutes les fonctionnalités MyAnimeList.",
+        "auto_episode": "Mise à jour auto des épisodes",
+        "auto_episode_desc": "Met automatiquement à jour ta progression sur MAL quand tu finis un épisode (>=90% de complétion).",
+        "auto_add": "Ajout auto des anime",
+        "auto_add_desc": "Si un anime n'est pas dans ta liste MAL, il sera ajouté automatiquement quand tu commences à le regarder.",
+        "auto_sync_library": "Synchronisation auto vers la bibliothèque",
+        "auto_sync_library_desc": "Ajoute automatiquement les éléments de ta liste MAL \"En cours\" à ta bibliothèque Nuvio.",
+        "include_nsfw": "Inclure le contenu NSFW",
+        "include_nsfw_desc": "Autoriser les entrées NSFW lors de la récupération de ta liste MAL.",
+        "stat_total": "Total",
+        "stat_days": "Jours",
+        "stat_mean": "Moyenne",
+        "watching": "En cours",
+        "completed": "Terminé",
+        "on_hold": "En pause",
+        "dropped": "Abandonné",
+        "plan_to_watch": "À regarder",
+        "edit_title": "Modifier {{title}}",
+        "updated": "Mis à jour",
+        "updated_msg": "Statut de {{title}} mis à jour sur MAL",
+        "update_failed": "Échec de la mise à jour",
+        "update_failed_msg": "Impossible de mettre à jour le statut MAL",
+        "remove_title": "Retirer de la liste",
+        "remove_confirm": "Es-tu sûr de vouloir retirer {{title}} de ta liste MyAnimeList ?",
+        "removed": "Retiré",
+        "removed_msg": "{{title}} retiré de MAL",
+        "remove_failed": "Échec du retrait",
+        "remove_failed_msg": "Impossible de retirer de MAL",
+        "description": "Synchroniser avec MyAnimeList",
+        "discord_open_prompt": "Discord : @{{username}}\n\nOuvrir Discord et chercher cet utilisateur ?"
+    },
+    "profiles": {
+        "error_load": "Échec du chargement des profils",
+        "error_save": "Échec de l'enregistrement des profils",
+        "error_empty_name": "Entre un nom de profil",
+        "error_delete_active": "Impossible de supprimer le profil actif. Bascule d'abord sur un autre profil.",
+        "error_delete_only": "Impossible de supprimer le seul profil",
+        "delete_title": "Supprimer le profil",
+        "delete_confirm": "Es-tu sûr de vouloir supprimer ce profil ? Cette action est irréversible."
+    },
+    "auth": {
+        "invalid_email": "E-mail invalide",
+        "invalid_email_msg": "Entre une adresse e-mail valide",
+        "password_short": "Mot de passe trop court",
+        "password_short_msg": "Le mot de passe doit contenir au moins 6 caractères",
+        "passwords_mismatch": "Mots de passe différents",
+        "passwords_mismatch_msg": "Les mots de passe ne correspondent pas",
+        "auth_failed": "Échec de l'authentification",
+        "login_success": "Connexion réussie",
+        "signup_success": "Inscription réussie"
+    },
+    "stream_card": {
+        "url_copied": "URL copiée",
+        "url_copied_msg": "URL du flux copiée dans le presse-papiers !",
+        "copied": "Copié !",
+        "copied_msg": "L'URL du flux a été copiée dans le presse-papiers.",
+        "already_downloading": "Déjà en téléchargement",
+        "already_downloading_msg": "Ce téléchargement a déjà été lancé pour ce lien.",
+        "download_started": "Téléchargement lancé",
+        "download_started_msg": "Ton téléchargement a été ajouté à la file d'attente.",
+        "download_failed": "Échec du téléchargement"
+    },
+    "parentalGuide": {
+        "labels": {
+            "nudity": "Nudité",
+            "violence": "Violence",
+            "profanity": "Langage grossier",
+            "alcohol": "Alcool/Drogues",
+            "frightening": "Scènes effrayantes"
+        },
+        "severity": {
+            "severe": "Grave",
+            "moderate": "Modéré",
+            "mild": "Léger",
+            "none": "Aucun"
         }
     }
 }
