@@ -6,9 +6,86 @@ import { DEFAULT_SETTINGS, type AppSettings } from '../../hooks/useSettings';
 import { TMDBService } from '../tmdbService';
 import { logger } from '../../utils/logger';
 import { safeAxiosConfig } from '../../utils/axiosConfig';
+import { embyService } from '../emby/embyService';
 
 import type { StremioServiceContext } from './context';
 import type { Manifest, ResourceObject, StreamCallback } from './types';
+
+// ---------------------------------------------------------------------------
+// Emby stream injection – prepended before Stremio addon results
+// ---------------------------------------------------------------------------
+async function runEmbySearch(
+  type: string,
+  id: string,
+  callback?: StreamCallback
+): Promise<void> {
+  try {
+    const connected = await embyService.isConnected();
+    if (!connected) return;
+
+    // Parse the Stremio content ID into identifiers Emby understands
+    // Formats: tt1234567 | tt1234567:S:E | tmdb:12345 | tmdb:12345:S:E
+    const parts = id.split(':');
+    let imdbId: string | undefined;
+    let tmdbId: string | undefined;
+    let season: number | undefined;
+    let episode: number | undefined;
+    const mediaType = type === 'movie' ? 'movie' : 'series';
+
+    if (parts[0].startsWith('tt')) {
+      // IMDb format: tt1234567 or tt1234567:1:2
+      imdbId = parts[0];
+      if (mediaType === 'series' && parts.length >= 3) {
+        season = parseInt(parts[1], 10);
+        episode = parseInt(parts[2], 10);
+      }
+    } else if (parts[0] === 'tmdb') {
+      // TMDB format: tmdb:12345 or tmdb:12345:1:2
+      tmdbId = parts[1];
+      if (mediaType === 'series' && parts.length >= 4) {
+        season = parseInt(parts[2], 10);
+        episode = parseInt(parts[3], 10);
+      }
+    } else {
+      // Unknown prefix – skip
+      return;
+    }
+
+    logger.log(`🎬 [getStreams] Searching Emby for ${mediaType} imdb=${imdbId} tmdb=${tmdbId} s=${season} e=${episode}`);
+
+    const item = await embyService.findMedia(imdbId, tmdbId, mediaType, season, episode);
+    if (!item) {
+      logger.log('🎬 [getStreams] Emby: no matching item found');
+      callback?.([], 'emby-local', 'Emby Server', null, null);
+      return;
+    }
+
+    const playbackUrl = await embyService.getPlaybackUrl(item.Id);
+    if (!playbackUrl) {
+      callback?.([], 'emby-local', 'Emby Server', null, null);
+      return;
+    }
+
+    const stream = {
+      name: 'Emby Server',
+      title: `Direct Play — ${item.Name}`,
+      description: `Direct Play — ${item.Name}`,
+      url: playbackUrl,
+      addon: 'emby-local',
+      addonId: 'emby-local',
+      addonName: 'Emby Server',
+      isEmby: true,
+      embyItemId: item.Id,
+      behaviorHints: { notWebReady: false },
+    };
+
+    logger.log(`🎬 [getStreams] Emby: found "${item.Name}" (${item.Id})`);
+    callback?.([stream as any], 'emby-local', 'Emby Server', null, null);
+  } catch (err) {
+    logger.warn('🎬 [getStreams] Emby search error:', err);
+    callback?.(null, 'emby-local', 'Emby Server', err as Error, null);
+  }
+}
 
 function pickStreamAddons(ctx: StremioServiceContext, requestType: string, id: string): Manifest[] {
   return ctx.getInstalledAddons().filter(addon => {
@@ -256,6 +333,9 @@ export async function getStreams(
   await ctx.ensureInitialized();
 
   const addons = ctx.getInstalledAddons();
+
+  // Run Emby search first so its result appears at the top of the stream list
+  await runEmbySearch(type, id, callback);
   await runLocalScrapers(type, id, callback);
 
   let effectiveType = type;

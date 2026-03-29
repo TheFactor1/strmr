@@ -434,6 +434,7 @@ export const useStreamsScreen = () => {
         backdrop: metadata?.banner || bannerImage,
         videoType,
         releaseDate,
+        embyItemId: stream.embyItemId,
       } as any);
     },
     [metadata, type, currentEpisode, navigation, id, selectedEpisode, imdbId, episodeStreams, groupedStreams, bannerImage, settings.streamCacheTTL]

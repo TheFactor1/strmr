@@ -12,6 +12,7 @@ import TMDBIcon from '../../components/icons/TMDBIcon';
 import { SettingsCard, SettingItem, ChevronRight } from './SettingsComponents';
 import { useRealtimeConfig } from '../../hooks/useRealtimeConfig';
 import { useTranslation } from 'react-i18next';
+import { EMBY_SERVER_URL_KEY, EMBY_USER_ID_KEY } from '../../services/emby/embyService';
 
 const { width } = Dimensions.get('window');
 
@@ -31,6 +32,7 @@ export const IntegrationsSettingsContent: React.FC<IntegrationsSettingsContentPr
 
     const [mdblistKeySet, setMdblistKeySet] = useState<boolean>(false);
     const [openRouterKeySet, setOpenRouterKeySet] = useState<boolean>(false);
+    const [embyConnected, setEmbyConnected] = useState<boolean>(false);
 
     const loadData = useCallback(async () => {
         try {
@@ -39,6 +41,10 @@ export const IntegrationsSettingsContent: React.FC<IntegrationsSettingsContentPr
 
             const openRouterKey = await mmkvStorage.getItem('openrouter_api_key');
             setOpenRouterKeySet(!!openRouterKey);
+
+            const embyUrl = await mmkvStorage.getItem(EMBY_SERVER_URL_KEY);
+            const embyUserId = await mmkvStorage.getItem(EMBY_USER_ID_KEY);
+            setEmbyConnected(!!(embyUrl && embyUserId));
         } catch (error) {
             if (__DEV__) console.error('Error loading integration data:', error);
         }
@@ -63,6 +69,18 @@ export const IntegrationsSettingsContent: React.FC<IntegrationsSettingsContentPr
 
     return (
         <>
+            <SettingsCard title="Media Servers" isTablet={isTablet}>
+                <SettingItem
+                    title="Emby Server"
+                    description={embyConnected ? 'Connected — your library is available as a stream source' : 'Stream from your personal Emby media server'}
+                    icon="server"
+                    renderControl={() => <ChevronRight />}
+                    onPress={() => navigation.navigate('EmbySettings')}
+                    isLast
+                    isTablet={isTablet}
+                />
+            </SettingsCard>
+
             {hasVisibleItems(['mdblist', 'tmdb']) && (
                 <SettingsCard title={t('settings.sections.metadata')} isTablet={isTablet}>
                     {isItemVisible('mdblist') && (

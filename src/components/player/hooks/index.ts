@@ -21,3 +21,6 @@ export { usePlayerSetup } from './usePlayerSetup';
 export { useNextEpisode } from './useNextEpisode';
 export { useWatchProgress } from './useWatchProgress';
 export { useSkipSegments } from './useSkipSegments';
+
+// Integrations
+export { useEmbySession } from './useEmbySession';

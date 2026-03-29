@@ -77,6 +77,7 @@ import BackdropGalleryScreen from '../screens/BackdropGalleryScreen';
 import BackupScreen from '../screens/BackupScreen';
 import ContinueWatchingSettingsScreen from '../screens/ContinueWatchingSettingsScreen';
 import ContributorsScreen from '../screens/ContributorsScreen';
+import EmbySettingsScreen from '../screens/EmbySettingsScreen';
 
 import {
   ContentDiscoverySettingsScreen,
@@ -234,6 +235,9 @@ export type RootStackParamList = {
   DeveloperSettings: undefined;
   PrivacySettings: undefined;
   Legal: undefined;
+
+  // Media server integrations
+  EmbySettings: undefined;
 };
 
 
@@ -1612,6 +1616,21 @@ const InnerNavigator = ({ initialRouteName }: { initialRouteName?: keyof RootSta
             <Stack.Screen
               name="SimklSettings"
               component={SimklSettingsScreen}
+              options={{
+                animation: Platform.OS === 'android' ? 'default' : 'fade',
+                animationDuration: Platform.OS === 'android' ? 250 : 200,
+                presentation: 'card',
+                gestureEnabled: true,
+                gestureDirection: 'horizontal',
+                headerShown: false,
+                contentStyle: {
+                  backgroundColor: currentTheme.colors.darkBackground,
+                },
+              }}
+            />
+            <Stack.Screen
+              name="EmbySettings"
+              component={EmbySettingsScreen}
               options={{
                 animation: Platform.OS === 'android' ? 'default' : 'fade',
                 animationDuration: Platform.OS === 'android' ? 250 : 200,

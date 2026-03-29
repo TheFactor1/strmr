@@ -37,7 +37,8 @@ import {
   usePlayerSetup,
   useWatchProgress,
   useNextEpisode,
-  useSkipSegments
+  useSkipSegments,
+  useEmbySession,
 } from './hooks';
 
 // Platform-specific hooks
@@ -100,6 +101,7 @@ const KSPlayerCore: React.FC = () => {
   } = params;
 
   const videoType = (params as any)?.videoType as string | undefined;
+  const embyItemId: string | undefined = (params as any)?.embyItemId;
 
   useEffect(() => {
     if (!__DEV__) return;
@@ -278,6 +280,9 @@ const KSPlayerCore: React.FC = () => {
     false, // KSPlayer doesn't support PiP yet
     metadata?.name
   );
+
+  // Emby session reporting: reports start/progress/stopped when stream came from Emby
+  useEmbySession(embyItemId, currentTime, paused);
 
   // Gestures
   const fadeAnim = useRef(new Animated.Value(1)).current;

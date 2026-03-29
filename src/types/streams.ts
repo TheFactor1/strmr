@@ -65,6 +65,10 @@ export interface Stream {
   // Additional tracker/DHT sources
   sources?: string[];
 
+  // Emby-specific fields (set when this stream originates from a local Emby server)
+  embyItemId?: string;         // Emby item ID for session reporting
+  isEmby?: boolean;            // True when this stream was sourced from an Emby server
+
   // Complete behavior hints per protocol
   behaviorHints?: {
     bingeGroup?: string;           // Group for binge watching

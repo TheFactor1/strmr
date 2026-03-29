@@ -12,7 +12,8 @@ import {
   useSpeedControl,
   useOpeningAnimation,
   useWatchProgress,
-  useSkipSegments
+  useSkipSegments,
+  useEmbySession,
 } from './hooks';
 
 // Android-specific hooks
@@ -77,8 +78,10 @@ const AndroidVideoPlayer: React.FC = () => {
   const {
     uri, title = 'Episode Name', season, episode, episodeTitle, quality, year,
     streamProvider, streamName, headers, id, type, episodeId, imdbId,
-    availableStreams: passedAvailableStreams, backdrop, groupedEpisodes, releaseDate
+    availableStreams: passedAvailableStreams, backdrop, groupedEpisodes, releaseDate,
   } = route.params;
+
+  const embyItemId: string | undefined = (route.params as any).embyItemId;
 
   // --- State & Custom Hooks ---
 
@@ -259,6 +262,9 @@ const AndroidVideoPlayer: React.FC = () => {
     isInPictureInPicture || isPiPTransitionPending,
     metadata?.name
   );
+
+  // Emby session reporting: reports start/progress/stopped when stream came from Emby
+  useEmbySession(embyItemId, playerState.currentTime, playerState.paused);
 
   const gestureControls = usePlayerGestureControls({
     volume,
