@@ -82,10 +82,15 @@ target 'Nuvio' do
     frameworks_script = File.join(installer.sandbox.root, 'Target Support Files', 'Pods-Nuvio', 'Pods-Nuvio-frameworks.sh')
     if File.exist?(frameworks_script)
       script = File.read(frameworks_script)
+      # Only React.framework and ReactNativeDependencies.framework ship hybrid Catalyst
+      # slices that need their Versions/ directory removed before signing. Hermes is a
+      # normal symlinked macOS framework, so deleting Versions/ breaks its layout.
       script.gsub!(
         '  code_sign_if_enabled "${destination}/$(basename "$1")"',
-        "  rm -rf \"${destination}/$(basename \"$1\")/Versions\"\n  code_sign_if_enabled \"${destination}/$(basename \"$1\")\""
+        "  framework_path=\"${destination}/$(basename \"$1\")\"\n  framework_name=\"$(basename \"$framework_path\")\"\n  case \"$framework_name\" in\n    React.framework|ReactNativeDependencies.framework)\n      rm -rf \"$framework_path/Versions\"\n      if [ -f \"$framework_path/Resources/Info.plist\" ] && [ ! -f \"$framework_path/Info.plist\" ]; then\n        cp \"$framework_path/Resources/Info.plist\" \"$framework_path/Info.plist\"\n      fi\n      ;;\n  esac\n  if [ \"$framework_name\" = \"ReactNativeDependencies.framework\" ]; then\n    find \"$framework_path\" -type d -name \"*.bundle\" -print0 | while IFS= read -r -d '' bundle; do\n      code_sign_if_enabled \"$bundle\"\n    done\n  fi\n  code_sign_if_enabled \"$framework_path\""
       )
+      # Remove --preserve-metadata which can produce invalid signatures for Catalyst
+      script.gsub!('--preserve-metadata=identifier,entitlements ', '')
       File.write(frameworks_script, script)
     end
   end
