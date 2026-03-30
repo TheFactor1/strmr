@@ -329,7 +329,6 @@ PODS:
     - FFmpegKit/FFmpegKit (= 6.1.0)
   - FFmpegKit/FFmpegKit (6.1.0):
     - Libass
-  - google-cast-sdk (4.8.4)
   - hermes-engine (0.81.4):
     - hermes-engine/Pre-built (= 0.81.4)
   - hermes-engine/Pre-built (0.81.4)
@@ -458,7 +457,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - PromisesObjC (2.4.0)
   - RCTDeprecation (0.81.4)
   - RCTRequired (0.81.4)
   - RCTTypeSafety (0.81.4):
@@ -1855,10 +1853,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-google-cast (4.9.1):
-    - google-cast-sdk
-    - PromisesObjC
-    - React
   - react-native-netinfo (12.0.1):
     - hermes-engine
     - RCTRequired
@@ -2898,7 +2892,6 @@ DEPENDENCIES:
   - react-native-bottom-tabs (from `../node_modules/react-native-bottom-tabs`)
   - "react-native-device-brightness (from `../node_modules/@adrianso/react-native-device-brightness`)"
   - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
-  - react-native-google-cast (from `../node_modules/react-native-google-cast`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - "react-native-skia (from `../node_modules/@shopify/react-native-skia`)"
@@ -2948,14 +2941,12 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
-    - google-cast-sdk
     - libavif
     - libdav1d
     - libwebp
     - lottie-ios
     - MMKV
     - MMKVCore
-    - PromisesObjC
     - ReachabilitySwift
     - SDWebImage
     - SDWebImageAVIFCoder
@@ -3138,8 +3129,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@adrianso/react-native-device-brightness"
   react-native-get-random-values:
     :path: "../node_modules/react-native-get-random-values"
-  react-native-google-cast:
-    :path: "../node_modules/react-native-google-cast"
   react-native-netinfo:
     :path: "../node_modules/@react-native-community/netinfo"
   react-native-safe-area-context:
@@ -3281,7 +3270,6 @@ SPEC CHECKSUMS:
   EXUpdatesInterface: 5adf50cb41e079c861da6d9b4b954c3db9a50734
   FBLazyVector: 9e0cd874afd81d9a4d36679daca991b58b260d42
   FFmpegKit: 3885085fbbc320745838ee4c8a1f9c5e5953dab2
-  google-cast-sdk: 32f65af50d164e3c475e79ad123db3cc26fbcd37
   hermes-engine: 35c763d57c9832d0eef764316ca1c4d043581394
   ImageColors: 3019b37809023d67795162135628e367d70e1766
   KSPlayer: f163ac6195f240b6fa5b8225aeb39ec811a70c62
@@ -3295,7 +3283,6 @@ SPEC CHECKSUMS:
   MMKVCore: d078dce7d6586a888b2c2ef5343b6242678e3ee8
   NitroMmkv: 38dfb2983c83e9bbbb64423ff48fbeaaa097cc38
   NitroModules: ff0d24be334de628166b9ac63661c998c732de7d
-  PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   RCTDeprecation: 7487d6dda857ccd4cb3dd6ecfccdc3170e85dcbc
   RCTRequired: 54128b7df8be566881d48c7234724a78cb9b6157
   RCTTypeSafety: d2b07797a79e45d7b19e1cd2f53c79ab419fe217
@@ -3335,7 +3322,6 @@ SPEC CHECKSUMS:
   react-native-bottom-tabs: bcb70e4fae95fc9da0da875f7414acda26dfc551
   react-native-device-brightness: 1a997350d060c3df9f303b1df84a4f7c5cbeb924
   react-native-get-random-values: a603782b2b222a34533c66371614790282dba3f1
-  react-native-google-cast: 7be68a5d0b7eeb95a5924c3ecef8d319ef6c0a44
   react-native-netinfo: 7e0b1936e928fa8ddb60da9e572a33767db7805f
   react-native-safe-area-context: ae7587b95fb580d1800c5b0b2a7bd48c2868e67a
   react-native-skia: 6a51463f8391c82f675f490c8078135925285a8f

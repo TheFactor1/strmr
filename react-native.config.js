@@ -1,4 +1,4 @@
-// Prevent expo-libvlc-player from linking on iOS (Android only)
+// Prevent certain modules from linking on iOS/macOS
 module.exports = {
   dependencies: {
     'expo-libvlc-player': {
@@ -9,6 +9,11 @@ module.exports = {
     'react-native-vlc-media-player': {
       platforms: {
         ios: null,
+      },
+    },
+    'react-native-google-cast': {
+      platforms: {
+        ios: null, // Google Cast SDK doesn't support Mac Catalyst
       },
     },
   },
