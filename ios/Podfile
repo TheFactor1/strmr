@@ -52,12 +52,27 @@ target 'Nuvio' do
     :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false',
   )
 
+  # KSPlayer dependencies
+  pod 'KSPlayer', :path => '../KSPlayer'
+  pod 'DisplayCriteria', :path => '../KSPlayer', :modular_headers => true
+  pod 'FFmpegKit', :git => 'https://github.com/kingslay/FFmpegKit.git', :branch => 'main', :modular_headers => true
+  pod 'Libass', :git => 'https://github.com/kingslay/FFmpegKit.git', :branch => 'main'
+
   post_install do |installer|
     react_native_post_install(
       installer,
       config[:reactNativePath],
-      :mac_catalyst_enabled => false,
+      :mac_catalyst_enabled => true,
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
+
+    # Exclude pods that don't support Mac Catalyst
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        if ['react-native-google-cast', 'GoogleCast'].include?(target.name)
+          config.build_settings['SUPPORTS_MACCATALYST'] = 'NO'
+        end
+      end
+    end
   end
 end
