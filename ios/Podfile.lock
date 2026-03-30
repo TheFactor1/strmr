@@ -235,8 +235,6 @@ PODS:
     - ExpoModulesCore
   - ExpoLinking (8.0.11):
     - ExpoModulesCore
-  - ExpoLiveActivity (0.4.2):
-    - ExpoModulesCore
   - ExpoLocalization (17.0.8):
     - ExpoModulesCore
   - ExpoModulesCore (3.0.29):
@@ -1829,8 +1827,6 @@ PODS:
     - ReactNativeDependencies
     - SwiftUIIntrospect (~> 1.0)
     - Yoga
-  - react-native-device-brightness (1.2.7):
-    - React
   - react-native-get-random-values (2.0.0):
     - hermes-engine
     - RCTRequired
@@ -1934,30 +1930,6 @@ PODS:
     - React-ImageManager
     - React-jsi
     - react-native-safe-area-context/common
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
-  - react-native-skia (2.5.1):
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
-    - React
-    - React-callinvoker
-    - React-Core
-    - React-Core-prebuilt
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
     - React-NativeModulesApple
     - React-RCTFabric
     - React-renderercss
@@ -2833,7 +2805,6 @@ DEPENDENCIES:
   - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
   - ExpoLinearGradient (from `../node_modules/expo-linear-gradient/ios`)
   - ExpoLinking (from `../node_modules/expo-linking/ios`)
-  - ExpoLiveActivity (from `../node_modules/expo-live-activity/ios`)
   - ExpoLocalization (from `../node_modules/expo-localization/ios`)
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
   - ExpoRandom (from `../node_modules/expo-random/ios`)
@@ -2890,11 +2861,9 @@ DEPENDENCIES:
   - "react-native-background-downloader (from `../node_modules/@kesha-antonov/react-native-background-downloader`)"
   - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
   - react-native-bottom-tabs (from `../node_modules/react-native-bottom-tabs`)
-  - "react-native-device-brightness (from `../node_modules/@adrianso/react-native-device-brightness`)"
   - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
-  - "react-native-skia (from `../node_modules/@shopify/react-native-skia`)"
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
   - react-native-video (from `../node_modules/react-native-video`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -3010,8 +2979,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-linear-gradient/ios"
   ExpoLinking:
     :path: "../node_modules/expo-linking/ios"
-  ExpoLiveActivity:
-    :path: "../node_modules/expo-live-activity/ios"
   ExpoLocalization:
     :path: "../node_modules/expo-localization/ios"
   ExpoModulesCore:
@@ -3125,16 +3092,12 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-community/blur"
   react-native-bottom-tabs:
     :path: "../node_modules/react-native-bottom-tabs"
-  react-native-device-brightness:
-    :path: "../node_modules/@adrianso/react-native-device-brightness"
   react-native-get-random-values:
     :path: "../node_modules/react-native-get-random-values"
   react-native-netinfo:
     :path: "../node_modules/@react-native-community/netinfo"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
-  react-native-skia:
-    :path: "../node_modules/@shopify/react-native-skia"
   react-native-slider:
     :path: "../node_modules/@react-native-community/slider"
   react-native-video:
@@ -3257,7 +3220,6 @@ SPEC CHECKSUMS:
   ExpoKeepAwake: 55f75eca6499bb9e4231ebad6f3e9cb8f99c0296
   ExpoLinearGradient: 809102bdb979f590083af49f7fa4805cd931bd58
   ExpoLinking: 8f0aaf69aa56f832913030503b6263dc6f647f37
-  ExpoLiveActivity: d0dd0e8e1460b6b26555b611c4826cdb1036eea2
   ExpoLocalization: d9168d5300a5b03e5e78b986124d11fb6ec3ebbd
   ExpoModulesCore: f3da4f1ab5a8375d0beafab763739dbee8446583
   ExpoRandom: d1444df65007bdd4070009efd5dab18e20bf0f00
@@ -3320,11 +3282,9 @@ SPEC CHECKSUMS:
   react-native-background-downloader: 19eb7c5a834bac72f1273ab25325c71c44953c49
   react-native-blur: 1b00ef07fe0efdc0c40b37139a5268ccad73c72d
   react-native-bottom-tabs: bcb70e4fae95fc9da0da875f7414acda26dfc551
-  react-native-device-brightness: 1a997350d060c3df9f303b1df84a4f7c5cbeb924
   react-native-get-random-values: a603782b2b222a34533c66371614790282dba3f1
   react-native-netinfo: 7e0b1936e928fa8ddb60da9e572a33767db7805f
   react-native-safe-area-context: ae7587b95fb580d1800c5b0b2a7bd48c2868e67a
-  react-native-skia: 6a51463f8391c82f675f490c8078135925285a8f
   react-native-slider: 8b9a218d1a3e526146a170cb6133be9cda23e70e
   react-native-video: bca076cfff2a3e749fc63b3ac88118e1d8ee2689
   React-NativeModulesApple: a9464983ccc0f66f45e93558671f60fc7536e438
@@ -3377,6 +3337,6 @@ SPEC CHECKSUMS:
   SwiftUIIntrospect: fee9aa07293ee280373a591e1824e8ddc869ba5d
   Yoga: 051f086b5ccf465ff2ed38a2cf5a558ae01aaaa1
 
-PODFILE CHECKSUM: 33399d786f2fefbeff0ee013fddf3aca0e7e1e4f
+PODFILE CHECKSUM: 82eb3c129c4691efb411d696a44202a70866292e
 
 COCOAPODS: 1.16.2

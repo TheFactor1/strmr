@@ -16,6 +16,21 @@ module.exports = {
         ios: null, // Google Cast SDK doesn't support Mac Catalyst
       },
     },
+    'expo-live-activity': {
+      platforms: {
+        ios: null, // ActivityKit is unavailable on Mac Catalyst
+      },
+    },
+    '@shopify/react-native-skia': {
+      platforms: {
+        ios: null, // Skia library not available for Mac Catalyst
+      },
+    },
+    '@adrianso/react-native-device-brightness': {
+      platforms: {
+        ios: null, // Brightness control not applicable on macOS
+      },
+    },
   },
 };
 

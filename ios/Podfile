@@ -21,7 +21,7 @@ platform :ios, podfile_properties['ios.deploymentTarget'] || '15.1'
 prepare_react_native_project!
 
 target 'Nuvio' do
-  use_expo_modules!
+  use_expo_modules!(exclude: ['expo-live-activity'])
 
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
     config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"];
@@ -73,6 +73,20 @@ target 'Nuvio' do
           config.build_settings['SUPPORTS_MACCATALYST'] = 'NO'
         end
       end
+    end
+
+    # Fix "bundle format is ambiguous" codesign error for Mac Catalyst.
+    # The React and ReactNativeDependencies xcframework maccatalyst slices have a hybrid
+    # bundle structure (flat iOS binary + macOS Versions/ directory) that confuses codesign.
+    # Removing Versions/ after copy makes them clean flat frameworks codesign can handle.
+    frameworks_script = File.join(installer.sandbox.root, 'Target Support Files', 'Pods-Nuvio', 'Pods-Nuvio-frameworks.sh')
+    if File.exist?(frameworks_script)
+      script = File.read(frameworks_script)
+      script.gsub!(
+        '  code_sign_if_enabled "${destination}/$(basename "$1")"',
+        "  rm -rf \"${destination}/$(basename \"$1\")/Versions\"\n  code_sign_if_enabled \"${destination}/$(basename \"$1\")\""
+      )
+      File.write(frameworks_script, script)
     end
   end
 end
