@@ -25,7 +25,13 @@ import { useTheme } from '../contexts/ThemeContext';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { mmkvStorage } from '../services/mmkvStorage';
-import { ShapeAnimation } from '../components/onboarding/ShapeAnimation';
+// ShapeAnimation uses @shopify/react-native-skia which is excluded from Mac Catalyst builds
+let ShapeAnimation: any = null;
+try {
+  ShapeAnimation = require('../components/onboarding/ShapeAnimation').ShapeAnimation;
+} catch (e) {
+  // Skia not available (Mac Catalyst)
+}
 
 const { width, height } = Dimensions.get('window');
 
@@ -301,7 +307,7 @@ const OnboardingScreen = () => {
 
       <View style={styles.fullScreenContainer}>
         {/* Shape Animation Background - iOS only */}
-        {Platform.OS === 'ios' && <ShapeAnimation scrollX={scrollX} />}
+        {Platform.OS === 'ios' && ShapeAnimation && <ShapeAnimation scrollX={scrollX} />}
 
         {/* Header */}
         <Animated.View

@@ -10,10 +10,14 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		800C7B849163FAAC88DB98F6 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 04939D24EA845814748CF4C5 /* PrivacyInfo.xcprivacy */; };
+		B22D170B7109D77E77A1D5DC /* KSPlayerViewManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 993B48A9DE29F32CFC8B8415 /* KSPlayerViewManager.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		C1280595842967468DD92406 /* KSPlayerManager.m in Sources */ = {isa = PBXBuildFile; fileRef = EFB6B36EB7094A552FCEC6F2 /* KSPlayerManager.m */; };
 		C6D6251CEF4B18DBB8A3E0AC /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1CDA6ECED3E60C094DDEFE1 /* ExpoModulesProvider.swift */; };
+		D224B2EC273053398EBDC24B /* KSPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 989BE873247CC4E1985D4270 /* KSPlayerView.swift */; };
 		DCD40879DF68AC92E270497B /* libPods-Nuvio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 82C0DE761492F556FCDC668B /* libPods-Nuvio.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
+		F32636E0236325F8C2AB77B7 /* KSPlayerModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 659DBB9AE421326E0765146B /* KSPlayerModule.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -37,9 +41,12 @@
 		3498E886CB524A65BBF369CA /* ViewHelpers.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = ViewHelpers.swift; sourceTree = "<group>"; };
 		3DA9471C5B154C449436741B /* Color+hex.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = "Color+hex.swift"; sourceTree = "<group>"; };
 		4B4040FFF5F2219040B9B0F5 /* Pods-Nuvio.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Nuvio.debug.xcconfig"; path = "Target Support Files/Pods-Nuvio/Pods-Nuvio.debug.xcconfig"; sourceTree = "<group>"; };
+		659DBB9AE421326E0765146B /* KSPlayerModule.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = KSPlayerModule.swift; path = ../KSPlayer/RNBridge/KSPlayerModule.swift; sourceTree = "<group>"; };
 		6DFF278E11F8474CAD508574 /* Assets.xcassets */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6F61B62A7A374AEC88AEBA5E /* Image+dynamic.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = "Image+dynamic.swift"; sourceTree = "<group>"; };
 		82C0DE761492F556FCDC668B /* libPods-Nuvio.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Nuvio.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		989BE873247CC4E1985D4270 /* KSPlayerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = KSPlayerView.swift; path = ../KSPlayer/RNBridge/KSPlayerView.swift; sourceTree = "<group>"; };
+		993B48A9DE29F32CFC8B8415 /* KSPlayerViewManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = KSPlayerViewManager.swift; path = ../KSPlayer/RNBridge/KSPlayerViewManager.swift; sourceTree = "<group>"; };
 		99C3409F2BDC43379265C7E4 /* Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		9AB38B50212545F3BAF096A0 /* View+applyWidgetURL.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = "View+applyWidgetURL.swift"; sourceTree = "<group>"; };
 		A0E98F71DBCC4876B236439F /* LiveActivityWidgetBundle.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = LiveActivityWidgetBundle.swift; sourceTree = "<group>"; };
@@ -50,6 +57,7 @@
 		C2663B2EEB9D72B0FC379746 /* Pods-Nuvio.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Nuvio.release.xcconfig"; path = "Target Support Files/Pods-Nuvio/Pods-Nuvio.release.xcconfig"; sourceTree = "<group>"; };
 		C63E404CF0444243A1A4848D /* LiveActivity.entitlements */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; path = LiveActivity.entitlements; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		EFB6B36EB7094A552FCEC6F2 /* KSPlayerManager.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = KSPlayerManager.m; path = ../KSPlayer/RNBridge/KSPlayerManager.m; sourceTree = "<group>"; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Nuvio/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Nuvio-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Nuvio-Bridging-Header.h"; path = "Nuvio/Nuvio-Bridging-Header.h"; sourceTree = "<group>"; };
 		F55232554C6E44E2B378E07B /* LiveActivityView.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = LiveActivityView.swift; sourceTree = "<group>"; };
@@ -79,6 +87,10 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
 				04939D24EA845814748CF4C5 /* PrivacyInfo.xcprivacy */,
+				EFB6B36EB7094A552FCEC6F2 /* KSPlayerManager.m */,
+				659DBB9AE421326E0765146B /* KSPlayerModule.swift */,
+				989BE873247CC4E1985D4270 /* KSPlayerView.swift */,
+				993B48A9DE29F32CFC8B8415 /* KSPlayerViewManager.swift */,
 			);
 			name = Nuvio;
 			sourceTree = "<group>";
@@ -452,6 +464,10 @@
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
 				C6D6251CEF4B18DBB8A3E0AC /* ExpoModulesProvider.swift in Sources */,
+				C1280595842967468DD92406 /* KSPlayerManager.m in Sources */,
+				F32636E0236325F8C2AB77B7 /* KSPlayerModule.swift in Sources */,
+				D224B2EC273053398EBDC24B /* KSPlayerView.swift in Sources */,
+				B22D170B7109D77E77A1D5DC /* KSPlayerViewManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
