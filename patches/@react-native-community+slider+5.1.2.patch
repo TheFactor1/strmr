@@ -1,0 +1,13 @@
+diff --git a/node_modules/@react-native-community/slider/ios/RNCSliderComponentView.mm b/node_modules/@react-native-community/slider/ios/RNCSliderComponentView.mm
+index 87dd20a..3277ca5 100644
+--- a/node_modules/@react-native-community/slider/ios/RNCSliderComponentView.mm
++++ b/node_modules/@react-native-community/slider/ios/RNCSliderComponentView.mm
+@@ -23,7 +23,7 @@ @implementation RNCSliderComponentView
+ {
+     RNCSlider *slider;
+     UIImage *_image;
+-    BOOL _isSliding;
++    bool _isSliding;
+ }
+ 
+ + (ComponentDescriptorProvider)componentDescriptorProvider

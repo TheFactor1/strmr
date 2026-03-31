@@ -76,20 +76,45 @@ target 'Nuvio' do
     end
 
     # Fix "bundle format is ambiguous" codesign error for Mac Catalyst.
-    # The React and ReactNativeDependencies xcframework maccatalyst slices have a hybrid
-    # bundle structure (flat iOS binary + macOS Versions/ directory) that confuses codesign.
-    # Removing Versions/ after copy makes them clean flat frameworks codesign can handle.
+    # React.framework and ReactNativeDependencies.framework have hybrid layouts:
+    # flat iOS binary at root + macOS Versions/ directory. This confuses codesign.
+    # Fix: convert hybrid layout into proper versioned macOS framework structure.
+    # Hermes already has correct versioned layout, so only target frameworks where
+    # the top-level binary is a real file (not a symlink into Versions/).
     frameworks_script = File.join(installer.sandbox.root, 'Target Support Files', 'Pods-Nuvio', 'Pods-Nuvio-frameworks.sh')
     if File.exist?(frameworks_script)
       script = File.read(frameworks_script)
-      # Only React.framework and ReactNativeDependencies.framework ship hybrid Catalyst
-      # slices that need their Versions/ directory removed before signing. Hermes is a
-      # normal symlinked macOS framework, so deleting Versions/ breaks its layout.
+      fix_and_sign = <<~'SHELL'
+  fw="${destination}/$(basename "$1")"
+  bn="${fw%.framework}"; bn="$(basename "$bn")"
+  # Convert hybrid frameworks to proper versioned macOS layout
+  if [ -f "$fw/$bn" ] && [ ! -L "$fw/$bn" ] && [ -d "$fw/Versions" ]; then
+    rm -rf "$fw/Versions"
+    mkdir -p "$fw/Versions/A/Resources"
+    mv "$fw/$bn" "$fw/Versions/A/$bn"
+    if [ -d "$fw/Resources" ]; then
+      cp -a "$fw/Resources/"* "$fw/Versions/A/Resources/" 2>/dev/null
+      rm -rf "$fw/Resources"
+    fi
+    find "$fw" -maxdepth 1 -type d -name "*.bundle" -exec mv {} "$fw/Versions/A/" \; 2>/dev/null || true
+    ln -sf A "$fw/Versions/Current"
+    ln -sf "Versions/Current/$bn" "$fw/$bn"
+    ln -sf Versions/Current/Resources "$fw/Resources"
+    for b in "$fw"/Versions/A/*.bundle; do
+      [ -d "$b" ] && ln -sf "Versions/Current/$(basename "$b")" "$fw/$(basename "$b")"
+    done
+  fi
+  # Sign nested bundles before the framework itself
+  find "$fw" -path "*/Versions/A/*.bundle" -type d -print0 2>/dev/null | while IFS= read -r -d '' b; do
+    code_sign_if_enabled "$b"
+  done || true
+  code_sign_if_enabled "$fw"
+SHELL
       script.gsub!(
         '  code_sign_if_enabled "${destination}/$(basename "$1")"',
-        "  framework_path=\"${destination}/$(basename \"$1\")\"\n  framework_name=\"$(basename \"$framework_path\")\"\n  case \"$framework_name\" in\n    React.framework|ReactNativeDependencies.framework)\n      rm -rf \"$framework_path/Versions\"\n      if [ -f \"$framework_path/Resources/Info.plist\" ] && [ ! -f \"$framework_path/Info.plist\" ]; then\n        cp \"$framework_path/Resources/Info.plist\" \"$framework_path/Info.plist\"\n      fi\n      ;;\n  esac\n  if [ \"$framework_name\" = \"ReactNativeDependencies.framework\" ]; then\n    find \"$framework_path\" -type d -name \"*.bundle\" -print0 | while IFS= read -r -d '' bundle; do\n      code_sign_if_enabled \"$bundle\"\n    done\n  fi\n  code_sign_if_enabled \"$framework_path\""
+        fix_and_sign
       )
-      # Remove --preserve-metadata which can produce invalid signatures for Catalyst
+      # Remove --preserve-metadata which produces invalid signatures for Catalyst
       script.gsub!('--preserve-metadata=identifier,entitlements ', '')
       File.write(frameworks_script, script)
     end
