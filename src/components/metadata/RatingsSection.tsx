@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Image, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Image, Animated, Dimensions, Linking, TouchableOpacity } from 'react-native';
 import { MaterialIcons as MaterialIconsWrapper } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import FastImage from '@d11/react-native-fast-image';
@@ -262,9 +262,10 @@ export const RatingsSection: React.FC<RatingsSectionProps> = ({ imdbId, type }) 
         {displayRatings.map(([source, value]) => {
           const config = ratingConfig[source as keyof typeof ratingConfig];
           const displayValue = config.transform(parseFloat(value as string));
+          const isIMDb = source === 'imdb';
 
-          return (
-            <View key={source} style={[styles.compactRatingItem, { marginRight: itemSpacing }]}>
+          const Content = (
+            <View style={[styles.compactRatingItem, { marginRight: itemSpacing }]}>
               {config.isImage ? (
                 <FastImage
                   source={config.icon as any}
@@ -298,6 +299,20 @@ export const RatingsSection: React.FC<RatingsSectionProps> = ({ imdbId, type }) 
               </Text>
             </View>
           );
+
+          if (isIMDb) {
+            return (
+              <TouchableOpacity
+                key={source}
+                activeOpacity={0.7}
+                onPress={() => Linking.openURL(`https://www.imdb.com/title/${imdbId}/`)}
+              >
+                {Content}
+              </TouchableOpacity>
+            );
+          }
+
+          return React.cloneElement(Content, { key: source });
         })}
       </View>
     </Animated.View>

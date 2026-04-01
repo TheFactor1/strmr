@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
+  Linking,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import FastImage from '@d11/react-native-fast-image';
@@ -240,7 +241,11 @@ const MetadataDetails: React.FC<MetadataDetailsProps> = ({
           <AgeRatingBadge rating={metadata.certification} />
         )}
         {metadata.imdbRating && !isMDBEnabled && (
-          <View style={styles.ratingContainer}>
+          <TouchableOpacity
+            style={styles.ratingContainer}
+            activeOpacity={0.7}
+            onPress={() => _imdbId && Linking.openURL(`https://www.imdb.com/title/${_imdbId}/`)}
+          >
             <FastImage
               source={{ uri: IMDb_LOGO }}
               style={[
@@ -259,7 +264,7 @@ const MetadataDetails: React.FC<MetadataDetailsProps> = ({
                 fontSize: isTV ? 18 : isLargeTablet ? 17 : isTablet ? 16 : 15
               }
             ]}>{metadata.imdbRating}</Text>
-          </View>
+          </TouchableOpacity>
         )}
       </View>
 
