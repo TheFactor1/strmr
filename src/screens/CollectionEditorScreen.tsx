@@ -109,6 +109,8 @@ const CollectionEditorScreen = () => {
   const isNew = !collectionId;
 
   const [title, setTitle] = useState('');
+  const [backdropImageUrl, setBackdropImageUrl] = useState('');
+  const [showAllTab, setShowAllTab] = useState(true);
   const [folders, setFolders] = useState<CollectionFolder[]>([]);
   const [editingFolder, setEditingFolder] = useState<CollectionFolder | null>(null);
   const [editingFolderIndex, setEditingFolderIndex] = useState<number>(-1);
@@ -131,6 +133,8 @@ const CollectionEditorScreen = () => {
     const found = collections.find(c => c.id === collectionId);
     if (found) {
       setTitle(found.title);
+      setBackdropImageUrl(found.backdropImageUrl || '');
+      setShowAllTab(found.showAllTab !== false);
       setFolders(found.folders);
     }
   };
@@ -175,6 +179,8 @@ const CollectionEditorScreen = () => {
     const collection: Collection = {
       id: collectionId || collectionsService.generateId(),
       title: trimmedTitle,
+      backdropImageUrl: backdropImageUrl.trim() || undefined,
+      showAllTab,
       folders,
     };
 
@@ -184,7 +190,7 @@ const CollectionEditorScreen = () => {
       await collectionsService.updateCollection(collection);
     }
     navigation.goBack();
-  }, [title, folders, collectionId, isNew, navigation, showError]);
+  }, [title, backdropImageUrl, showAllTab, folders, collectionId, isNew, navigation, showError]);
 
   const handleAddFolder = useCallback(() => {
     const newFolder: CollectionFolder = {
@@ -586,6 +592,30 @@ const CollectionEditorScreen = () => {
           placeholderTextColor={colors.disabled}
           autoFocus={isNew}
         />
+
+        {/* Backdrop Image URL */}
+        <Text style={[styles.label, { color: colors.textMuted, marginTop: 16 }]}>Backdrop Image URL</Text>
+        <TextInput
+          style={[styles.textInput, { backgroundColor: colors.elevation1, color: colors.text, borderColor: colors.border }]}
+          value={backdropImageUrl}
+          onChangeText={setBackdropImageUrl}
+          placeholder="Optional backdrop image URL"
+          placeholderTextColor={colors.disabled}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+        />
+
+        {/* Show All Tab */}
+        <TouchableOpacity
+          style={[styles.toggleRow, { backgroundColor: colors.elevation1, borderColor: colors.border, marginTop: 16 }]}
+          onPress={() => setShowAllTab(!showAllTab)}
+        >
+          <Text style={[styles.toggleLabel, { color: colors.text }]}>Show "All" Tab</Text>
+          <View style={[styles.toggleSwitch, { backgroundColor: showAllTab ? colors.primary : colors.disabled }]}>
+            <View style={[styles.toggleThumb, showAllTab && styles.toggleThumbActive]} />
+          </View>
+        </TouchableOpacity>
 
         {/* Folders */}
         <View style={styles.foldersHeader}>

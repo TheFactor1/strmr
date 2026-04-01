@@ -4,6 +4,8 @@ export interface CollectionCatalogSource {
   catalogId: string;
 }
 
+export type FolderViewMode = 'TABBED_GRID' | 'ROWS' | 'FOLLOW_LAYOUT';
+
 export interface CollectionFolder {
   id: string;
   title: string;
@@ -17,5 +19,8 @@ export interface CollectionFolder {
 export interface Collection {
   id: string;
   title: string;
+  backdropImageUrl?: string;
+  viewMode?: FolderViewMode;
+  showAllTab?: boolean;
   folders: CollectionFolder[];
 }
