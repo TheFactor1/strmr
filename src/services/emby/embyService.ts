@@ -242,8 +242,10 @@ class EmbyService {
   async getPlaybackUrl(itemId: string): Promise<string | null> {
     const creds = await this.getCredentials();
     if (!creds) return null;
-    const { serverUrl, apiKey } = creds;
-    return `${serverUrl}/Videos/${itemId}/stream?api_key=${apiKey}&static=true`;
+    const { serverUrl } = creds;
+    // Note: Authentication should be provided via headers (e.g., X-Emby-Token)
+    // when the HTTP request is made, not via query parameters in the URL.
+    return `${serverUrl}/Videos/${itemId}/stream?static=true`;
   }
 
   // -------------------------------------------------------------------------
