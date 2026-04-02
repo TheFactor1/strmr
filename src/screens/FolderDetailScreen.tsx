@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   StatusBar,
   Dimensions,
-  Platform,
   FlatList,
+  ScrollView,
 } from 'react-native';
 import { useNavigation, useRoute, NavigationProp } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -28,6 +28,32 @@ const NUM_COLUMNS = screenWidth >= 1024 ? 5 : screenWidth >= 768 ? 4 : 3;
 const ITEM_SPACING = 8;
 const HORIZONTAL_PADDING = 16;
 const ITEM_WIDTH = (screenWidth - HORIZONTAL_PADDING * 2 - ITEM_SPACING * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
+const ROW_ITEM_WIDTH = screenWidth * 0.28;
+
+interface TabData {
+  label: string;
+  typeLabel: string;
+  items: StreamingContent[];
+  addonBaseUrl: string;
+  isLoading: boolean;
+  isAllTab: boolean;
+}
+
+function roundRobinMerge(lists: StreamingContent[][]): StreamingContent[] {
+  const result: StreamingContent[] = [];
+  const seen = new Set<string>();
+  const maxSize = Math.max(...lists.map(l => l.length), 0);
+  for (let i = 0; i < maxSize; i++) {
+    for (const list of lists) {
+      const item = list[i];
+      if (item && !seen.has(item.id)) {
+        seen.add(item.id);
+        result.push(item);
+      }
+    }
+  }
+  return result;
+}
 
 const FolderDetailScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -38,10 +64,10 @@ const FolderDetailScreen = () => {
   const { collectionId, folderId } = route.params as { collectionId: string; folderId: string };
 
   const [folder, setFolder] = useState<CollectionFolder | null>(null);
+  const [viewMode, setViewMode] = useState<'TABBED_GRID' | 'ROWS'>('TABBED_GRID');
   const [selectedTabIndex, setSelectedTabIndex] = useState(0);
-  const [items, setItems] = useState<StreamingContent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [tabLabels, setTabLabels] = useState<{ name: string; type: string }[]>([]);
+  const [tabs, setTabs] = useState<TabData[]>([]);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
     loadFolder();
@@ -55,40 +81,46 @@ const FolderDetailScreen = () => {
     if (!f) return;
     setFolder(f);
 
-    // Build tab labels — resolve human-readable names from addon manifests
+    const vm = collection.viewMode;
+    setViewMode(vm === 'ROWS' ? 'ROWS' : 'TABBED_GRID');
+
+    const showAll = (collection.showAllTab !== false) && f.catalogSources.length >= 2;
     const addons = await stremioService.getInstalledAddonsAsync();
-    const labels = f.catalogSources.map(source => {
+
+    // Build source tabs
+    const sourceTabs: TabData[] = f.catalogSources.map(source => {
       const addon = addons.find((a: any) => a.id === source.addonId);
       const catalog = addon?.catalogs?.find(
         (c: any) => c.id === source.catalogId && c.type === source.type
       );
+      const typeLabel = source.type.charAt(0).toUpperCase() + source.type.slice(1);
       return {
-        name: catalog?.name || source.catalogId,
-        type: source.type,
+        label: catalog?.name || source.catalogId,
+        typeLabel: typeLabel === 'Movie' ? 'Movies' : typeLabel === 'Series' ? 'Series' : typeLabel,
+        items: [],
+        addonBaseUrl: addon?.transportUrl || '',
+        isLoading: true,
+        isAllTab: false,
       };
     });
-    setTabLabels(labels);
 
-    // Load first tab
-    if (f.catalogSources.length > 0) {
-      loadCatalogData(f.catalogSources[0]);
-    }
-  };
+    // Prepend All tab if needed
+    const allTabs = showAll
+      ? [{ label: 'All', typeLabel: 'Combined', items: [] as StreamingContent[], addonBaseUrl: '', isLoading: true, isAllTab: true }, ...sourceTabs]
+      : sourceTabs;
 
-  const loadCatalogData = async (source: CollectionCatalogSource) => {
-    setLoading(true);
-    setItems([]);
-    try {
-      const addons = await stremioService.getInstalledAddonsAsync();
+    setTabs(allTabs);
+    setInitialLoading(false);
+
+    // Load all catalogs concurrently
+    const tabOffset = showAll ? 1 : 0;
+    const loadPromises = f.catalogSources.map(async (source, index) => {
       const addon = addons.find((a: any) => a.id === source.addonId);
-      if (!addon) {
-        setLoading(false);
-        return;
-      }
+      if (!addon) return { index: index + tabOffset, items: [] as StreamingContent[] };
 
-      const metas = await stremioService.getCatalog(addon, source.type, source.catalogId, 1);
-      if (metas && metas.length > 0) {
-        const mapped: StreamingContent[] = metas.map((meta: any) => ({
+      try {
+        const metas = await stremioService.getCatalog(addon, source.type, source.catalogId, 1);
+        const mapped: StreamingContent[] = (metas || []).map((meta: any) => ({
           id: meta.id,
           type: meta.type,
           name: meta.name,
@@ -99,26 +131,40 @@ const FolderDetailScreen = () => {
           genres: meta.genres,
           description: meta.description,
         }));
-        setItems(mapped);
+        return { index: index + tabOffset, items: mapped };
+      } catch {
+        return { index: index + tabOffset, items: [] as StreamingContent[] };
       }
-    } catch (error) {
-      if (__DEV__) console.error('[FolderDetail] Error loading catalog:', error);
-    } finally {
-      setLoading(false);
-    }
+    });
+
+    const results = await Promise.all(loadPromises);
+
+    setTabs(prev => {
+      const updated = [...prev];
+      for (const result of results) {
+        if (result.index < updated.length) {
+          updated[result.index] = { ...updated[result.index], items: result.items, isLoading: false };
+        }
+      }
+      // Build All tab
+      if (showAll && updated.length > 0) {
+        const sourceItems = updated.slice(1).map(t => t.items);
+        const merged = roundRobinMerge(sourceItems);
+        updated[0] = { ...updated[0], items: merged, isLoading: false };
+      }
+      return updated;
+    });
   };
 
   const handleTabPress = useCallback((index: number) => {
-    if (!folder) return;
     setSelectedTabIndex(index);
-    loadCatalogData(folder.catalogSources[index]);
-  }, [folder]);
+  }, []);
 
   const handleItemPress = useCallback((id: string, type: string) => {
     navigation.navigate('Metadata', { id, type });
   }, [navigation]);
 
-  const renderItem = useCallback(({ item }: { item: StreamingContent }) => (
+  const renderGridItem = useCallback(({ item }: { item: StreamingContent }) => (
     <TouchableOpacity
       activeOpacity={0.7}
       onPress={() => handleItemPress(item.id, item.type)}
@@ -135,9 +181,33 @@ const FolderDetailScreen = () => {
     </TouchableOpacity>
   ), [handleItemPress, colors.text]);
 
-  const keyExtractor = useCallback((item: StreamingContent) => item.id, []);
+  const renderRowItem = useCallback(({ item }: { item: StreamingContent }) => (
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={() => handleItemPress(item.id, item.type)}
+      style={styles.rowItem}
+    >
+      <FastImage
+        source={{ uri: item.poster, priority: FastImage.priority.normal }}
+        style={styles.rowPoster}
+        resizeMode={FastImage.resizeMode.cover}
+      />
+      <Text numberOfLines={2} style={[styles.gridTitle, { color: colors.text }]}>
+        {item.name}
+      </Text>
+    </TouchableOpacity>
+  ), [handleItemPress, colors.text]);
 
-  if (!folder) {
+  const keyExtractor = useCallback((item: StreamingContent, index: number) => `${item.id}_${index}`, []);
+
+  // Header with emoji support
+  const headerTitle = useMemo(() => {
+    if (!folder) return '';
+    if (folder.coverEmoji) return `${folder.coverEmoji}  ${folder.title}`;
+    return folder.title;
+  }, [folder]);
+
+  if (!folder || initialLoading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.darkBackground }]}>
         <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
@@ -146,20 +216,63 @@ const FolderDetailScreen = () => {
     );
   }
 
+  const currentTab = tabs[selectedTabIndex];
+
+  if (viewMode === 'ROWS') {
+    const sourceTabs = tabs.filter(t => !t.isAllTab);
+    return (
+      <View style={[styles.container, { backgroundColor: colors.darkBackground }]}>
+        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+        <ScreenHeader
+          title={headerTitle}
+          showBackButton
+          onBackPress={() => navigation.goBack()}
+        />
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 48 }}>
+          {sourceTabs.map((tab, idx) => (
+            <View key={`row-${idx}-${tab.label}`} style={styles.rowSection}>
+              <View style={styles.rowHeader}>
+                <Text style={[styles.rowTitle, { color: colors.text }]}>{tab.label}</Text>
+                <Text style={[styles.rowType, { color: colors.textMuted }]}>{tab.typeLabel}</Text>
+              </View>
+              {tab.isLoading ? (
+                <View style={styles.rowLoadingContainer}>
+                  <LoadingSpinner size="small" />
+                </View>
+              ) : tab.items.length === 0 ? (
+                <Text style={[styles.rowEmptyText, { color: colors.textMuted }]}>No content</Text>
+              ) : (
+                <FlatList
+                  data={tab.items}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ paddingHorizontal: HORIZONTAL_PADDING, gap: 10 }}
+                  keyExtractor={(item, i) => `${tab.label}_${item.id}_${i}`}
+                  renderItem={renderRowItem}
+                />
+              )}
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // Tabbed Grid view (default)
   return (
     <View style={[styles.container, { backgroundColor: colors.darkBackground }]}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       <ScreenHeader
-        title={folder.title}
+        title={headerTitle}
         showBackButton
         onBackPress={() => navigation.goBack()}
       />
 
       {/* Tabs */}
-      {folder.catalogSources.length > 1 && (
+      {tabs.length > 1 && (
         <View style={styles.tabContainer}>
           <FlatList
-            data={tabLabels}
+            data={tabs}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.tabList}
@@ -181,7 +294,7 @@ const FolderDetailScreen = () => {
                     { color: selectedTabIndex === index ? '#fff' : colors.text },
                   ]}
                 >
-                  {tab.name}
+                  {tab.label}
                 </Text>
                 <Text
                   style={[
@@ -189,7 +302,7 @@ const FolderDetailScreen = () => {
                     { color: selectedTabIndex === index ? 'rgba(255,255,255,0.7)' : colors.textMuted },
                   ]}
                 >
-                  {tab.type}
+                  {tab.typeLabel}
                 </Text>
               </TouchableOpacity>
             )}
@@ -198,19 +311,19 @@ const FolderDetailScreen = () => {
       )}
 
       {/* Content Grid */}
-      {loading ? (
+      {!currentTab || currentTab.isLoading ? (
         <View style={styles.loadingContainer}>
           <LoadingSpinner size="large" />
         </View>
-      ) : items.length === 0 ? (
+      ) : currentTab.items.length === 0 ? (
         <View style={styles.emptyContainer}>
           <MaterialIcons name="movie-filter" size={48} color={colors.textMuted} />
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>No content found</Text>
         </View>
       ) : (
         <FlatList
-          data={items}
-          renderItem={renderItem}
+          data={currentTab.items}
+          renderItem={renderGridItem}
           keyExtractor={keyExtractor}
           numColumns={NUM_COLUMNS}
           contentContainerStyle={styles.gridContent}
@@ -282,6 +395,41 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
     marginTop: 4,
+  },
+  rowSection: {
+    marginBottom: 24,
+  },
+  rowHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
+    paddingHorizontal: HORIZONTAL_PADDING,
+    marginBottom: 10,
+  },
+  rowTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  rowType: {
+    fontSize: 13,
+  },
+  rowItem: {
+    width: ROW_ITEM_WIDTH,
+  },
+  rowPoster: {
+    width: '100%',
+    aspectRatio: 2 / 3,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  rowLoadingContainer: {
+    height: ROW_ITEM_WIDTH * 1.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  rowEmptyText: {
+    paddingHorizontal: HORIZONTAL_PADDING,
+    fontSize: 13,
   },
 });
 

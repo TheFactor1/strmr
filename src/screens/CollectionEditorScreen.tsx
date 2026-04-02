@@ -110,6 +110,7 @@ const CollectionEditorScreen = () => {
 
   const [title, setTitle] = useState('');
   const [backdropImageUrl, setBackdropImageUrl] = useState('');
+  const [viewMode, setViewMode] = useState<'TABBED_GRID' | 'ROWS'>('TABBED_GRID');
   const [showAllTab, setShowAllTab] = useState(true);
   const [folders, setFolders] = useState<CollectionFolder[]>([]);
   const [editingFolder, setEditingFolder] = useState<CollectionFolder | null>(null);
@@ -134,6 +135,8 @@ const CollectionEditorScreen = () => {
     if (found) {
       setTitle(found.title);
       setBackdropImageUrl(found.backdropImageUrl || '');
+      const vm = found.viewMode;
+      setViewMode(vm === 'ROWS' ? 'ROWS' : 'TABBED_GRID');
       setShowAllTab(found.showAllTab !== false);
       setFolders(found.folders);
     }
@@ -180,6 +183,7 @@ const CollectionEditorScreen = () => {
       id: collectionId || collectionsService.generateId(),
       title: trimmedTitle,
       backdropImageUrl: backdropImageUrl.trim() || undefined,
+      viewMode,
       showAllTab,
       folders,
     };
@@ -190,7 +194,7 @@ const CollectionEditorScreen = () => {
       await collectionsService.updateCollection(collection);
     }
     navigation.goBack();
-  }, [title, backdropImageUrl, showAllTab, folders, collectionId, isNew, navigation, showError]);
+  }, [title, backdropImageUrl, viewMode, showAllTab, folders, collectionId, isNew, navigation, showError]);
 
   const handleAddFolder = useCallback(() => {
     const newFolder: CollectionFolder = {
@@ -593,29 +597,37 @@ const CollectionEditorScreen = () => {
           autoFocus={isNew}
         />
 
-        {/* Backdrop Image URL */}
-        <Text style={[styles.label, { color: colors.textMuted, marginTop: 16 }]}>Backdrop Image URL</Text>
-        <TextInput
-          style={[styles.textInput, { backgroundColor: colors.elevation1, color: colors.text, borderColor: colors.border }]}
-          value={backdropImageUrl}
-          onChangeText={setBackdropImageUrl}
-          placeholder="Optional backdrop image URL"
-          placeholderTextColor={colors.disabled}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="url"
-        />
+        {/* View Mode */}
+        <Text style={[styles.label, { color: colors.textMuted, marginTop: 16 }]}>View Mode</Text>
+        <View style={styles.shapeRow}>
+          {([['TABBED_GRID', 'Tabs'], ['ROWS', 'Rows']] as const).map(([mode, label]) => (
+            <TouchableOpacity
+              key={mode}
+              style={[styles.shapeButton, {
+                backgroundColor: viewMode === mode ? colors.primary : colors.elevation1,
+                borderColor: viewMode === mode ? colors.primary : colors.border,
+              }]}
+              onPress={() => setViewMode(mode)}
+            >
+              <Text style={[styles.shapeButtonText, { color: viewMode === mode ? '#fff' : colors.text }]}>
+                {label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-        {/* Show All Tab */}
-        <TouchableOpacity
-          style={[styles.toggleRow, { backgroundColor: colors.elevation1, borderColor: colors.border, marginTop: 16 }]}
-          onPress={() => setShowAllTab(!showAllTab)}
-        >
-          <Text style={[styles.toggleLabel, { color: colors.text }]}>Show "All" Tab</Text>
-          <View style={[styles.toggleSwitch, { backgroundColor: showAllTab ? colors.primary : colors.disabled }]}>
-            <View style={[styles.toggleThumb, showAllTab && styles.toggleThumbActive]} />
-          </View>
-        </TouchableOpacity>
+        {/* Show All Tab (only for Tabs mode) */}
+        {viewMode === 'TABBED_GRID' && (
+          <TouchableOpacity
+            style={[styles.toggleRow, { backgroundColor: colors.elevation1, borderColor: colors.border, marginTop: 16 }]}
+            onPress={() => setShowAllTab(!showAllTab)}
+          >
+            <Text style={[styles.toggleLabel, { color: colors.text }]}>Show "All" Tab</Text>
+            <View style={[styles.toggleSwitch, { backgroundColor: showAllTab ? colors.primary : colors.disabled }]}>
+              <View style={[styles.toggleThumb, showAllTab && styles.toggleThumbActive]} />
+            </View>
+          </TouchableOpacity>
+        )}
 
         {/* Folders */}
         <View style={styles.foldersHeader}>
