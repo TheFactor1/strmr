@@ -474,8 +474,9 @@ const CollectionEditorScreen = () => {
           {/* Save/Cancel Buttons */}
           <View style={styles.folderActions}>
             <TouchableOpacity
-              style={[styles.saveButton, { backgroundColor: colors.primary }]}
+              style={[styles.saveButton, { backgroundColor: colors.primary, opacity: editingFolder && editingFolder.catalogSources.length > 0 ? 1 : 0.35 }]}
               onPress={handleSaveFolder}
+              disabled={!editingFolder || editingFolder.catalogSources.length === 0}
             >
               <Text style={styles.saveButtonText}>Save Folder</Text>
             </TouchableOpacity>
@@ -580,7 +581,11 @@ const CollectionEditorScreen = () => {
         showBackButton
         onBackPress={() => navigation.goBack()}
         rightActionComponent={
-          <TouchableOpacity onPress={handleSave} style={styles.headerSaveButton}>
+          <TouchableOpacity
+            onPress={handleSave}
+            style={[styles.headerSaveButton, { opacity: title.trim() && folders.length > 0 ? 1 : 0.35 }]}
+            disabled={!title.trim() || folders.length === 0}
+          >
             <Text style={[styles.headerSaveText, { color: colors.primary }]}>Save</Text>
           </TouchableOpacity>
         }
