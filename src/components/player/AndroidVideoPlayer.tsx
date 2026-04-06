@@ -188,7 +188,7 @@ const AndroidVideoPlayer: React.FC = () => {
   }, [uri, episodeId]);
 
   const metadataResult = useMetadata({ id: id || 'placeholder', type: (type as any) });
-  const { metadata, cast } = Boolean(id && type) ? (metadataResult as any) : { metadata: null, cast: [] };
+  const { metadata, cast, addonResponseOrder } = Boolean(id && type) ? (metadataResult as any) : { metadata: null, cast: [] };
 
   // For content with provider IDs (e.g. kitsu:123), imdbId from route params may be null at
   // navigation time. useMetadata resolves it asynchronously via ARM + TMDB. Use that resolved
@@ -752,7 +752,7 @@ const AndroidVideoPlayer: React.FC = () => {
   // Subtitle addon fetching
   const fetchAvailableSubtitles = useCallback(async () => {
     const targetImdbId = resolvedImdbId;
-    
+
     setIsLoadingSubtitleList(true);
     try {
       const stremioType = type === 'series' ? 'series' : 'movie';
@@ -783,7 +783,7 @@ const AndroidVideoPlayer: React.FC = () => {
       const pluginPromise = (async () => {
         try {
           let tmdbIdStr: string | null = null;
-          
+
           // Try to resolve TMDB ID
           if (id && id.startsWith('tmdb:')) {
             tmdbIdStr = id.split(':')[1];
@@ -799,7 +799,7 @@ const AndroidVideoPlayer: React.FC = () => {
               season,
               episode
             );
-            
+
             return results.map((sub: any) => ({
               id: sub.url, // Use URL as ID for simple deduplication
               url: sub.url,
@@ -824,7 +824,7 @@ const AndroidVideoPlayer: React.FC = () => {
 
       setAvailableSubtitles(allSubs);
       logger.info(`[AndroidVideoPlayer] Fetched ${allSubs.length} subtitles (${stremioSubs.length} Stremio, ${pluginSubs.length} Plugins)`);
-      
+
     } catch (e) {
       logger.error('[AndroidVideoPlayer] Error in fetchAvailableSubtitles', e);
     } finally {
@@ -1347,6 +1347,7 @@ const AndroidVideoPlayer: React.FC = () => {
         episode={modals.selectedEpisodeForStreams}
         onSelectStream={handleEpisodeStreamSelect}
         metadata={{ id: id, name: title }}
+        addonResponseOrder={addonResponseOrder}
       />
 
       {/* MPV Switch Confirmation Alert */}
