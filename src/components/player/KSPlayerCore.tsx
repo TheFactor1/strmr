@@ -160,7 +160,7 @@ const KSPlayerCore: React.FC = () => {
   const speedControl = useSpeedControl(1.0);
 
   // Metadata Hook
-  const { metadata, groupedEpisodes, cast } = useMetadata({ id, type: type as 'movie' | 'series' });
+  const { metadata, groupedEpisodes, cast, addonResponseOrder } = useMetadata({ id, type: type as 'movie' | 'series' });
 
   // Trakt Autosync
   const traktAutosync = useTraktAutosync({
@@ -365,7 +365,7 @@ const KSPlayerCore: React.FC = () => {
   // Subtitle Fetching Logic
   const fetchAvailableSubtitles = async (imdbIdParam?: string, autoSelectEnglish = true) => {
     const targetImdbId = imdbIdParam || imdbId;
-    
+
     customSubs.setIsLoadingSubtitleList(true);
     try {
       const stremioType = type === 'series' ? 'series' : 'movie';
@@ -396,7 +396,7 @@ const KSPlayerCore: React.FC = () => {
       const pluginPromise = (async () => {
         try {
           let tmdbIdStr: string | null = null;
-          
+
           if (id && id.startsWith('tmdb:')) {
             tmdbIdStr = id.split(':')[1];
           } else if (targetImdbId) {
@@ -411,7 +411,7 @@ const KSPlayerCore: React.FC = () => {
               season,
               episode
             );
-            
+
             return results.map((sub: any) => ({
               id: sub.url,
               url: sub.url,
@@ -436,7 +436,7 @@ const KSPlayerCore: React.FC = () => {
 
       customSubs.setAvailableSubtitles(allSubs);
       logger.info(`[KSPlayerCore] Fetched ${allSubs.length} subtitles (${stremioSubs.length} Stremio, ${pluginSubs.length} Plugins)`);
-      
+
     } catch (error) {
       logger.error('[KSPlayerCore] Error in fetchAvailableSubtitles', error);
     } finally {
@@ -1197,6 +1197,7 @@ const KSPlayerCore: React.FC = () => {
         episode={modals.selectedEpisodeForStreams}
         onSelectStream={handleEpisodeStreamSelect}
         metadata={{ id: id, name: title }}
+        addonResponseOrder={addonResponseOrder}
       />
     </View>
   );

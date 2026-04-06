@@ -19,6 +19,7 @@ interface EpisodeStreamsModalProps {
   onClose: () => void;
   onSelectStream: (stream: Stream) => void;
   metadata?: { id?: string; name?: string };
+  addonResponseOrder?: string[];
 }
 
 const QualityBadge = ({ quality }: { quality: string | null | undefined }) => {
@@ -58,6 +59,7 @@ export const EpisodeStreamsModal: React.FC<EpisodeStreamsModalProps> = ({
   onClose,
   onSelectStream,
   metadata,
+  addonResponseOrder,
 }) => {
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
@@ -139,7 +141,44 @@ export const EpisodeStreamsModal: React.FC<EpisodeStreamsModalProps> = ({
 
   if (!visible) return null;
 
-  const sortedProviders = Object.entries(availableStreams);
+  const installedAddons = stremioService.getInstalledAddons();
+  const sortedProviders = Object.entries(availableStreams).sort(
+    ([keyA], [keyB]) => {
+      const isAddonA = installedAddons.some(
+        (addon) => addon.installationId === keyA || addon.id === keyA,
+      );
+      const isAddonB = installedAddons.some(
+        (addon) => addon.installationId === keyB || addon.id === keyB,
+      );
+
+      // Addons always come before plugins
+      if (isAddonA && !isAddonB) return -1;
+      if (!isAddonA && isAddonB) return 1;
+
+      // Both are addons - sort by installation order
+      if (isAddonA && isAddonB) {
+        const indexA = installedAddons.findIndex(
+          (addon) => addon.installationId === keyA || addon.id === keyA,
+        );
+        const indexB = installedAddons.findIndex(
+          (addon) => addon.installationId === keyB || addon.id === keyB,
+        );
+        return indexA - indexB;
+      }
+
+      // Both are plugins - sort by response order
+      if (addonResponseOrder) {
+        const responseIndexA = addonResponseOrder.indexOf(keyA);
+        const responseIndexB = addonResponseOrder.indexOf(keyB);
+        if (responseIndexA !== -1 && responseIndexB !== -1)
+          return responseIndexA - responseIndexB;
+        if (responseIndexA !== -1) return -1;
+        if (responseIndexB !== -1) return 1;
+      }
+      return 0;
+    },
+  );
+
 
   return (
     <View style={[StyleSheet.absoluteFill, { zIndex: 10000 }]}>
