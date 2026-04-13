@@ -14,7 +14,7 @@ import {
   FlatList,
   Image,
 } from 'react-native';
-import { BottomSheetModal, BottomSheetView, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { BottomSheetModal, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { mmkvStorage } from '../services/mmkvStorage';
 import { useNavigation } from '@react-navigation/native';
@@ -46,8 +46,7 @@ import { IntegrationsSettingsContent } from './settings/IntegrationsSettingsScre
 import { AboutSettingsContent, AboutFooter } from './settings/AboutSettingsScreen';
 import { PrivacySettingsContent } from './settings/PrivacySettingsScreen';
 import { SettingsCard, SettingItem, ChevronRight, CustomSwitch } from './settings/SettingsComponents';
-import { useBottomSheetBackHandler } from '../hooks/useBottomSheetBackHandler';
-import { LOCALES } from '../constants/locales';
+import { LanguageSettingItem } from './settings/LanguageSettingItem';
 import { useSimklIntegration } from '../hooks/useSimklIntegration';
 import SimklIcon from '../components/icons/SimklIcon';
 
@@ -156,8 +155,6 @@ const SettingsScreen: React.FC = () => {
   ];
   const { settings, updateSetting } = useSettings();
   const [hasUpdateBadge, setHasUpdateBadge] = useState(false);
-  const languageSheetRef = useRef<BottomSheetModal>(null);
-  const { onChange, onDismiss } = useBottomSheetBackHandler();
   const insets = useSafeAreaInsets();
 
   // Render backdrop for bottom sheet
@@ -439,15 +436,7 @@ const SettingsScreen: React.FC = () => {
         return (
           <>
             <SettingsCard title="GENERAL" isTablet={isTablet}>
-              <SettingItem
-                title={t('settings.language')}
-                description={t(`settings.${LOCALES.find(l => l.code === i18n.language)?.key}`)}
-                icon="globe"
-                renderControl={() => <ChevronRight />}
-                onPress={() => languageSheetRef.current?.present()}
-                isLast={true}
-                isTablet={isTablet}
-              />
+              <LanguageSettingItem isTablet={isTablet} isLast />
             </SettingsCard>
             <AppearanceSettingsContent isTablet={isTablet} />
           </>
@@ -637,64 +626,6 @@ const SettingsScreen: React.FC = () => {
           onClose={() => setAlertVisible(false)}
         />
 
-        <BottomSheetModal
-          ref={languageSheetRef}
-          index={0}
-          snapPoints={['65%']}
-          enablePanDownToClose={true}
-          backdropComponent={renderBackdrop}
-          backgroundStyle={{
-            backgroundColor: currentTheme.colors.darkGray || '#0A0C0C',
-            borderTopLeftRadius: 16,
-            borderTopRightRadius: 16,
-          }}
-          handleIndicatorStyle={{
-            backgroundColor: currentTheme.colors.mediumGray,
-            width: 40,
-          }}
-          onChange={onChange(languageSheetRef)}
-          onDismiss={onDismiss(languageSheetRef)}
-        >
-          <View style={[styles.bottomSheetHeader, { backgroundColor: currentTheme.colors.darkGray || '#0A0C0C' }]}>
-            <Text style={[styles.bottomSheetTitle, { color: currentTheme.colors.white }]}>
-              {t('settings.select_language')}
-            </Text>
-            <TouchableOpacity onPress={() => languageSheetRef.current?.dismiss()}>
-              <Feather name="x" size={24} color={currentTheme.colors.lightGray} />
-            </TouchableOpacity>
-          </View>
-          <BottomSheetScrollView
-            style={{ backgroundColor: currentTheme.colors.darkGray || '#0A0C0C' }}
-            contentContainerStyle={[styles.bottomSheetContent, { paddingBottom: insets.bottom + 16 }]}
-          >
-            {
-              LOCALES.sort((a, b) => a.key.localeCompare(b.key)).map(l =>
-                <TouchableOpacity
-                  key={l.key}
-                  style={[
-                    styles.languageOption,
-                    i18n.language === l.code && { backgroundColor: currentTheme.colors.primary + '20' }
-                  ]}
-                  onPress={() => {
-                    i18n.changeLanguage(l.code);
-                    languageSheetRef.current?.dismiss();
-                  }}
-                >
-                  <Text style={[
-                    styles.languageText,
-                    { color: currentTheme.colors.highEmphasis },
-                    i18n.language === l.code && { color: currentTheme.colors.primary, fontWeight: 'bold' }
-                  ]}>
-                    {t(`settings.${l.key}`)}
-                  </Text>
-                  {i18n.language === l.code && (
-                    <Feather name="check" size={20} color={currentTheme.colors.primary} />
-                  )}
-                </TouchableOpacity>
-              )
-            }
-          </BottomSheetScrollView>
-        </BottomSheetModal>
       </View>
     );
   }
@@ -772,14 +703,7 @@ const SettingsScreen: React.FC = () => {
               (settingsConfig?.categories?.['playback']?.visible !== false)
             ) && (
                 <SettingsCard title="GENERAL">
-                  <SettingItem
-                    title={t('settings.language')}
-                    description={t(`settings.${LOCALES.find(l => l.code === i18n.language)?.key}`)
-                    }
-                    icon="globe"
-                    renderControl={() => <ChevronRight />}
-                    onPress={() => languageSheetRef.current?.present()}
-                  />
+                  <LanguageSettingItem />
                   {(settingsConfig?.categories?.['content']?.visible !== false) && (
                     <SettingItem
                       title={t('settings.content_discovery')}
@@ -974,64 +898,6 @@ const SettingsScreen: React.FC = () => {
         onClose={() => setAlertVisible(false)}
       />
 
-      <BottomSheetModal
-        ref={languageSheetRef}
-        index={0}
-        snapPoints={['65%']}
-        enablePanDownToClose={true}
-        backdropComponent={renderBackdrop}
-        backgroundStyle={{
-          backgroundColor: currentTheme.colors.darkGray || '#0A0C0C',
-          borderTopLeftRadius: 16,
-          borderTopRightRadius: 16,
-        }}
-        handleIndicatorStyle={{
-          backgroundColor: currentTheme.colors.mediumGray,
-          width: 40,
-        }}
-        onChange={onChange(languageSheetRef)}
-        onDismiss={onDismiss(languageSheetRef)}
-      >
-        <View style={[styles.bottomSheetHeader, { backgroundColor: currentTheme.colors.darkGray || '#0A0C0C' }]}>
-          <Text style={[styles.bottomSheetTitle, { color: currentTheme.colors.white }]}>
-            {t('settings.select_language')}
-          </Text>
-          <TouchableOpacity onPress={() => languageSheetRef.current?.dismiss()}>
-            <Feather name="x" size={24} color={currentTheme.colors.lightGray} />
-          </TouchableOpacity>
-        </View>
-        <BottomSheetScrollView
-          style={{ backgroundColor: currentTheme.colors.darkGray || '#0A0C0C' }}
-          contentContainerStyle={[styles.bottomSheetContent, { paddingBottom: insets.bottom + 16 }]}
-        >
-          {
-            LOCALES.sort((a, b) => a.key.localeCompare(b.key)).map(l =>
-              <TouchableOpacity
-                key={l.key}
-                style={[
-                  styles.languageOption,
-                  i18n.language === l.code && { backgroundColor: currentTheme.colors.primary + '20' }
-                ]}
-                onPress={() => {
-                  i18n.changeLanguage(l.code);
-                  languageSheetRef.current?.dismiss();
-                }}
-              >
-                <Text style={[
-                  styles.languageText,
-                  { color: currentTheme.colors.highEmphasis },
-                  i18n.language === l.code && { color: currentTheme.colors.primary, fontWeight: 'bold' }
-                ]}>
-                  {t(`settings.${l.key}`)}
-                </Text>
-                {i18n.language === l.code && (
-                  <Feather name="check" size={20} color={currentTheme.colors.primary} />
-                )}
-              </TouchableOpacity>
-            )
-          }
-        </BottomSheetScrollView>
-      </BottomSheetModal>
     </View>
   );
 };
@@ -1042,36 +908,6 @@ const styles = StyleSheet.create({
   },
   actionSheetContent: {
     flex: 1,
-  },
-  bottomSheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
-  },
-  bottomSheetTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  bottomSheetContent: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 24,
-  },
-  languageOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  languageText: {
-    fontSize: 16,
   },
   // Mobile styles
   contentContainer: {
