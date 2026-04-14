@@ -8,6 +8,7 @@ import { useSettings } from '../../hooks/useSettings';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import ScreenHeader from '../../components/common/ScreenHeader';
 import { SettingsCard, SettingItem, CustomSwitch, ChevronRight } from './SettingsComponents';
+import { LanguageSettingItem } from './LanguageSettingItem';
 import { useRealtimeConfig } from '../../hooks/useRealtimeConfig';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BottomSheetModal, BottomSheetScrollView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
@@ -156,31 +157,10 @@ export const PlaybackSettingsContent: React.FC<PlaybackSettingsContentProps> = (
         <MaterialIcons name="skip-next" size={18} color={currentTheme.colors.primary} />
     );
 
-    // Bottom sheet refs
-    const audioLanguageSheetRef = useRef<BottomSheetModal>(null);
-    const subtitleLanguageSheetRef = useRef<BottomSheetModal>(null);
     const subtitleSourceSheetRef = useRef<BottomSheetModal>(null);
-
-    // Snap points
-    const languageSnapPoints = useMemo(() => ['70%'], []);
     const sourceSnapPoints = useMemo(() => ['45%'], []);
 
-    // Handlers to present sheets - ensure only one is open at a time
-    const openAudioLanguageSheet = useCallback(() => {
-        subtitleLanguageSheetRef.current?.dismiss();
-        subtitleSourceSheetRef.current?.dismiss();
-        setTimeout(() => audioLanguageSheetRef.current?.present(), 100);
-    }, []);
-
-    const openSubtitleLanguageSheet = useCallback(() => {
-        audioLanguageSheetRef.current?.dismiss();
-        subtitleSourceSheetRef.current?.dismiss();
-        setTimeout(() => subtitleLanguageSheetRef.current?.present(), 100);
-    }, []);
-
     const openSubtitleSourceSheet = useCallback(() => {
-        audioLanguageSheetRef.current?.dismiss();
-        subtitleLanguageSheetRef.current?.dismiss();
         setTimeout(() => subtitleSourceSheetRef.current?.present(), 100);
     }, []);
 
@@ -193,11 +173,6 @@ export const PlaybackSettingsContent: React.FC<PlaybackSettingsContentProps> = (
 
     const hasVisibleItems = (itemIds: string[]) => {
         return itemIds.some(id => isItemVisible(id));
-    };
-
-    const getLanguageName = (code: string) => {
-        const lang = AVAILABLE_LANGUAGES.find(l => l.code === code);
-        return lang ? lang.name : code.toUpperCase();
     };
 
     const getSourceLabel = (value: string) => {
@@ -219,16 +194,6 @@ export const PlaybackSettingsContent: React.FC<PlaybackSettingsContentProps> = (
         ),
         []
     );
-
-    const handleSelectAudioLanguage = (code: string) => {
-        updateSetting('preferredAudioLanguage', code);
-        audioLanguageSheetRef.current?.dismiss();
-    };
-
-    const handleSelectSubtitleLanguage = (code: string) => {
-        updateSetting('preferredSubtitleLanguage', code);
-        subtitleLanguageSheetRef.current?.dismiss();
-    };
 
     const handleSelectSubtitleSource = (value: 'internal' | 'external' | 'any') => {
         updateSetting('subtitleSourcePreference', value);
@@ -322,20 +287,18 @@ export const PlaybackSettingsContent: React.FC<PlaybackSettingsContentProps> = (
 
             {/* Audio & Subtitle Preferences */}
             <SettingsCard title={t('settings.sections.audio_subtitles')} isTablet={isTablet}>
-                <SettingItem
+                <LanguageSettingItem
                     title={t('settings.items.preferred_audio')}
-                    description={getLanguageName(settings?.preferredAudioLanguage || 'en')}
-                    icon="volume-2"
-                    renderControl={() => <ChevronRight />}
-                    onPress={openAudioLanguageSheet}
+                    value={settings?.preferredAudioLanguage || 'en'}
+                    onChange={(code) => updateSetting('preferredAudioLanguage', code)}
+                    languages={AVAILABLE_LANGUAGES}
                     isTablet={isTablet}
                 />
-                <SettingItem
+                <LanguageSettingItem
                     title={t('settings.items.preferred_subtitle')}
-                    description={getLanguageName(settings?.preferredSubtitleLanguage || 'en')}
-                    icon="type"
-                    renderControl={() => <ChevronRight />}
-                    onPress={openSubtitleLanguageSheet}
+                    value={settings?.preferredSubtitleLanguage || 'en'}
+                    onChange={(code) => updateSetting('preferredSubtitleLanguage', code)}
+                    languages={AVAILABLE_LANGUAGES}
                     isTablet={isTablet}
                 />
                 <SettingItem
@@ -410,88 +373,6 @@ export const PlaybackSettingsContent: React.FC<PlaybackSettingsContentProps> = (
                     )}
                 </SettingsCard>
             )}
-
-            {/* Audio Language Bottom Sheet */}
-            <BottomSheetModal
-                ref={audioLanguageSheetRef}
-                index={0}
-                snapPoints={languageSnapPoints}
-                enableDynamicSizing={false}
-                enablePanDownToClose={true}
-                backdropComponent={renderBackdrop}
-                backgroundStyle={{ backgroundColor: '#1a1a1a' }}
-                handleIndicatorStyle={{ backgroundColor: 'rgba(255,255,255,0.3)' }}
-            >
-                <View style={styles.sheetHeader}>
-                    <Text style={styles.sheetTitle}>{t('settings.items.preferred_audio')}</Text>
-                </View>
-                <BottomSheetScrollView contentContainerStyle={styles.sheetContent}>
-                    {AVAILABLE_LANGUAGES.map((lang) => {
-                        const isSelected = lang.code === (settings?.preferredAudioLanguage || 'en');
-                        return (
-                            <TouchableOpacity
-                                key={lang.code}
-                                style={[
-                                    styles.languageItem,
-                                    isSelected && { backgroundColor: currentTheme.colors.primary + '20' }
-                                ]}
-                                onPress={() => handleSelectAudioLanguage(lang.code)}
-                            >
-                                <Text style={[styles.languageName, { color: isSelected ? currentTheme.colors.primary : '#fff' }]}>
-                                    {lang.name}
-                                </Text>
-                                <Text style={styles.languageCode}>
-                                    {lang.code.toUpperCase()}
-                                </Text>
-                                {isSelected && (
-                                    <MaterialIcons name="check" size={20} color={currentTheme.colors.primary} />
-                                )}
-                            </TouchableOpacity>
-                        );
-                    })}
-                </BottomSheetScrollView>
-            </BottomSheetModal>
-
-            {/* Subtitle Language Bottom Sheet */}
-            <BottomSheetModal
-                ref={subtitleLanguageSheetRef}
-                index={0}
-                snapPoints={languageSnapPoints}
-                enableDynamicSizing={false}
-                enablePanDownToClose={true}
-                backdropComponent={renderBackdrop}
-                backgroundStyle={{ backgroundColor: '#1a1a1a' }}
-                handleIndicatorStyle={{ backgroundColor: 'rgba(255,255,255,0.3)' }}
-            >
-                <View style={styles.sheetHeader}>
-                    <Text style={styles.sheetTitle}>{t('settings.items.preferred_subtitle')}</Text>
-                </View>
-                <BottomSheetScrollView contentContainerStyle={styles.sheetContent}>
-                    {AVAILABLE_LANGUAGES.map((lang) => {
-                        const isSelected = lang.code === (settings?.preferredSubtitleLanguage || 'en');
-                        return (
-                            <TouchableOpacity
-                                key={lang.code}
-                                style={[
-                                    styles.languageItem,
-                                    isSelected && { backgroundColor: currentTheme.colors.primary + '20' }
-                                ]}
-                                onPress={() => handleSelectSubtitleLanguage(lang.code)}
-                            >
-                                <Text style={[styles.languageName, { color: isSelected ? currentTheme.colors.primary : '#fff' }]}>
-                                    {lang.name}
-                                </Text>
-                                <Text style={styles.languageCode}>
-                                    {lang.code.toUpperCase()}
-                                </Text>
-                                {isSelected && (
-                                    <MaterialIcons name="check" size={20} color={currentTheme.colors.primary} />
-                                )}
-                            </TouchableOpacity>
-                        );
-                    })}
-                </BottomSheetScrollView>
-            </BottomSheetModal>
 
             {/* Subtitle Source Priority Bottom Sheet */}
             <BottomSheetModal

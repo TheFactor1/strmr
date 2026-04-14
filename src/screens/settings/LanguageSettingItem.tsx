@@ -1,31 +1,53 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Feather } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useBottomSheetBackHandler } from '../../hooks/useBottomSheetBackHandler';
 import { ChevronRight, SettingItem } from './SettingsComponents';
 import { LOCALES } from '../../constants/locales';
 
-const SORTED_LOCALES = [...LOCALES].sort((a, b) => a.name.localeCompare(b.name));
+export interface LanguageOption {
+    code: string;
+    name: string;
+}
 
 interface LanguageSettingItemProps {
+    title: string;
+    value: string;
+    onChange: (code: string) => void;
+    languages?: LanguageOption[];
     isTablet?: boolean;
     isLast?: boolean;
 }
 
-export const LanguageSettingItem: React.FC<LanguageSettingItemProps> = ({ isTablet = false, isLast = false }) => {
-    const { t, i18n } = useTranslation();
+export const LanguageSettingItem: React.FC<LanguageSettingItemProps> = ({
+    title,
+    value,
+    onChange,
+    languages,
+    isTablet = false,
+    isLast = false,
+}) => {
     const { currentTheme } = useTheme();
     const insets = useSafeAreaInsets();
     const sheetRef = useRef<BottomSheetModal>(null);
-    const { onChange, onDismiss } = useBottomSheetBackHandler();
+    const { onChange: onSheetChange, onDismiss } = useBottomSheetBackHandler();
+
+    const sortedLanguages = useMemo(() => {
+        const sorted = [...(languages ?? LOCALES)].sort((a, b) => a.name.localeCompare(b.name));
+        const selectedIndex = sorted.findIndex(l => l.code === value || l.code === value?.split('-')[0]);
+        if (selectedIndex > 0) {
+            const [selected] = sorted.splice(selectedIndex, 1);
+            sorted.unshift(selected);
+        }
+        return sorted;
+    }, [languages, value]);
 
     const currentLocale =
-        LOCALES.find(l => l.code === i18n.language) ??
-        LOCALES.find(l => l.code === i18n.language?.split('-')[0]);
+        sortedLanguages.find(l => l.code === value) ??
+        sortedLanguages.find(l => l.code === value?.split('-')[0]);
 
     const renderBackdrop = useCallback(
         (props: any) => (
@@ -37,7 +59,7 @@ export const LanguageSettingItem: React.FC<LanguageSettingItemProps> = ({ isTabl
     return (
         <>
             <SettingItem
-                title={t('settings.language')}
+                title={title}
                 description={currentLocale?.name}
                 icon="globe"
                 renderControl={() => <ChevronRight />}
@@ -61,12 +83,12 @@ export const LanguageSettingItem: React.FC<LanguageSettingItemProps> = ({ isTabl
                     backgroundColor: currentTheme.colors.mediumGray,
                     width: 40,
                 }}
-                onChange={onChange(sheetRef)}
+                onChange={onSheetChange(sheetRef)}
                 onDismiss={onDismiss(sheetRef)}
             >
                 <View style={[styles.sheetHeader, { backgroundColor: currentTheme.colors.darkGray || '#0A0C0C' }]}>
                     <Text style={[styles.sheetTitle, { color: currentTheme.colors.white }]}>
-                        {t('settings.select_language')}
+                        {title}
                     </Text>
                     <TouchableOpacity onPress={() => sheetRef.current?.dismiss()}>
                         <Feather name="x" size={24} color={currentTheme.colors.lightGray} />
@@ -76,9 +98,8 @@ export const LanguageSettingItem: React.FC<LanguageSettingItemProps> = ({ isTabl
                     style={{ backgroundColor: currentTheme.colors.darkGray || '#0A0C0C' }}
                     contentContainerStyle={[styles.sheetContent, { paddingBottom: insets.bottom + 16 }]}
                 >
-                    {SORTED_LOCALES.map(l => {
-                        const isSelected = i18n.language === l.code ||
-                            i18n.language?.split('-')[0] === l.code;
+                    {sortedLanguages.map(l => {
+                        const isSelected = value === l.code || value?.split('-')[0] === l.code;
                         return (
                             <TouchableOpacity
                                 key={l.code}
@@ -87,7 +108,7 @@ export const LanguageSettingItem: React.FC<LanguageSettingItemProps> = ({ isTabl
                                     isSelected && { backgroundColor: currentTheme.colors.primary + '20' },
                                 ]}
                                 onPress={() => {
-                                    i18n.changeLanguage(l.code);
+                                    onChange(l.code);
                                     sheetRef.current?.dismiss();
                                 }}
                             >

@@ -436,7 +436,13 @@ const SettingsScreen: React.FC = () => {
         return (
           <>
             <SettingsCard title="GENERAL" isTablet={isTablet}>
-              <LanguageSettingItem isTablet={isTablet} isLast />
+              <LanguageSettingItem
+                title={t('settings.language')}
+                value={i18n.language}
+                onChange={(code) => i18n.changeLanguage(code)}
+                isTablet={isTablet}
+                isLast
+              />
             </SettingsCard>
             <AppearanceSettingsContent isTablet={isTablet} />
           </>
@@ -703,7 +709,11 @@ const SettingsScreen: React.FC = () => {
               (settingsConfig?.categories?.['playback']?.visible !== false)
             ) && (
                 <SettingsCard title="GENERAL">
-                  <LanguageSettingItem />
+                  <LanguageSettingItem
+                    title={t('settings.language')}
+                    value={i18n.language}
+                    onChange={(code) => i18n.changeLanguage(code)}
+                  />
                   {(settingsConfig?.categories?.['content']?.visible !== false) && (
                     <SettingItem
                       title={t('settings.content_discovery')}
