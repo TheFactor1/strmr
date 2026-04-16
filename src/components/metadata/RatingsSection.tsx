@@ -12,6 +12,7 @@ import LetterboxdIcon from '../../../assets/rating-icons/letterboxd.svg';
 import MetacriticIcon from '../../../assets/rating-icons/Metacritic.png';
 import RottenTomatoesIcon from '../../../assets/rating-icons/RottenTomatoes.svg';
 import TMDBIcon from '../../../assets/rating-icons/tmdb.svg';
+import IMDBIcon from '../../../assets/rating-icons/imdb.svg';
 import TraktIcon from '../../../assets/rating-icons/trakt.svg';
 import AudienceScoreIcon from '../../../assets/rating-icons/audienscore.png';
 
@@ -23,7 +24,6 @@ const BREAKPOINTS = {
   tv: 1440,
 };
 
-const IMDb_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/IMDB_Logo_2016.svg/575px-IMDB_Logo_2016.svg.png';
 
 export const RATING_PROVIDERS = {
   imdb: {
@@ -183,8 +183,9 @@ export const RatingsSection: React.FC<RatingsSectionProps> = ({ imdbId, type }) 
   const ratingConfig = {
     imdb: {
       name: 'IMDb',
-      icon: { uri: IMDb_LOGO },
-      isImage: true,
+      icon: IMDBIcon,
+      isImage: false,
+      iconScale: 1.8, // badge is square but needs to be larger to be readable
       color: '#F5C518',
       transform: (value: number) => value.toFixed(1)
     },
@@ -278,8 +279,8 @@ export const RatingsSection: React.FC<RatingsSectionProps> = ({ imdbId, type }) 
               ) : config.icon ? (
                 <View style={[styles.compactSvgContainer, { marginRight: iconTextGap }]}>
                   {React.createElement(config.icon as any, {
-                    width: iconSize,
-                    height: iconSize,
+                    width: iconSize * ((config as any).iconScale ?? 1),
+                    height: iconSize * ((config as any).iconScale ?? 1),
                   })}
                 </View>
               ) : (
