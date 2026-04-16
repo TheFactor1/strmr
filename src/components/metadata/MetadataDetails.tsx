@@ -23,7 +23,7 @@ import { isMDBListEnabled } from '../../services/mdblistConstants';
 import { getAgeRatingColor } from '../../utils/ageRatingColors';
 import AgeRatingBadge from '../common/AgeRatingBadge';
 
-const IMDb_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/IMDB_Logo_2016.svg/575px-IMDB_Logo_2016.svg.png';
+import IMDBIcon from '../../../assets/rating-icons/imdb.svg';
 
 // Enhanced responsive breakpoints for Metadata Details
 const BREAKPOINTS = {
@@ -241,16 +241,9 @@ const MetadataDetails: React.FC<MetadataDetailsProps> = ({
         )}
         {metadata.imdbRating && !isMDBEnabled && (
           <View style={styles.ratingContainer}>
-            <FastImage
-              source={{ uri: IMDb_LOGO }}
-              style={[
-                styles.imdbLogo,
-                {
-                  width: isTV ? 35 : isLargeTablet ? 32 : isTablet ? 30 : 30,
-                  height: isTV ? 18 : isLargeTablet ? 16 : isTablet ? 15 : 15
-                }
-              ]}
-              resizeMode={FastImage.resizeMode.contain}
+            <IMDBIcon
+              width={isTV ? 35 : isLargeTablet ? 32 : isTablet ?32 :32}
+              height={isTV ? 35 : isLargeTablet ? 32 : isTablet ?32 :32}
             />
             <Text style={[
               styles.ratingText,
