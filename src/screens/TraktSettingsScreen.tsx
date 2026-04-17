@@ -191,7 +191,7 @@ const TraktSettingsScreen: React.FC = () => {
       if (response.type === 'success' && request?.codeVerifier) {
         const { code } = response.params;
         logger.log('[TraktSettingsScreen] Auth code received:', code);
-        traktService.exchangeCodeForToken(code, request.codeVerifier)
+        traktService.exchangeCodeForToken(code, request.codeVerifier, redirectUri)
           .then(success => {
             if (success) {
               logger.log('[TraktSettingsScreen] Token exchange successful');

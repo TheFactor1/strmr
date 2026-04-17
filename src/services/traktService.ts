@@ -800,7 +800,7 @@ export class TraktService {
   /**
    * Exchange the authorization code for an access token
    */
-  public async exchangeCodeForToken(code: string, codeVerifier: string): Promise<boolean> {
+  public async exchangeCodeForToken(code: string, codeVerifier: string, redirectUri?: string): Promise<boolean> {
     // Block authentication during maintenance
     if (this.isMaintenanceMode()) {
       logger.warn('[TraktService] Maintenance mode: blocking new authentication');
@@ -819,7 +819,7 @@ export class TraktService {
           code,
           client_id: TRAKT_CLIENT_ID,
           client_secret: TRAKT_CLIENT_SECRET,
-          redirect_uri: TRAKT_REDIRECT_URI,
+          redirect_uri: redirectUri ?? TRAKT_REDIRECT_URI,
           grant_type: 'authorization_code',
           code_verifier: codeVerifier
         })
@@ -1348,6 +1348,27 @@ export class TraktService {
   public async getRatings(type?: 'movies' | 'shows'): Promise<TraktRatingItem[]> {
     const endpoint = type ? `/sync/ratings/${type}` : '/sync/ratings';
     return this.apiRequest<TraktRatingItem[]>(endpoint);
+  }
+
+  /**
+   * Get personalized movie/show recommendations for the authenticated user.
+   * Returns extended metadata including IMDb/TMDB IDs, overview, genres, etc.
+   */
+  public async getRecommendations(
+    type: 'movies' | 'shows',
+    limit: number = 20
+  ): Promise<any[]> {
+    const isAuth = await this.isAuthenticated();
+    if (!isAuth) return [];
+    try {
+      const data = await this.apiRequest<any[]>(
+        `/recommendations/${type}?extended=full&limit=${limit}`
+      );
+      return Array.isArray(data) ? data : [];
+    } catch (err) {
+      logger.error(`[TraktService] getRecommendations(${type}) error:`, err);
+      return [];
+    }
   }
 
   /**
