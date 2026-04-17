@@ -19,6 +19,7 @@ import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { Meta, stremioService, CatalogExtra } from '../services/stremioService';
+import { traktService } from '../services/traktService';
 import { useTheme } from '../contexts/ThemeContext';
 import FastImage from '@d11/react-native-fast-image';
 import { BlurView } from 'expo-blur';
@@ -500,10 +501,12 @@ const CatalogScreen: React.FC<CatalogScreenProps> = ({ route, navigation }) => {
             setItems(prev => [...prev, ...nextBatch]);
             displayedCountRef.current += nextBatch.length;
 
-            // Check if we still have more in buffer OR if we should try fetching more from network
-            // If buffer is exhausted, we might need to fetch next page from server
+            // Check if we still have more in buffer OR if we should try fetching more from network.
+            // Trakt catalogs are fully buffered on first load — no server-side next page exists,
+            // so once the buffer is drained we must not trigger another fetch.
             const hasMoreInBuffer = displayedCountRef.current < allFetchedItemsRef.current.length;
-            setHasMore(hasMoreInBuffer || (addonId ? true : false)); // Simplified: if addon, assume potential server side more
+            const hasServerSideMore = addonId && addonId !== 'trakt';
+            setHasMore(hasMoreInBuffer || (hasServerSideMore ? true : false));
             setIsFetchingMore(false);
             setLoading(false);
           });
@@ -596,6 +599,44 @@ const CatalogScreen: React.FC<CatalogScreenProps> = ({ route, navigation }) => {
           });
           return;
         }
+      }
+
+      // Handle Trakt recommendation catalogs (not a Stremio addon).
+      // Trakt caps recommendations at 100 items. We fetch all at once and
+      // paginate client-side using the existing allFetchedItemsRef buffer.
+      if (addonId === 'trakt') {
+        const traktType = type === 'movie' ? 'movies' : 'shows';
+        // Fetch the maximum Trakt allows so the buffer is fully populated.
+        const raw = await traktService.getRecommendations(traktType, 100);
+        const metas: Meta[] = raw
+          .filter((item: any) => item?.title && item?.ids?.imdb)
+          .map((item: any): Meta => ({
+            id: item.ids.imdb,
+            type,
+            name: item.title,
+            poster: `https://images.metahub.space/poster/medium/${item.ids.imdb}/img`,
+            year: item.year,
+            description: item.overview,
+            genres: item.genres?.map((g: string) => g.charAt(0).toUpperCase() + g.slice(1)),
+            runtime: item.runtime ? `${item.runtime} min` : undefined,
+            certification: item.certification,
+            imdb_id: item.ids.imdb,
+          }));
+
+        InteractionManager.runAfterInteractions(() => {
+          allFetchedItemsRef.current = metas;
+          displayedCountRef.current = 0;
+          const firstBatch = metas.slice(0, CLIENT_PAGE_SIZE);
+          setItems(firstBatch);
+          displayedCountRef.current = firstBatch.length;
+          // Only enable load-more if the buffer has items beyond the first page.
+          // Never set true unconditionally — there is no server-side next page
+          // for Trakt recommendations, so once the buffer is drained we stop.
+          setHasMore(metas.length > CLIENT_PAGE_SIZE);
+          setLoading(false);
+          setRefreshing(false);
+        });
+        return;
       }
 
       // addon logic

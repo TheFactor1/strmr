@@ -18,6 +18,7 @@ import {
 import { mmkvStorage } from '../services/mmkvStorage';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
+import { traktService } from '../services/traktService';
 import { stremioService } from '../services/stremioService';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useCatalogContext } from '../contexts/CatalogContext';
@@ -68,6 +69,8 @@ interface GroupedCatalogs {
 const CATALOG_SETTINGS_KEY = 'catalog_settings';
 const CATALOG_CUSTOM_NAMES_KEY = 'catalog_custom_names';
 const CATALOG_MOBILE_COLUMNS_KEY = 'catalog_mobile_columns';
+export const TRAKT_RECOMMENDED_MOVIES_KEY = 'trakt_recommended_movies_enabled';
+export const TRAKT_RECOMMENDED_SHOWS_KEY = 'trakt_recommended_shows_enabled';
 const ANDROID_STATUSBAR_HEIGHT = StatusBar.currentHeight || 0;
 
 // Create a styles creator function that accepts the theme colors
@@ -270,6 +273,9 @@ const CatalogSettingsScreen = () => {
   const [groupedSettings, setGroupedSettings] = useState<GroupedCatalogs>({});
   const [mobileColumns, setMobileColumns] = useState<'auto' | 2 | 3>('auto');
   const [showTitles, setShowTitles] = useState(true); // Default to showing titles
+  const [isTraktAuthenticated, setIsTraktAuthenticated] = useState(false);
+  const [traktMoviesEnabled, setTraktMoviesEnabled] = useState(true);
+  const [traktShowsEnabled, setTraktShowsEnabled] = useState(true);
   const navigation = useNavigation();
   const { refreshCatalogs } = useCatalogContext();
   const { currentTheme } = useTheme();
@@ -382,6 +388,20 @@ const CatalogSettingsScreen = () => {
         // Load show titles preference (default: true)
         const titlesPref = await mmkvStorage.getItem('catalog_show_titles');
         setShowTitles(titlesPref !== 'false'); // Default to true if not set
+      } catch (e) {
+        // ignore
+      }
+
+      // Load Trakt auth state and recommendation toggles
+      try {
+        const auth = await traktService.isAuthenticated();
+        setIsTraktAuthenticated(auth);
+        if (auth) {
+          const moviesVal = await mmkvStorage.getItem(TRAKT_RECOMMENDED_MOVIES_KEY);
+          const showsVal = await mmkvStorage.getItem(TRAKT_RECOMMENDED_SHOWS_KEY);
+          setTraktMoviesEnabled(moviesVal !== 'false');
+          setTraktShowsEnabled(showsVal !== 'false');
+        }
       } catch (e) {
         // ignore
       }
@@ -608,6 +628,52 @@ const CatalogSettingsScreen = () => {
                       await mmkvStorage.setItem('catalog_show_titles', value ? 'true' : 'false');
                       setShowTitles(value);
                     } catch { }
+                  }}
+                  trackColor={{ false: '#505050', true: colors.primary }}
+                  thumbColor={Platform.OS === 'android' ? colors.white : undefined}
+                  ios_backgroundColor="#505050"
+                />
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Trakt Recommendations — only when logged in */}
+        {isTraktAuthenticated && (
+          <View style={styles.addonSection}>
+            <Text style={styles.addonTitle}>TRAKT</Text>
+            <View style={styles.card}>
+              <View style={styles.groupHeader}>
+                <Text style={styles.groupTitle}>Recommendations</Text>
+              </View>
+              <View style={styles.catalogItem}>
+                <View style={styles.catalogInfo}>
+                  <Text style={styles.catalogName}>Recommended Movies</Text>
+                  <Text style={styles.catalogType}>Movie</Text>
+                </View>
+                <Switch
+                  value={traktMoviesEnabled}
+                  onValueChange={async (value) => {
+                    setTraktMoviesEnabled(value);
+                    await mmkvStorage.setItem(TRAKT_RECOMMENDED_MOVIES_KEY, value ? 'true' : 'false');
+                    refreshCatalogs();
+                  }}
+                  trackColor={{ false: '#505050', true: colors.primary }}
+                  thumbColor={Platform.OS === 'android' ? colors.white : undefined}
+                  ios_backgroundColor="#505050"
+                />
+              </View>
+              <View style={[styles.catalogItem, { borderBottomWidth: 0 }]}>
+                <View style={styles.catalogInfo}>
+                  <Text style={styles.catalogName}>Recommended Shows</Text>
+                  <Text style={styles.catalogType}>Series</Text>
+                </View>
+                <Switch
+                  value={traktShowsEnabled}
+                  onValueChange={async (value) => {
+                    setTraktShowsEnabled(value);
+                    await mmkvStorage.setItem(TRAKT_RECOMMENDED_SHOWS_KEY, value ? 'true' : 'false');
+                    refreshCatalogs();
                   }}
                   trackColor={{ false: '#505050', true: colors.primary }}
                   thumbColor={Platform.OS === 'android' ? colors.white : undefined}

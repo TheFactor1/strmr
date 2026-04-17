@@ -51,6 +51,7 @@ import {
   clearCustomNameCache
 } from '../utils/catalogNameUtils';
 import { useHomeCatalogs } from '../hooks/useHomeCatalogs';
+import { useTraktRecommendations } from '../hooks/useTraktRecommendations';
 import { useFeaturedContent } from '../hooks/useFeaturedContent';
 import { useSettings, settingsEmitter } from '../hooks/useSettings';
 import FeaturedContent from '../components/home/FeaturedContent';
@@ -153,6 +154,7 @@ const HomeScreen = () => {
 
   const [catalogs, setCatalogs] = useState<(CatalogContent | null)[]>([]);
   const [catalogsLoading, setCatalogsLoading] = useState(true);
+  const { catalogs: traktRecommendedCatalogs } = useTraktRecommendations();
   const [loadedCatalogCount, setLoadedCatalogCount] = useState(0);
   const [pendingCatalogIndexes, setPendingCatalogIndexes] = useState<Record<number, boolean>>({});
   const [hasAddons, setHasAddons] = useState<boolean | null>(null);
@@ -755,6 +757,11 @@ const HomeScreen = () => {
       data.push({ type: 'thisWeek', key: 'thisWeek' });
     }
 
+    // Inject Trakt recommended catalogs at the top when authenticated
+    traktRecommendedCatalogs.forEach((catalog, index) => {
+      data.push({ type: 'catalog', catalog, key: `trakt-recommended-${index}` });
+    });
+
     // Only show a limited number of catalogs initially for performance
     const catalogsToShow = catalogs.slice(0, visibleCatalogCount);
 
@@ -773,7 +780,7 @@ const HomeScreen = () => {
     }
 
     return data;
-  }, [hasAddons, catalogs, catalogsLoading, pendingCatalogIndexes, visibleCatalogCount, settings.showThisWeekSection]);
+  }, [hasAddons, catalogs, traktRecommendedCatalogs, catalogsLoading, pendingCatalogIndexes, visibleCatalogCount, settings.showThisWeekSection]);
 
   const handleLoadMoreCatalogs = useCallback(() => {
     setVisibleCatalogCount(prev => Math.min(prev + 3, catalogs.length));
