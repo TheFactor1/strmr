@@ -238,6 +238,9 @@ kotlin {
                 implementation(libs.ktor.client.java)
                 implementation(libs.kotlinx.coroutines.swing)
                 implementation(libs.jna)
+                // mediamp-mpv for Windows desktop player
+                implementation("org.openani.mediamp:mediamp-api:0.1.0-dev-1")
+                implementation("org.openani.mediamp:mediamp-mpv:0.1.0-dev-1")
             }
         }
         androidMain.dependencies {
@@ -305,6 +308,21 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "com.nuvio.app.DesktopAppKt"
+
+        // Add mediamp native library path for Windows
+        val mediampNativeBuildDir = rootProject.file("mediamp/mediamp-mpv/build-ci")
+        val mediampPrebuiltDir = rootProject.file("mediamp/mediamp-mpv/libmpv/lib/windows/x86_64")
+        jvmArgs(
+            "-Dskiko.renderApi=OPENGL",
+            "-Djava.library.path=" + listOf(
+                mediampNativeBuildDir.absolutePath,
+                mediampNativeBuildDir.resolve("Debug").absolutePath,
+                mediampNativeBuildDir.resolve("Release").absolutePath,
+                mediampPrebuiltDir.absolutePath,
+                System.getenv("NUVIO_MPV_DIR")?.let { "$it/bin" } ?: "",
+            ).filter { it.isNotEmpty() }.joinToString(System.getProperty("path.separator")),
+        )
+
         buildTypes.release.proguard {
             configurationFiles.from(project.file("desktop-proguard-rules.pro"))
         }

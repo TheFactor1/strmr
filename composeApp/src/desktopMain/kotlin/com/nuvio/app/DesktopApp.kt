@@ -1,5 +1,6 @@
 package com.nuvio.app
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -27,7 +28,9 @@ fun main() {
                 onDispose { }
             }
 
-            App()
+            CompositionLocalProvider(LocalDesktopWindow provides window) {
+                App()
+            }
         }
     }
 }

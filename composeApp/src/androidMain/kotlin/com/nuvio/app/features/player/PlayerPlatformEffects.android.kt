@@ -99,6 +99,10 @@ actual fun rememberPlayerGestureController(): PlayerGestureController? {
     return controller
 }
 
+actual val usesNativePlayerChrome: Boolean = false
+
+actual val usesAnimatedPlayerChrome: Boolean = true
+
 private tailrec fun Context.findActivity(): Activity? =
     when (this) {
         is Activity -> this

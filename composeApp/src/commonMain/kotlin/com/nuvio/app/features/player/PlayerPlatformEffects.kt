@@ -29,3 +29,7 @@ expect fun ManagePlayerPictureInPicture(
 
 @Composable
 expect fun rememberPlayerGestureController(): PlayerGestureController?
+
+expect val usesNativePlayerChrome: Boolean
+
+expect val usesAnimatedPlayerChrome: Boolean

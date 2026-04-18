@@ -61,6 +61,10 @@ actual fun rememberPlayerGestureController(): PlayerGestureController? {
     return controller
 }
 
+actual val usesNativePlayerChrome: Boolean = false
+
+actual val usesAnimatedPlayerChrome: Boolean = true
+
 private class IOSPlayerGestureController : PlayerGestureController {
     private val volumeView = MPVolumeView().apply {
         hidden = true

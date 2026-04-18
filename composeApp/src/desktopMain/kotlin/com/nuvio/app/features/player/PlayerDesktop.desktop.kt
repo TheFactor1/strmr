@@ -2,6 +2,7 @@ package com.nuvio.app.features.player
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -9,10 +10,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.IntSize
+import com.nuvio.app.LocalDesktopWindow
 import com.nuvio.app.core.storage.ProfileScopedKey
 import com.nuvio.app.core.sync.decodeSyncBoolean
 import com.nuvio.app.core.sync.decodeSyncFloat
@@ -28,15 +33,665 @@ import com.nuvio.app.desktop.DesktopPreferences
 import com.nuvio.app.features.details.MetaVideo
 import com.nuvio.app.features.streams.AddonStreamGroup
 import com.nuvio.app.features.streams.StreamItem
+import com.sun.jna.Native
 import com.sun.jna.Pointer
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import org.openani.mediamp.InternalMediampApi
+import org.openani.mediamp.PlaybackState
+import org.openani.mediamp.features.PlaybackSpeed
+import org.openani.mediamp.mpv.MpvMediampPlayer
+import org.openani.mediamp.mpv.compose.MpvMediampPlayerSurface
+import org.openani.mediamp.source.UriMediaData
+
+private val isMacOS: Boolean by lazy {
+    System.getProperty("os.name")?.lowercase()?.contains("mac") == true
+}
+
+private val hasWindowsNativeBridge: Boolean
+    get() = !isMacOS && WindowsDesktopMPVBridgeLib.isAvailable
 
 @Composable
 actual fun PlatformPlayerSurface(
+    sourceUrl: String,
+    sourceAudioUrl: String?,
+    sourceHeaders: Map<String, String>,
+    sourceResponseHeaders: Map<String, String>,
+    useYoutubeChunkedPlayback: Boolean,
+    modifier: Modifier,
+    playWhenReady: Boolean,
+    resizeMode: PlayerResizeMode,
+    useNativeController: Boolean,
+    onControllerReady: (PlayerEngineController) -> Unit,
+    onSnapshot: (PlayerPlaybackSnapshot) -> Unit,
+    onError: (String?) -> Unit,
+) {
+    if (isMacOS) {
+        MacOSPlayerSurface(
+            sourceUrl = sourceUrl,
+            sourceAudioUrl = sourceAudioUrl,
+            sourceHeaders = sourceHeaders,
+            sourceResponseHeaders = sourceResponseHeaders,
+            useYoutubeChunkedPlayback = useYoutubeChunkedPlayback,
+            modifier = modifier,
+            playWhenReady = playWhenReady,
+            resizeMode = resizeMode,
+            useNativeController = useNativeController,
+            onControllerReady = onControllerReady,
+            onSnapshot = onSnapshot,
+            onError = onError,
+        )
+    } else {
+        WindowsMpvPlayerSurface(
+            sourceUrl = sourceUrl,
+            sourceAudioUrl = sourceAudioUrl,
+            sourceHeaders = sourceHeaders,
+            modifier = modifier,
+            playWhenReady = playWhenReady,
+            resizeMode = resizeMode,
+            onControllerReady = onControllerReady,
+            onSnapshot = onSnapshot,
+            onError = onError,
+        )
+    }
+}
+
+private data class WindowsBridgePollState(
+    val isClosed: Boolean,
+    val snapshot: PlayerPlaybackSnapshot,
+    val error: String?,
+    val addonSubtitlesFetchRequested: Boolean,
+    val subtitleStyleChanged: Boolean,
+    val subtitleStyleColorIndex: Int,
+    val subtitleStyleOutlineEnabled: Boolean,
+    val subtitleStyleFontSize: Int,
+    val subtitleStyleBottomOffset: Int,
+    val nextEpisodePressed: Boolean,
+    val sourcesOpenRequested: Boolean,
+    val episodesOpenRequested: Boolean,
+    val selectedSourceUrl: String?,
+    val sourceFilterChanged: Boolean,
+    val sourceFilterValue: String?,
+    val sourceReloadRequested: Boolean,
+    val selectedEpisodeId: String?,
+    val selectedEpisodeStreamUrl: String?,
+    val episodeFilterChanged: Boolean,
+    val episodeFilterValue: String?,
+    val episodeReloadRequested: Boolean,
+    val episodeBackRequested: Boolean,
+)
+
+@Composable
+private fun WindowsNativePlayerSurface(
+    sourceUrl: String,
+    sourceAudioUrl: String?,
+    sourceHeaders: Map<String, String>,
+    sourceResponseHeaders: Map<String, String>,
+    useYoutubeChunkedPlayback: Boolean,
+    modifier: Modifier,
+    playWhenReady: Boolean,
+    resizeMode: PlayerResizeMode,
+    useNativeController: Boolean,
+    onControllerReady: (PlayerEngineController) -> Unit,
+    onSnapshot: (PlayerPlaybackSnapshot) -> Unit,
+    onError: (String?) -> Unit,
+) {
+    val bridge = remember { WindowsDesktopMPVBridgeLib.loadOrNull() }
+    if (bridge == null) {
+        WindowsMpvPlayerSurface(
+            sourceUrl = sourceUrl,
+            sourceAudioUrl = sourceAudioUrl,
+            sourceHeaders = sourceHeaders,
+            modifier = modifier,
+            playWhenReady = playWhenReady,
+            resizeMode = resizeMode,
+            onControllerReady = onControllerReady,
+            onSnapshot = onSnapshot,
+            onError = onError,
+        )
+        return
+    }
+    val desktopWindow = LocalDesktopWindow.current
+    val playerPtr = remember { bridge.nuvio_player_create() }
+    val playerAttached = remember(playerPtr) { booleanArrayOf(false) }
+    val lastBounds = remember(playerPtr) { arrayOfNulls<Rect>(1) }
+    var onCloseCallback by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var onAddonSubtitlesFetchCallback by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var onSourcesRequestedCallback by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var onSourceStreamSelectedCallback by remember { mutableStateOf<((String) -> Unit)?>(null) }
+    var onSourceFilterChangedCallback by remember { mutableStateOf<((String?) -> Unit)?>(null) }
+    var onSourceReloadCallback by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var onEpisodesRequestedCallback by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var onEpisodeSelectedCallback by remember { mutableStateOf<((String) -> Unit)?>(null) }
+    var onEpisodeStreamSelectedCallback by remember { mutableStateOf<((String) -> Unit)?>(null) }
+    var onEpisodeFilterChangedCallback by remember { mutableStateOf<((String?) -> Unit)?>(null) }
+    var onEpisodeReloadCallback by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var onEpisodeBackCallback by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    DisposableEffect(playerPtr) {
+        onDispose {
+            bridge.nuvio_player_destroy(playerPtr)
+        }
+    }
+
+    LaunchedEffect(desktopWindow, playerPtr) {
+        val window = desktopWindow ?: return@LaunchedEffect
+        val nativePtr = Native.getComponentPointer(window) ?: return@LaunchedEffect
+        bridge.nuvio_player_show(playerPtr, Pointer.nativeValue(nativePtr))
+        playerAttached[0] = true
+    }
+
+    LaunchedEffect(sourceUrl, sourceAudioUrl) {
+        val headersJson = if (sourceHeaders.isNotEmpty()) {
+            buildJsonObject {
+                sourceHeaders.forEach { (key, value) -> put(key, value) }
+            }.toString()
+        } else null
+        bridge.nuvio_player_load_file(playerPtr, sourceUrl, sourceAudioUrl, headersJson)
+        if (playWhenReady) {
+            bridge.nuvio_player_play(playerPtr)
+        }
+    }
+
+    LaunchedEffect(playWhenReady) {
+        if (playWhenReady) bridge.nuvio_player_play(playerPtr) else bridge.nuvio_player_pause(playerPtr)
+    }
+
+    LaunchedEffect(resizeMode) {
+        val mode = when (resizeMode) {
+            PlayerResizeMode.Fit -> 0
+            PlayerResizeMode.Fill -> 1
+            PlayerResizeMode.Zoom -> 2
+        }
+        bridge.nuvio_player_set_resize_mode(playerPtr, mode)
+    }
+
+    val controller = remember(playerPtr) {
+        object : PlayerEngineController {
+            override fun play() = bridge.nuvio_player_play(playerPtr)
+            override fun pause() = bridge.nuvio_player_pause(playerPtr)
+            override fun seekTo(positionMs: Long) = bridge.nuvio_player_seek_to(playerPtr, positionMs)
+            override fun seekBy(offsetMs: Long) = bridge.nuvio_player_seek_by(playerPtr, offsetMs)
+            override fun retry() = bridge.nuvio_player_retry(playerPtr)
+            override fun setPlaybackSpeed(speed: Float) = bridge.nuvio_player_set_speed(playerPtr, speed)
+            override fun getAudioTracks(): List<AudioTrack> {
+                val count = bridge.nuvio_player_get_audio_track_count(playerPtr)
+                return (0 until count).map { index ->
+                    AudioTrack(
+                        index = index,
+                        id = bridge.nuvio_player_get_audio_track_id(playerPtr, index).toString(),
+                        label = bridge.nuvio_player_get_audio_track_label(playerPtr, index) ?: "",
+                        language = bridge.nuvio_player_get_audio_track_lang(playerPtr, index),
+                        isSelected = bridge.nuvio_player_is_audio_track_selected(playerPtr, index),
+                    )
+                }
+            }
+            override fun getSubtitleTracks(): List<SubtitleTrack> {
+                val count = bridge.nuvio_player_get_subtitle_track_count(playerPtr)
+                return (0 until count).map { index ->
+                    SubtitleTrack(
+                        index = index,
+                        id = bridge.nuvio_player_get_subtitle_track_id(playerPtr, index).toString(),
+                        label = bridge.nuvio_player_get_subtitle_track_label(playerPtr, index) ?: "",
+                        language = bridge.nuvio_player_get_subtitle_track_lang(playerPtr, index),
+                        isSelected = bridge.nuvio_player_is_subtitle_track_selected(playerPtr, index),
+                    )
+                }
+            }
+            override fun selectAudioTrack(index: Int) {
+                val count = bridge.nuvio_player_get_audio_track_count(playerPtr)
+                if (index in 0 until count) {
+                    bridge.nuvio_player_select_audio_track(playerPtr, bridge.nuvio_player_get_audio_track_id(playerPtr, index))
+                }
+            }
+            override fun selectSubtitleTrack(index: Int) {
+                if (index < 0) {
+                    bridge.nuvio_player_select_subtitle_track(playerPtr, -1)
+                    return
+                }
+                val count = bridge.nuvio_player_get_subtitle_track_count(playerPtr)
+                if (index in 0 until count) {
+                    bridge.nuvio_player_select_subtitle_track(playerPtr, bridge.nuvio_player_get_subtitle_track_id(playerPtr, index))
+                }
+            }
+            override fun setSubtitleUri(url: String) = bridge.nuvio_player_set_subtitle_url(playerPtr, url)
+            override fun clearExternalSubtitle() = bridge.nuvio_player_clear_external_subtitle(playerPtr)
+            override fun clearExternalSubtitleAndSelect(trackIndex: Int) {
+                val trackId = if (trackIndex >= 0) {
+                    val count = bridge.nuvio_player_get_subtitle_track_count(playerPtr)
+                    if (trackIndex < count) bridge.nuvio_player_get_subtitle_track_id(playerPtr, trackIndex) else -1
+                } else -1
+                bridge.nuvio_player_clear_external_subtitle_and_select(playerPtr, trackId)
+            }
+            override fun applySubtitleStyle(style: SubtitleStyleState) {
+                val colorHex = style.textColor.toMpvColorString()
+                val outline = if (style.outlineEnabled) 2.0f else 0.0f
+                val subPos = 100 - style.bottomOffset
+                bridge.nuvio_player_apply_subtitle_style(playerPtr, colorHex, outline, style.fontSizeSp.toFloat(), subPos)
+            }
+            override fun setMetadata(title: String, streamTitle: String, providerName: String, seasonNumber: Int?, episodeNumber: Int?, episodeTitle: String?, artwork: String?, logo: String?) {
+                bridge.nuvio_player_set_metadata(playerPtr, title, streamTitle, providerName, seasonNumber ?: 0, episodeNumber ?: 0, episodeTitle, artwork, logo)
+            }
+            override fun setPlayerFlags(hasVideoId: Boolean, isSeries: Boolean) {
+                bridge.nuvio_player_set_has_video_id(playerPtr, hasVideoId)
+                bridge.nuvio_player_set_is_series(playerPtr, isSeries)
+            }
+            override fun showSkipButton(type: String, endTimeMs: Long) = bridge.nuvio_player_show_skip_button(playerPtr, type, endTimeMs)
+            override fun hideSkipButton() = bridge.nuvio_player_hide_skip_button(playerPtr)
+            override fun showNextEpisode(season: Int, episode: Int, title: String, thumbnail: String?, hasAired: Boolean) = bridge.nuvio_player_show_next_episode(playerPtr, season, episode, title, thumbnail, hasAired)
+            override fun hideNextEpisode() = bridge.nuvio_player_hide_next_episode(playerPtr)
+            override fun setOnCloseCallback(callback: () -> Unit) { onCloseCallback = callback }
+            override fun setOnAddonSubtitlesFetchCallback(callback: () -> Unit) { onAddonSubtitlesFetchCallback = callback }
+            override fun pushAddonSubtitles(subtitles: List<AddonSubtitle>, isLoading: Boolean) {
+                bridge.nuvio_player_set_addon_subtitles_loading(playerPtr, isLoading)
+                if (!isLoading) {
+                    bridge.nuvio_player_clear_addon_subtitles(playerPtr)
+                    subtitles.forEach { addon -> bridge.nuvio_player_add_addon_subtitle(playerPtr, addon.id, addon.url, addon.language, addon.display) }
+                }
+            }
+            override fun setOnSourcesRequestedCallback(callback: () -> Unit) { onSourcesRequestedCallback = callback }
+            override fun setOnSourceStreamSelectedCallback(callback: (String) -> Unit) { onSourceStreamSelectedCallback = callback }
+            override fun setOnSourceFilterChangedCallback(callback: (String?) -> Unit) { onSourceFilterChangedCallback = callback }
+            override fun setOnSourceReloadCallback(callback: () -> Unit) { onSourceReloadCallback = callback }
+            override fun setOnEpisodesRequestedCallback(callback: () -> Unit) { onEpisodesRequestedCallback = callback }
+            override fun setOnEpisodeSelectedCallback(callback: (String) -> Unit) { onEpisodeSelectedCallback = callback }
+            override fun setOnEpisodeStreamSelectedCallback(callback: (String) -> Unit) { onEpisodeStreamSelectedCallback = callback }
+            override fun setOnEpisodeFilterChangedCallback(callback: (String?) -> Unit) { onEpisodeFilterChangedCallback = callback }
+            override fun setOnEpisodeReloadCallback(callback: () -> Unit) { onEpisodeReloadCallback = callback }
+            override fun setOnEpisodeBackCallback(callback: () -> Unit) { onEpisodeBackCallback = callback }
+            override fun pushSourceData(streams: List<StreamItem>, groups: List<AddonStreamGroup>, loading: Boolean, selectedFilter: String?, currentStreamUrl: String?) {
+                bridge.nuvio_player_set_sources_loading(playerPtr, loading)
+                bridge.nuvio_player_set_source_selected_filter(playerPtr, selectedFilter)
+                bridge.nuvio_player_clear_source_addon_groups(playerPtr)
+                groups.forEach { group -> bridge.nuvio_player_add_source_addon_group(playerPtr, group.addonId, group.addonName, group.addonId, group.isLoading, group.error != null) }
+                bridge.nuvio_player_clear_source_streams(playerPtr)
+                streams.forEach { stream -> bridge.nuvio_player_add_source_stream(playerPtr, stream.addonId + "_" + (stream.url ?: stream.infoHash ?: ""), stream.streamLabel, stream.streamSubtitle, stream.addonName, stream.addonId, stream.directPlaybackUrl ?: "", stream.directPlaybackUrl == currentStreamUrl) }
+            }
+            override fun pushEpisodes(episodes: List<MetaVideo>) {
+                bridge.nuvio_player_clear_episodes(playerPtr)
+                episodes.forEach { episode -> bridge.nuvio_player_add_episode(playerPtr, episode.id, episode.title, episode.overview, episode.thumbnail, episode.season ?: 0, episode.episode ?: 0) }
+            }
+            override fun pushEpisodeStreamsData(streams: List<StreamItem>, groups: List<AddonStreamGroup>, loading: Boolean, selectedFilter: String?, currentStreamUrl: String?) {
+                bridge.nuvio_player_set_episode_streams_loading(playerPtr, loading)
+                bridge.nuvio_player_set_episode_selected_filter(playerPtr, selectedFilter)
+                bridge.nuvio_player_clear_episode_addon_groups(playerPtr)
+                groups.forEach { group -> bridge.nuvio_player_add_episode_addon_group(playerPtr, group.addonId, group.addonName, group.addonId, group.isLoading, group.error != null) }
+                bridge.nuvio_player_clear_episode_streams(playerPtr)
+                streams.forEach { stream -> bridge.nuvio_player_add_episode_stream(playerPtr, stream.addonId + "_" + (stream.url ?: stream.infoHash ?: ""), stream.streamLabel, stream.streamSubtitle, stream.addonName, stream.addonId, stream.directPlaybackUrl ?: "", stream.directPlaybackUrl == currentStreamUrl) }
+            }
+            override fun showEpisodeStreamsView(season: Int?, episode: Int?, title: String?) = bridge.nuvio_player_show_episode_streams(playerPtr, season ?: 0, episode ?: 0, title)
+            override fun switchSource(url: String, audioUrl: String?, headersJson: String?) = bridge.nuvio_player_load_file(playerPtr, url, audioUrl, headersJson)
+        }
+    }
+
+    LaunchedEffect(controller) {
+        onControllerReady(controller)
+    }
+
+    LaunchedEffect(playerPtr) {
+        while (true) {
+            delay(250)
+            val pollState = withContext(Dispatchers.IO) {
+                bridge.nuvio_player_refresh_state(playerPtr)
+                WindowsBridgePollState(
+                    isClosed = bridge.nuvio_player_is_closed(playerPtr),
+                    snapshot = PlayerPlaybackSnapshot(
+                        isLoading = bridge.nuvio_player_is_loading(playerPtr),
+                        isPlaying = bridge.nuvio_player_is_playing(playerPtr),
+                        isEnded = bridge.nuvio_player_is_ended(playerPtr),
+                        positionMs = bridge.nuvio_player_get_position_ms(playerPtr),
+                        durationMs = bridge.nuvio_player_get_duration_ms(playerPtr),
+                        bufferedPositionMs = bridge.nuvio_player_get_buffered_ms(playerPtr),
+                        playbackSpeed = bridge.nuvio_player_get_speed(playerPtr),
+                    ),
+                    error = bridge.nuvio_player_get_error(playerPtr),
+                    addonSubtitlesFetchRequested = bridge.nuvio_player_is_addon_subtitles_fetch_requested(playerPtr),
+                    subtitleStyleChanged = bridge.nuvio_player_pop_subtitle_style_changed(playerPtr),
+                    subtitleStyleColorIndex = bridge.nuvio_player_get_subtitle_style_color_index(playerPtr),
+                    subtitleStyleOutlineEnabled = bridge.nuvio_player_get_subtitle_style_outline_enabled(playerPtr),
+                    subtitleStyleFontSize = bridge.nuvio_player_get_subtitle_style_font_size(playerPtr),
+                    subtitleStyleBottomOffset = bridge.nuvio_player_get_subtitle_style_bottom_offset(playerPtr),
+                    nextEpisodePressed = bridge.nuvio_player_pop_next_episode_pressed(playerPtr),
+                    sourcesOpenRequested = bridge.nuvio_player_pop_sources_open_requested(playerPtr),
+                    episodesOpenRequested = bridge.nuvio_player_pop_episodes_open_requested(playerPtr),
+                    selectedSourceUrl = bridge.nuvio_player_pop_source_stream_selected(playerPtr),
+                    sourceFilterChanged = bridge.nuvio_player_pop_source_filter_changed(playerPtr),
+                    sourceFilterValue = bridge.nuvio_player_get_source_filter_value(playerPtr),
+                    sourceReloadRequested = bridge.nuvio_player_pop_source_reload(playerPtr),
+                    selectedEpisodeId = bridge.nuvio_player_pop_episode_selected(playerPtr),
+                    selectedEpisodeStreamUrl = bridge.nuvio_player_pop_episode_stream_selected(playerPtr),
+                    episodeFilterChanged = bridge.nuvio_player_pop_episode_filter_changed(playerPtr),
+                    episodeFilterValue = bridge.nuvio_player_get_episode_filter_value(playerPtr),
+                    episodeReloadRequested = bridge.nuvio_player_pop_episode_reload(playerPtr),
+                    episodeBackRequested = bridge.nuvio_player_pop_episode_back(playerPtr),
+                )
+            }
+            if (pollState.isClosed) {
+                onCloseCallback?.invoke()
+                break
+            }
+            onSnapshot(pollState.snapshot)
+            onError(pollState.error)
+            if (pollState.addonSubtitlesFetchRequested) onAddonSubtitlesFetchCallback?.invoke()
+            if (pollState.subtitleStyleChanged) {
+                val colorIndex = pollState.subtitleStyleColorIndex.coerceIn(0, SubtitleColorSwatches.lastIndex)
+                PlayerSettingsRepository.setSubtitleStyle(
+                    SubtitleStyleState(
+                        textColor = SubtitleColorSwatches[colorIndex],
+                        outlineEnabled = pollState.subtitleStyleOutlineEnabled,
+                        fontSizeSp = pollState.subtitleStyleFontSize,
+                        bottomOffset = pollState.subtitleStyleBottomOffset,
+                    ),
+                )
+            }
+            if (pollState.sourcesOpenRequested) onSourcesRequestedCallback?.invoke()
+            if (pollState.episodesOpenRequested) onEpisodesRequestedCallback?.invoke()
+            pollState.selectedSourceUrl?.let { onSourceStreamSelectedCallback?.invoke(it) }
+            if (pollState.sourceFilterChanged) onSourceFilterChangedCallback?.invoke(pollState.sourceFilterValue)
+            if (pollState.sourceReloadRequested) onSourceReloadCallback?.invoke()
+            pollState.selectedEpisodeId?.let { onEpisodeSelectedCallback?.invoke(it) }
+            pollState.selectedEpisodeStreamUrl?.let { onEpisodeStreamSelectedCallback?.invoke(it) }
+            if (pollState.episodeFilterChanged) onEpisodeFilterChangedCallback?.invoke(pollState.episodeFilterValue)
+            if (pollState.episodeReloadRequested) onEpisodeReloadCallback?.invoke()
+            if (pollState.episodeBackRequested) onEpisodeBackCallback?.invoke()
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .background(Color.Black)
+            .onGloballyPositioned { coordinates ->
+                if (!playerAttached[0]) return@onGloballyPositioned
+                val bounds = coordinates.boundsInWindow()
+                if (lastBounds[0] == bounds) return@onGloballyPositioned
+                lastBounds[0] = bounds
+                bridge.nuvio_player_set_bounds(
+                    playerPtr,
+                    bounds.left.toInt(),
+                    bounds.top.toInt(),
+                    bounds.width.toInt().coerceAtLeast(1),
+                    bounds.height.toInt().coerceAtLeast(1),
+                )
+            },
+    )
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Windows: mediamp-mpv backed inline Compose rendering
+// ──────────────────────────────────────────────────────────────────────────────
+
+@OptIn(InternalMediampApi::class)
+@Composable
+private fun WindowsMpvPlayerSurface(
+    sourceUrl: String,
+    sourceAudioUrl: String?,
+    sourceHeaders: Map<String, String>,
+    modifier: Modifier,
+    playWhenReady: Boolean,
+    resizeMode: PlayerResizeMode,
+    onControllerReady: (PlayerEngineController) -> Unit,
+    onSnapshot: (PlayerPlaybackSnapshot) -> Unit,
+    onError: (String?) -> Unit,
+) {
+    val player = remember {
+        MpvMediampPlayer(Unit, kotlin.coroutines.EmptyCoroutineContext)
+    }
+
+    DisposableEffect(player) {
+        onDispose {
+            player.close()
+        }
+    }
+
+    // Load source
+    LaunchedEffect(sourceUrl, sourceAudioUrl) {
+        try {
+            val headers = sourceHeaders.toMutableMap()
+            player.setMediaData(UriMediaData(sourceUrl, headers))
+
+            // Attach separate audio track if provided
+            if (!sourceAudioUrl.isNullOrEmpty()) {
+                player.command("audio-add", sourceAudioUrl, "auto")
+            }
+
+            if (playWhenReady) {
+                player.resume()
+            }
+        } catch (e: Exception) {
+            onError(e.message ?: "Failed to load media")
+        }
+    }
+
+    // Handle play/pause changes
+    LaunchedEffect(playWhenReady) {
+        if (playWhenReady && player.getCurrentPlaybackState() == PlaybackState.PAUSED) {
+            player.resume()
+        } else if (!playWhenReady && player.getCurrentPlaybackState() == PlaybackState.PLAYING) {
+            player.pause()
+        }
+    }
+
+    // Handle resize mode
+    LaunchedEffect(resizeMode) {
+        when (resizeMode) {
+            PlayerResizeMode.Fit -> {
+                player.setProperty("panscan", 0.0)
+                player.setProperty("keepaspect", true)
+            }
+            PlayerResizeMode.Fill, PlayerResizeMode.Zoom -> {
+                player.setProperty("panscan", 1.0)
+                player.setProperty("keepaspect", true)
+            }
+        }
+    }
+
+    // Create controller
+    val controller = remember(player) {
+        WindowsMpvController(player)
+    }
+
+    LaunchedEffect(controller) {
+        onControllerReady(controller)
+    }
+
+    // Collect playback state and report snapshots
+    LaunchedEffect(player) {
+        combine(
+            player.playbackState,
+            player.currentPositionMillis,
+            player.mediaProperties,
+        ) { state, position, props ->
+            PlayerPlaybackSnapshot(
+                isLoading = state == PlaybackState.PAUSED_BUFFERING || state == PlaybackState.READY,
+                isPlaying = state == PlaybackState.PLAYING,
+                isEnded = state == PlaybackState.FINISHED,
+                positionMs = position,
+                durationMs = props?.durationMillis?.takeIf { it > 0 } ?: 0L,
+                bufferedPositionMs = 0L,
+                playbackSpeed = player.features[PlaybackSpeed]?.value ?: 1.0f,
+            )
+        }.collectLatest { snapshot ->
+            onSnapshot(snapshot)
+        }
+    }
+
+    // Detect errors
+    LaunchedEffect(player) {
+        player.playbackState.collectLatest { state ->
+            if (state == PlaybackState.ERROR) {
+                onError("Playback error")
+            } else {
+                onError(null)
+            }
+        }
+    }
+
+    // Render surface: mpv renders directly into the Compose Canvas via OpenGL
+    MpvMediampPlayerSurface(
+        player = player,
+        modifier = modifier.background(Color.Black),
+    )
+}
+
+/**
+ * PlayerEngineController implementation backed by MpvMediampPlayer.
+ * Uses direct mpv property/command access for full control.
+ */
+private class WindowsMpvController(
+    private val player: MpvMediampPlayer,
+) : PlayerEngineController {
+
+    private val isReady: Boolean
+        get() = !player.isClosed && player.getCurrentPlaybackState() != PlaybackState.FINISHED
+
+    override fun play() { if (!player.isClosed) player.resume() }
+
+    override fun pause() { if (!player.isClosed) player.pause() }
+
+    override fun seekTo(positionMs: Long) { if (!player.isClosed) player.seekTo(positionMs) }
+
+    override fun seekBy(offsetMs: Long) { if (!player.isClosed) player.skip(offsetMs) }
+
+    override fun retry() {
+        player.resume()
+    }
+
+    override fun setPlaybackSpeed(speed: Float) {
+        player.features[PlaybackSpeed]?.set(speed)
+    }
+
+    override fun getAudioTracks(): List<AudioTrack> {
+        if (!isReady) return emptyList()
+        val count = player.getPropertyInt("track-list/count")
+        val tracks = mutableListOf<AudioTrack>()
+        for (i in 0 until count) {
+            val type = player.getPropertyString("track-list/$i/type")
+            if (type != "audio") continue
+            val id = player.getPropertyInt("track-list/$i/id")
+            val title = player.getPropertyString("track-list/$i/title")
+            val lang = player.getPropertyString("track-list/$i/lang").takeIf { it.isNotBlank() }
+            val selected = player.getPropertyBoolean("track-list/$i/selected")
+            tracks.add(
+                AudioTrack(
+                    index = tracks.size,
+                    id = id.toString(),
+                    label = title.ifEmpty { lang ?: "Track $id" },
+                    language = lang,
+                    isSelected = selected,
+                ),
+            )
+        }
+        return tracks
+    }
+
+    override fun getSubtitleTracks(): List<SubtitleTrack> {
+        if (!isReady) return emptyList()
+        val count = player.getPropertyInt("track-list/count")
+        val tracks = mutableListOf<SubtitleTrack>()
+        for (i in 0 until count) {
+            val type = player.getPropertyString("track-list/$i/type")
+            if (type != "sub") continue
+            val id = player.getPropertyInt("track-list/$i/id")
+            val title = player.getPropertyString("track-list/$i/title")
+            val lang = player.getPropertyString("track-list/$i/lang").takeIf { it.isNotBlank() }
+            val selected = player.getPropertyBoolean("track-list/$i/selected")
+            tracks.add(
+                SubtitleTrack(
+                    index = tracks.size,
+                    id = id.toString(),
+                    label = title.ifEmpty { lang ?: "Subtitle $id" },
+                    language = lang,
+                    isSelected = selected,
+                ),
+            )
+        }
+        return tracks
+    }
+
+    override fun selectAudioTrack(index: Int) {
+        val tracks = getAudioTracks()
+        if (index in tracks.indices) {
+            player.setProperty("aid", tracks[index].id)
+        }
+    }
+
+    override fun selectSubtitleTrack(index: Int) {
+        if (index < 0) {
+            player.setProperty("sid", "no")
+            return
+        }
+        val tracks = getSubtitleTracks()
+        if (index in tracks.indices) {
+            player.setProperty("sid", tracks[index].id)
+        }
+    }
+
+    override fun setSubtitleUri(url: String) {
+        player.command("sub-add", url, "auto")
+    }
+
+    override fun clearExternalSubtitle() {
+        if (!isReady) return
+        val count = player.getPropertyInt("track-list/count")
+        for (i in count - 1 downTo 0) {
+            val type = player.getPropertyString("track-list/$i/type")
+            val external = player.getPropertyBoolean("track-list/$i/external")
+            if (type == "sub" && external) {
+                val id = player.getPropertyInt("track-list/$i/id")
+                player.command("sub-remove", id.toString())
+                return
+            }
+        }
+    }
+
+    override fun clearExternalSubtitleAndSelect(trackIndex: Int) {
+        clearExternalSubtitle()
+        selectSubtitleTrack(trackIndex)
+    }
+
+    override fun applySubtitleStyle(style: SubtitleStyleState) {
+        val colorHex = style.textColor.toMpvColorString()
+        val outline = if (style.outlineEnabled) 2.0 else 0.0
+        val subPos = 100 - style.bottomOffset
+        player.option("sub-color", colorHex)
+        player.setProperty("sub-border-size", outline)
+        player.setProperty("sub-font-size", style.fontSizeSp.toDouble())
+        player.setProperty("sub-pos", subPos)
+    }
+
+    override fun switchSource(url: String, audioUrl: String?, headersJson: String?) {
+        // Parse headers from JSON if provided
+        if (headersJson != null) {
+            player.option("http-header-fields-clr", "")
+            // Simple JSON parsing for header fields
+            val headerPattern = Regex(""""([^"]+)"\s*:\s*"([^"]+)"""")
+            headerPattern.findAll(headersJson).forEach { match ->
+                val (key, value) = match.destructured
+                player.option("http-header-fields", "$key: $value")
+            }
+        }
+        player.command("stop")
+        player.command("playlist-clear")
+        player.command("loadfile", url)
+        if (!audioUrl.isNullOrEmpty()) {
+            player.command("audio-add", audioUrl, "auto")
+        }
+    }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// macOS: existing JNA bridge (unchanged)
+// ──────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun MacOSPlayerSurface(
     sourceUrl: String,
     sourceAudioUrl: String?,
     sourceHeaders: Map<String, String>,
@@ -829,3 +1484,8 @@ actual fun ManagePlayerPictureInPicture(
 
 @Composable
 actual fun rememberPlayerGestureController(): PlayerGestureController? = null
+
+actual val usesNativePlayerChrome: Boolean
+    get() = isMacOS
+
+actual val usesAnimatedPlayerChrome: Boolean = false

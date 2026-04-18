@@ -1602,7 +1602,7 @@ fun PlayerScreen(
                 },
             )
 
-            if (pausedOverlayVisible && !controlsVisible) {
+            if (!usesNativePlayerChrome && pausedOverlayVisible && !controlsVisible) {
                 PauseMetadataOverlay(
                     title = title,
                     logo = logo,
@@ -1618,86 +1618,157 @@ fun PlayerScreen(
                 )
             }
 
-            AnimatedVisibility(
-                visible = controlsVisible,
-                enter = fadeIn(),
-                exit = fadeOut(),
-            ) {
-                PlayerControlsShell(
-                    title = title,
-                    streamTitle = activeStreamTitle,
-                    providerName = activeProviderName,
-                    seasonNumber = activeSeasonNumber,
-                    episodeNumber = activeEpisodeNumber,
-                    episodeTitle = activeEpisodeTitle,
-                    playbackSnapshot = playbackSnapshot,
-                    displayedPositionMs = displayedPositionMs,
-                    metrics = metrics,
-                    resizeMode = resizeMode,
-                    onBack = onBackWithProgress,
-                    onTogglePlayback = ::togglePlayback,
-                    onSeekBack = { seekBy(-10_000L) },
-                    onSeekForward = { seekBy(10_000L) },
-                    onResizeModeClick = ::cycleResizeMode,
-                    onSpeedClick = ::cyclePlaybackSpeed,
-                    onSubtitleClick = {
-                        refreshTracks()
-                        showSubtitleModal = true
-                    },
-                    onAudioClick = {
-                        refreshTracks()
-                        showAudioModal = true
-                    },
-                    onSourcesClick = if (activeVideoId != null) {{ openSourcesPanel() }} else null,
-                    onEpisodesClick = if (isSeries) {{ openEpisodesPanel() }} else null,
-                    onScrubChange = { positionMs -> scrubbingPositionMs = positionMs },
-                    onScrubFinished = { positionMs ->
-                        scrubbingPositionMs = null
-                        playerController?.seekTo(positionMs)
-                    },
-                    horizontalSafePadding = horizontalSafePadding,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
-
-            AnimatedVisibility(
-                visible = playerSettingsUiState.showLoadingOverlay && !initialLoadCompleted && errorMessage == null,
-                enter = fadeIn(),
-                exit = fadeOut(),
-            ) {
-                OpeningOverlay(
-                    artwork = backdropArtwork,
-                    logo = logo,
-                    title = title,
-                    onBack = onBackWithProgress,
-                    horizontalSafePadding = horizontalSafePadding,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
-
-            AnimatedVisibility(
-                visible = currentGestureFeedback != null,
-                enter = fadeIn(),
-                exit = fadeOut(),
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    renderedGestureFeedback?.let { feedback ->
-                        GestureFeedbackPill(
-                            feedback = feedback,
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .windowInsetsPadding(WindowInsets.safeContent.only(WindowInsetsSides.Top))
-                                .padding(horizontal = horizontalSafePadding)
-                                .padding(top = 40.dp),
+            if (!usesNativePlayerChrome) {
+                if (usesAnimatedPlayerChrome) {
+                    AnimatedVisibility(
+                        visible = controlsVisible,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                    ) {
+                        PlayerControlsShell(
+                            title = title,
+                            streamTitle = activeStreamTitle,
+                            providerName = activeProviderName,
+                            seasonNumber = activeSeasonNumber,
+                            episodeNumber = activeEpisodeNumber,
+                            episodeTitle = activeEpisodeTitle,
+                            playbackSnapshot = playbackSnapshot,
+                            displayedPositionMs = displayedPositionMs,
+                            metrics = metrics,
+                            resizeMode = resizeMode,
+                            onBack = onBackWithProgress,
+                            onTogglePlayback = ::togglePlayback,
+                            onSeekBack = { seekBy(-10_000L) },
+                            onSeekForward = { seekBy(10_000L) },
+                            onResizeModeClick = ::cycleResizeMode,
+                            onSpeedClick = ::cyclePlaybackSpeed,
+                            onSubtitleClick = {
+                                refreshTracks()
+                                showSubtitleModal = true
+                            },
+                            onAudioClick = {
+                                refreshTracks()
+                                showAudioModal = true
+                            },
+                            onSourcesClick = if (activeVideoId != null) {{ openSourcesPanel() }} else null,
+                            onEpisodesClick = if (isSeries) {{ openEpisodesPanel() }} else null,
+                            onScrubChange = { positionMs -> scrubbingPositionMs = positionMs },
+                            onScrubFinished = { positionMs ->
+                                scrubbingPositionMs = null
+                                playerController?.seekTo(positionMs)
+                            },
+                            horizontalSafePadding = horizontalSafePadding,
+                            modifier = Modifier.fillMaxSize(),
                         )
+                    }
+                } else if (controlsVisible) {
+                    PlayerControlsShell(
+                        title = title,
+                        streamTitle = activeStreamTitle,
+                        providerName = activeProviderName,
+                        seasonNumber = activeSeasonNumber,
+                        episodeNumber = activeEpisodeNumber,
+                        episodeTitle = activeEpisodeTitle,
+                        playbackSnapshot = playbackSnapshot,
+                        displayedPositionMs = displayedPositionMs,
+                        metrics = metrics,
+                        resizeMode = resizeMode,
+                        onBack = onBackWithProgress,
+                        onTogglePlayback = ::togglePlayback,
+                        onSeekBack = { seekBy(-10_000L) },
+                        onSeekForward = { seekBy(10_000L) },
+                        onResizeModeClick = ::cycleResizeMode,
+                        onSpeedClick = ::cyclePlaybackSpeed,
+                        onSubtitleClick = {
+                            refreshTracks()
+                            showSubtitleModal = true
+                        },
+                        onAudioClick = {
+                            refreshTracks()
+                            showAudioModal = true
+                        },
+                        onSourcesClick = if (activeVideoId != null) {{ openSourcesPanel() }} else null,
+                        onEpisodesClick = if (isSeries) {{ openEpisodesPanel() }} else null,
+                        onScrubChange = { positionMs -> scrubbingPositionMs = positionMs },
+                        onScrubFinished = { positionMs ->
+                            scrubbingPositionMs = null
+                            playerController?.seekTo(positionMs)
+                        },
+                        horizontalSafePadding = horizontalSafePadding,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+
+                val showOpeningOverlay =
+                    playerSettingsUiState.showLoadingOverlay && !initialLoadCompleted && errorMessage == null
+                if (usesAnimatedPlayerChrome) {
+                    AnimatedVisibility(
+                        visible = showOpeningOverlay,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                    ) {
+                        OpeningOverlay(
+                            artwork = backdropArtwork,
+                            logo = logo,
+                            title = title,
+                            onBack = onBackWithProgress,
+                            horizontalSafePadding = horizontalSafePadding,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                } else if (showOpeningOverlay) {
+                    OpeningOverlay(
+                        artwork = backdropArtwork,
+                        logo = logo,
+                        title = title,
+                        onBack = onBackWithProgress,
+                        horizontalSafePadding = horizontalSafePadding,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+
+                val showGestureFeedback = currentGestureFeedback != null
+                if (usesAnimatedPlayerChrome) {
+                    AnimatedVisibility(
+                        visible = showGestureFeedback,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            renderedGestureFeedback?.let { feedback ->
+                                GestureFeedbackPill(
+                                    feedback = feedback,
+                                    modifier = Modifier
+                                        .align(Alignment.TopCenter)
+                                        .windowInsetsPadding(WindowInsets.safeContent.only(WindowInsetsSides.Top))
+                                        .padding(horizontal = horizontalSafePadding)
+                                        .padding(top = 40.dp),
+                                )
+                            }
+                        }
+                    }
+                } else if (showGestureFeedback) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        renderedGestureFeedback?.let { feedback ->
+                            GestureFeedbackPill(
+                                feedback = feedback,
+                                modifier = Modifier
+                                    .align(Alignment.TopCenter)
+                                    .windowInsetsPadding(WindowInsets.safeContent.only(WindowInsetsSides.Top))
+                                    .padding(horizontal = horizontalSafePadding)
+                                    .padding(top = 40.dp),
+                            )
+                        }
                     }
                 }
             }
 
             // Skip intro/recap/outro button
-            SkipIntroButton(
+            if (!usesNativePlayerChrome) SkipIntroButton(
                 interval = activeSkipInterval,
                 dismissed = skipIntervalDismissed,
                 controlsVisible = controlsVisible,
@@ -1713,7 +1784,7 @@ fun PlayerScreen(
             )
 
             // Next episode card
-            if (isSeries) {
+            if (!usesNativePlayerChrome && isSeries) {
                 NextEpisodeCard(
                     nextEpisode = nextEpisodeInfo,
                     visible = showNextEpisodeCard,
@@ -1737,14 +1808,14 @@ fun PlayerScreen(
                 )
             }
 
-            if (errorMessage != null) {
+            if (!usesNativePlayerChrome && errorMessage != null) {
                 ErrorModal(
                     message = errorMessage.orEmpty(),
                     onDismiss = onBackWithProgress,
                 )
             }
 
-            AudioTrackModal(
+            if (!usesNativePlayerChrome) AudioTrackModal(
                 visible = showAudioModal,
                 audioTracks = audioTracks,
                 selectedIndex = selectedAudioIndex,
@@ -1759,7 +1830,7 @@ fun PlayerScreen(
                 onDismiss = { showAudioModal = false },
             )
 
-            SubtitleModal(
+            if (!usesNativePlayerChrome) SubtitleModal(
                 visible = showSubtitleModal,
                 activeTab = activeSubtitleTab,
                 subtitleTracks = subtitleTracks,
@@ -1796,7 +1867,7 @@ fun PlayerScreen(
             )
 
             // Sources Panel
-            PlayerSourcesPanel(
+            if (!usesNativePlayerChrome) PlayerSourcesPanel(
                 visible = showSourcesPanel,
                 streamsUiState = sourceStreamsState,
                 currentStreamUrl = activeSourceUrl,
@@ -1821,7 +1892,7 @@ fun PlayerScreen(
             )
 
             // Episodes Panel
-            if (isSeries) {
+            if (!usesNativePlayerChrome && isSeries) {
                 PlayerEpisodesPanel(
                     visible = showEpisodesPanel,
                     episodes = allEpisodes,

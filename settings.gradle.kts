@@ -29,3 +29,11 @@ dependencyResolutionManagement {
 }
 
 include(":composeApp")
+
+includeBuild("mediamp") {
+    dependencySubstitution {
+        substitute(module("org.openani.mediamp:mediamp-api")).using(project(":mediamp-api"))
+        substitute(module("org.openani.mediamp:mediamp-mpv")).using(project(":mediamp-mpv"))
+        substitute(module("org.openani.mediamp:mediamp-internal-utils")).using(project(":mediamp-internal-utils"))
+    }
+}
