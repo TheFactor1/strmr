@@ -1,4 +1,4 @@
-name: Build Windows Desktop App
+name: Build Native Windows App
 
 on:
   workflow_dispatch:
@@ -6,151 +6,164 @@ on:
     branches: [ main, master ]
 
 jobs:
-  build-windows:
+  build-windows-native:
     runs-on: windows-latest
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+        with:
+          submodules: recursive
+          
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
           
       - name: Install dependencies
         run: npm install --legacy-peer-deps
         
-      - name: Install Electron
-        run: npm install --save-dev electron electron-builder
-        
-      - name: Create Windows launcher
+      - name: Install react-native-windows
+        run: |
+          npm install --save-dev react-native-windows
+          npx react-native-windows-init --overwrite --version "0.73.0"
+          
+      - name: Patch native modules for Windows compatibility
         shell: pwsh
         run: |
-          # Create a simple Electron app that points to your GitHub releases
-          New-Item -ItemType Directory -Force -Path "electron-app" | Out-Null
-          Set-Location electron-app
+          # Create Windows-specific shims for problematic modules
+          New-Item -ItemType Directory -Force -Path "windows/shim" | Out-Null
           
-          # Package.json for Electron
+          # Shimmer shim for Windows
           @'
-          {
-            "name": "nuvio-windows",
-            "version": "1.0.0",
-            "description": "Nuvio Media Hub for Windows",
-            "main": "main.js",
-            "scripts": {
-              "start": "electron ."
-            },
-            "build": {
-              "appId": "com.nuvio.windows",
-              "productName": "Nuvio Media Hub",
-              "directories": {
-                "output": "dist"
-              },
-              "win": {
-                "target": "portable",
-                "icon": "../assets/icon.png"
-              }
-            }
-          }
-          '@ | Out-File -FilePath package.json -Encoding UTF8
+          import React from 'react';
+          import { View, Animated } from 'react-native';
           
-          # Main Electron file
+          export const Shimmer = ({ children, ...props }) => {
+            return <View {...props}>{children}</View>;
+          };
+          
+          export default Shimmer;
+          '@ | Out-File -FilePath "windows/shim/Shimmer.js" -Encoding UTF8
+          
+          # Fast Image shim for Windows
           @'
-          const { app, BrowserWindow, shell } = require('electron');
+          import React from 'react';
+          import { Image } from 'react-native';
+          
+          const FastImage = (props) => {
+            return <Image {...props} />;
+          };
+          
+          FastImage.resizeMode = {
+            contain: 'contain',
+            cover: 'cover',
+            stretch: 'stretch',
+            center: 'center'
+          };
+          
+          export default FastImage;
+          '@ | Out-File -FilePath "windows/shim/FastImage.js" -Encoding UTF8
+          
+      - name: Update Metro config for Windows
+        shell: pwsh
+        run: |
+          $metroConfig = @'
+          const { getDefaultConfig } = require('expo/metro-config');
           const path = require('path');
           
-          function createWindow() {
-            const win = new BrowserWindow({
-              width: 1200,
-              height: 800,
-              webPreferences: {
-                nodeIntegration: false,
-                contextIsolation: true
+          const config = getDefaultConfig(__dirname);
+          
+          // Add Windows platform
+          config.resolver.platforms = ['windows', 'android', 'ios', 'web'];
+          
+          // Shim problematic modules for Windows
+          config.resolver.resolveRequest = (context, moduleName, platform) => {
+            if (platform === 'windows') {
+              if (moduleName === 'react-native-shimmer-placeholder') {
+                return { filePath: path.resolve(__dirname, 'windows/shim/Shimmer.js'), type: 'sourceFile' };
               }
-            });
-            
-            // Load a simple HTML page with download link
-            const html = `
-              <!DOCTYPE html>
-              <html>
-              <head>
-                <title>Nuvio Media Hub</title>
-                <style>
-                  body {
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    height: 100vh;
-                    margin: 0;
-                    text-align: center;
-                  }
-                  .container {
-                    max-width: 600px;
-                    padding: 40px;
-                  }
-                  h1 { font-size: 48px; margin-bottom: 20px; }
-                  p { font-size: 18px; line-height: 1.6; margin-bottom: 30px; opacity: 0.9; }
-                  .download-btn {
-                    background: white;
-                    color: #667eea;
-                    padding: 15px 40px;
-                    font-size: 18px;
-                    font-weight: bold;
-                    border: none;
-                    border-radius: 50px;
-                    cursor: pointer;
-                    text-decoration: none;
-                    display: inline-block;
-                    margin-top: 20px;
-                  }
-                  .note {
-                    margin-top: 40px;
-                    font-size: 14px;
-                    opacity: 0.7;
-                  }
-                </style>
-              </head>
-              <body>
-                <div class="container">
-                  <h1>🎬 Nuvio Media Hub</h1>
-                  <p>Your mobile media hub is optimized for Android and iOS.<br>
-                  To use on Windows, please download the Android APK and run it using an emulator.</p>
-                  <a href="https://github.com/TheFactor1/strmr/releases" class="download-btn" id="downloadLink">📱 Download Android APK</a>
-                  <p class="note">💡 Tip: Use BlueStacks or Windows Subsystem for Android to run the APK</p>
-                </div>
-                <script>
-                  document.getElementById('downloadLink').addEventListener('click', (e) => {
-                    e.preventDefault();
-                    require('electron').shell.openExternal('https://github.com/TheFactor1/strmr/releases');
-                  });
-                </script>
-              </body>
-              </html>
-            `;
-            
-            win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+              if (moduleName.includes('react-native-fast-image')) {
+                return { filePath: path.resolve(__dirname, 'windows/shim/FastImage.js'), type: 'sourceFile' };
+              }
+            }
+            return context.resolveRequest(context, moduleName, platform);
+          };
+          
+          module.exports = config;
+          '@
+          [System.IO.File]::WriteAllText("metro.config.js", $metroConfig)
+          
+      - name: Create Windows app manifest
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "windows/Nuvio" | Out-Null
+          
+          $manifest = @'
+          <?xml version="1.0" encoding="utf-8"?>
+          <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+                   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+                   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10">
+            <Identity Name="NuvioMediaHub" Version="1.0.0.0" Publisher="CN=Nuvio" />
+            <Properties>
+              <DisplayName>Nuvio Media Hub</DisplayName>
+              <PublisherDisplayName>Nuvio</PublisherDisplayName>
+              <Logo>Assets\StoreLogo.png</Logo>
+            </Properties>
+            <Dependencies>
+              <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+            </Dependencies>
+            <Resources>
+              <Resource Language="x-generate"/>
+            </Resources>
+            <Applications>
+              <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="$targetentrypoint$">
+                <uap:VisualElements DisplayName="Nuvio" Square150x150Logo="Assets\Square150x150Logo.png"
+                                    Square44x44Logo="Assets\Square44x44Logo.png" Description="Modern Media Hub"
+                                    BackgroundColor="transparent">
+                  <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" Square71x71Logo="Assets\SmallTile.png" Square310x310Logo="Assets\LargeTile.png"/>
+                  <uap:SplashScreen Image="Assets\SplashScreen.png" />
+                </uap:VisualElements>
+              </Application>
+            </Applications>
+          </Package>
+          '@
+          [System.IO.File]::WriteAllText("windows/Nuvio/Package.appxmanifest", $manifest)
+          
+      - name: Build Windows app
+        run: |
+          npx react-native run-windows --release --no-launch
+        env:
+          SOLUTION_FILE: windows/Nuvio.sln
+          CONFIGURATION: Release
+          PLATFORM: x64
+          
+      - name: Package as MSIX for distribution
+        shell: pwsh
+        run: |
+          # Find the built app
+          $appxPath = Get-ChildItem -Path "windows/AppPackages" -Recurse -Filter "*.msix" | Select-Object -First 1
+          if ($appxPath) {
+            Copy-Item $appxPath.FullName -Destination "Nuvio-Windows.msix"
+            Write-Host "✓ MSIX package created"
+          } else {
+            Write-Host "Creating portable version..."
+            # Fallback: create a portable zip of the app
+            $exePath = Get-ChildItem -Path "windows/x64/Release" -Filter "*.exe" | Where-Object { $_.Name -notlike "*test*" } | Select-Object -First 1
+            if ($exePath) {
+              Compress-Archive -Path $exePath.DirectoryName -DestinationPath "Nuvio-Windows-Portable.zip"
+              Write-Host "✓ Portable zip created"
+            }
           }
           
-          app.whenReady().then(createWindow);
-          app.on('window-all-closed', () => app.quit());
-          '@ | Out-File -FilePath main.js -Encoding UTF8
-          
-          # Install electron-builder locally
-          npm init -y
-          npm install electron electron-builder --save-dev
-          
-          # Build the executable
-          npx electron-builder --win portable
-          
-          Set-Location ..
-          
-      - name: Upload Windows app
+      - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Nuvio-Windows-Portable
-          path: electron-app/dist/*.exe
+          name: Nuvio-Windows-Native
+          path: |
+            *.msix
+            *.zip
+            windows/AppPackages/**/*.msix
+            windows/x64/Release/*.exe
           retention-days: 30
