@@ -1,0 +1,198 @@
+name: Build Windows Electron App
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build-electron-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Create web stubs for native-only modules
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "web-stubs" | Out-Null
+
+          # Stub for react-native-fast-image
+          $fastImageStub = @'
+          import React from "react";
+          import { Image } from "react-native";
+          const FastImage = (props) => React.createElement(Image, props);
+          FastImage.resizeMode = { contain: "contain", cover: "cover", stretch: "stretch", center: "center" };
+          FastImage.priority = { low: "low", normal: "normal", high: "high" };
+          FastImage.cacheControl = { immutable: "immutable", web: "web", cacheOnly: "cacheOnly" };
+          FastImage.preload = () => {};
+          FastImage.clearMemoryCache = () => Promise.resolve();
+          FastImage.clearDiskCache = () => Promise.resolve();
+          export default FastImage;
+          '@
+          [System.IO.File]::WriteAllText("web-stubs/FastImage.js", $fastImageStub)
+
+          # Stub for react-native-mmkv
+          $mmkvStub = @'
+          export class MMKV {
+            constructor() { this._store = {}; }
+            set(key, value) { this._store[key] = value; }
+            getString(key) { return this._store[key]; }
+            getNumber(key) { return this._store[key]; }
+            getBoolean(key) { return this._store[key]; }
+            delete(key) { delete this._store[key]; }
+            contains(key) { return key in this._store; }
+            getAllKeys() { return Object.keys(this._store); }
+            clearAll() { this._store = {}; }
+          }
+          '@
+          [System.IO.File]::WriteAllText("web-stubs/MMKV.js", $mmkvStub)
+
+          # Stub for expo-haptics
+          $hapticsStub = @'
+          export const impactAsync = () => Promise.resolve();
+          export const notificationAsync = () => Promise.resolve();
+          export const selectionAsync = () => Promise.resolve();
+          export const ImpactFeedbackStyle = { Light: "Light", Medium: "Medium", Heavy: "Heavy" };
+          export const NotificationFeedbackType = { Success: "Success", Warning: "Warning", Error: "Error" };
+          export default { impactAsync, notificationAsync, selectionAsync };
+          '@
+          [System.IO.File]::WriteAllText("web-stubs/Haptics.js", $hapticsStub)
+
+      - name: Patch metro.config.js for web stubs
+        shell: pwsh
+        run: |
+          $metroConfig = @'
+          const { getDefaultConfig } = require("expo/metro-config");
+          const path = require("path");
+
+          const config = getDefaultConfig(__dirname);
+
+          const webStubs = path.resolve(__dirname, "web-stubs");
+
+          config.resolver.resolveRequest = (context, moduleName, platform) => {
+            if (platform === "web") {
+              if (moduleName.includes("react-native-fast-image") || moduleName.includes("@d11/react-native-fast-image")) {
+                return { filePath: path.join(webStubs, "FastImage.js"), type: "sourceFile" };
+              }
+              if (moduleName.includes("react-native-mmkv")) {
+                return { filePath: path.join(webStubs, "MMKV.js"), type: "sourceFile" };
+              }
+              if (moduleName.includes("react-native-haptics") || moduleName === "expo-haptics") {
+                return { filePath: path.join(webStubs, "Haptics.js"), type: "sourceFile" };
+              }
+            }
+            return context.resolveRequest(context, moduleName, platform);
+          };
+
+          module.exports = config;
+          '@
+          [System.IO.File]::WriteAllText("metro.config.js", $metroConfig)
+
+      - name: Build Expo web bundle
+        run: npx expo export --platform web --output-dir web-build
+        env:
+          NODE_ENV: production
+          SENTRY_DISABLE_AUTO_UPLOAD: true
+
+      - name: Create Electron wrapper
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "electron" | Out-Null
+
+          $mainJs = @'
+          const { app, BrowserWindow, shell } = require("electron");
+          const path = require("path");
+          const { pathToFileURL } = require("url");
+
+          function createWindow() {
+            const win = new BrowserWindow({
+              width: 1280,
+              height: 800,
+              minWidth: 900,
+              minHeight: 600,
+              title: "Nuvio Media Hub",
+              backgroundColor: "#000000",
+              webPreferences: {
+                nodeIntegration: false,
+                contextIsolation: true,
+                webSecurity: false,
+              },
+            });
+            win.setMenuBarVisibility(false);
+            const indexPath = path.join(__dirname, "..", "web-build", "index.html");
+            win.loadURL(pathToFileURL(indexPath).toString());
+            win.webContents.setWindowOpenHandler(({ url }) => {
+              shell.openExternal(url);
+              return { action: "deny" };
+            });
+          }
+
+          app.whenReady().then(createWindow);
+          app.on("window-all-closed", () => app.quit());
+          app.on("activate", () => {
+            if (BrowserWindow.getAllWindows().length === 0) createWindow();
+          });
+          '@
+          [System.IO.File]::WriteAllText("electron/main.js", $mainJs)
+
+          $electronPkg = @'
+          {
+            "name": "nuvio-desktop",
+            "version": "1.0.0",
+            "description": "Nuvio Media Hub for Windows",
+            "main": "electron/main.js",
+            "author": "Nuvio",
+            "license": "GPL-3.0",
+            "build": {
+              "appId": "com.nuvio.desktop",
+              "productName": "Nuvio Media Hub",
+              "directories": { "output": "dist" },
+              "files": ["electron/**/*", "web-build/**/*"],
+              "win": {
+                "target": [
+                  { "target": "nsis", "arch": ["x64"] },
+                  { "target": "portable", "arch": ["x64"] }
+                ],
+                "icon": "assets/icon.png"
+              },
+              "nsis": {
+                "oneClick": false,
+                "allowToChangeInstallationDirectory": true,
+                "createDesktopShortcut": true,
+                "createStartMenuShortcut": true
+              }
+            }
+          }
+          '@
+          [System.IO.File]::WriteAllText("electron-package.json", $electronPkg)
+
+      - name: Install Electron builder
+        run: npm install --save-dev electron electron-builder --legacy-peer-deps
+
+      - name: Build Windows executable
+        shell: pwsh
+        run: npx electron-builder --config electron-package.json --win --x64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nuvio-Windows
+          path: |
+            dist/*.exe
+            dist/*.msi
+          retention-days: 30
