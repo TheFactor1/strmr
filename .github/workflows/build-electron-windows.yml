@@ -1,0 +1,138 @@
+name: Build Windows Electron App
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build-electron-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Build Expo web bundle
+        run: npx expo export --platform web --output-dir web-build
+        env:
+          NODE_ENV: production
+          SENTRY_DISABLE_AUTO_UPLOAD: true
+
+      - name: Create Electron wrapper
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "electron" | Out-Null
+
+          # Main Electron process
+          $mainJs = @'
+          const { app, BrowserWindow, shell } = require('electron');
+          const path = require('path');
+          const { pathToFileURL } = require('url');
+
+          function createWindow() {
+            const win = new BrowserWindow({
+              width: 1280,
+              height: 800,
+              minWidth: 900,
+              minHeight: 600,
+              title: 'Nuvio Media Hub',
+              icon: path.join(__dirname, 'icon.png'),
+              backgroundColor: '#000000',
+              webPreferences: {
+                nodeIntegration: false,
+                contextIsolation: true,
+                webSecurity: false,
+              },
+            });
+
+            win.setMenuBarVisibility(false);
+
+            const indexPath = path.join(__dirname, '..', 'web-build', 'index.html');
+            win.loadURL(pathToFileURL(indexPath).toString());
+
+            // Open external links in browser, not Electron
+            win.webContents.setWindowOpenHandler(({ url }) => {
+              shell.openExternal(url);
+              return { action: 'deny' };
+            });
+          }
+
+          app.whenReady().then(createWindow);
+
+          app.on('window-all-closed', () => {
+            app.quit();
+          });
+
+          app.on('activate', () => {
+            if (BrowserWindow.getAllWindows().length === 0) createWindow();
+          });
+          '@
+          [System.IO.File]::WriteAllText("electron/main.js", $mainJs)
+
+          # Electron package.json
+          $electronPkg = @'
+          {
+            "name": "nuvio-desktop",
+            "version": "1.0.0",
+            "description": "Nuvio Media Hub for Windows",
+            "main": "electron/main.js",
+            "author": "Nuvio",
+            "license": "GPL-3.0",
+            "build": {
+              "appId": "com.nuvio.desktop",
+              "productName": "Nuvio Media Hub",
+              "directories": {
+                "output": "dist"
+              },
+              "files": [
+                "electron/**/*",
+                "web-build/**/*"
+              ],
+              "win": {
+                "target": [
+                  { "target": "nsis", "arch": ["x64"] },
+                  { "target": "portable", "arch": ["x64"] }
+                ],
+                "icon": "assets/icon.png"
+              },
+              "nsis": {
+                "oneClick": false,
+                "allowToChangeInstallationDirectory": true,
+                "createDesktopShortcut": true,
+                "createStartMenuShortcut": true
+              }
+            }
+          }
+          '@
+          [System.IO.File]::WriteAllText("electron-package.json", $electronPkg)
+
+      - name: Install Electron builder
+        run: npm install --save-dev electron electron-builder --legacy-peer-deps
+
+      - name: Build Windows executable
+        shell: pwsh
+        run: |
+          npx electron-builder --config electron-package.json --win --x64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nuvio-Windows
+          path: |
+            dist/*.exe
+            dist/*.msi
+          retention-days: 30
