@@ -29,86 +29,89 @@ jobs:
           npm install --save-dev expo @expo/webpack-config
           npx expo install react-native-web react-dom
 
-      - name: PATCH @d11/react-native-fast-image for web
+      - name: COMPLETELY REMOVE AND REPLACE @d11/react-native-fast-image for web
         shell: pwsh
         run: |
-          $targetFile = "node_modules/@d11/react-native-fast-image/src/FastImageViewNativeComponent.ts"
-          if (Test-Path $targetFile) {
-            Write-Host "Patching $targetFile"
-            $content = Get-Content $targetFile -Raw
-            # Comment out the codegenNativeComponent import
-            $patched = $content -replace "import codegenNativeComponent", "// import codegenNativeComponent"
-            $patched = $patched -replace "codegenNativeComponent<", "// codegenNativeComponent<"
-            Set-Content $targetFile $patched
-            Write-Host "Patch applied successfully"
-          } else {
-            Write-Host "Warning: Target file not found at $targetFile"
+          # Delete the problematic file entirely
+          $problemFile = "node_modules/@d11/react-native-fast-image/src/FastImageViewNativeComponent.ts"
+          if (Test-Path $problemFile) {
+            Remove-Item $problemFile -Force
+            Write-Host "Removed problematic FastImageViewNativeComponent.ts"
           }
-
-      - name: Create web stubs for native-only modules
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path "web-stubs" | Out-Null
-
-          $fastImageStub = @'
+          
+          # Replace the index.tsx to not reference the deleted file
+          $indexFile = "node_modules/@d11/react-native-fast-image/src/index.tsx"
+          if (Test-Path $indexFile) {
+            $newIndex = @'
           import React from "react";
-          import { Image } from "react-native";
-          const FastImage = (props) => React.createElement(Image, props);
-          FastImage.resizeMode = { contain: "contain", cover: "cover", stretch: "stretch", center: "center" };
+          import { Image, ImageProps, StyleSheet, Platform } from "react-native";
+          
+          export type Source = any;
+          export type OnLoadEvent = any;
+          export type OnProgressEvent = any;
+          export type ResizeMode = "contain" | "cover" | "stretch" | "center";
+          
+          export const FastImage = (props: any) => {
+            const { source, style, resizeMode, onLoad, onError, ...rest } = props;
+            return React.createElement(Image, {
+              source: source,
+              style: [style, resizeMode && { resizeMode }],
+              onLoad: onLoad,
+              onError: onError,
+              ...rest
+            });
+          };
+          
+          FastImage.resizeMode = {
+            contain: "contain",
+            cover: "cover",
+            stretch: "stretch",
+            center: "center"
+          };
+          
           FastImage.priority = { low: "low", normal: "normal", high: "high" };
           FastImage.cacheControl = { immutable: "immutable", web: "web", cacheOnly: "cacheOnly" };
           FastImage.preload = () => {};
           FastImage.clearMemoryCache = () => Promise.resolve();
           FastImage.clearDiskCache = () => Promise.resolve();
+          
           export default FastImage;
           '@
-          [System.IO.File]::WriteAllText("web-stubs/FastImage.js", $fastImageStub)
-
-          $mmkvStub = @'
-          export class MMKV {
-            constructor() { this._store = {}; }
-            set(key, value) { this._store[key] = value; }
-            getString(key) { return this._store[key]; }
-            getNumber(key) { return this._store[key]; }
-            getBoolean(key) { return this._store[key]; }
-            delete(key) { delete this._store[key]; }
-            contains(key) { return key in this._store; }
-            getAllKeys() { return Object.keys(this._store); }
-            clearAll() { this._store = {}; }
+            [System.IO.File]::WriteAllText($indexFile, $newIndex)
+            Write-Host "Replaced index.tsx with web-compatible version"
           }
-          export default { MMKV };
-          '@
-          [System.IO.File]::WriteAllText("web-stubs/MMKV.js", $mmkvStub)
 
-          $hapticsStub = @'
-          export const impactAsync = () => Promise.resolve();
-          export const notificationAsync = () => Promise.resolve();
-          export const selectionAsync = () => Promise.resolve();
-          export const ImpactFeedbackStyle = { Light: "Light", Medium: "Medium", Heavy: "Heavy" };
-          export const NotificationFeedbackType = { Success: "Success", Warning: "Warning", Error: "Error" };
-          export default { impactAsync, notificationAsync, selectionAsync };
-          '@
-          [System.IO.File]::WriteAllText("web-stubs/Haptics.js", $hapticsStub)
+      - name: Create web stubs directory
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "web-stubs" | Out-Null
 
-          $emptyStub = @'
-          export default {};
-          '@
-          [System.IO.File]::WriteAllText("web-stubs/empty.js", $emptyStub)
-
-          # Add a complete web shim for react-native
-          $rnWebShim = @'
-          // Web shim for React Native internals
+      - name: Create complete react-native web shim
+        shell: pwsh
+        run: |
+          $rnShim = @'
+          // Complete React Native web shim
           export const codegenNativeComponent = () => {
-            throw new Error("codegenNativeComponent not supported on web");
+            return (props) => null;
           };
+          
           export const TurboModuleRegistry = {
             get: () => null,
-            getEnforcing: () => { throw new Error("TurboModules not supported on web"); }
+            getEnforcing: () => {
+              throw new Error("TurboModules not supported on web");
+            }
+          };
+          
+          export const NativeModules = {};
+          export const NativeEventEmitter = class {
+            addListener() {}
+            removeListener() {}
+            removeAllListeners() {}
           };
           '@
-          [System.IO.File]::WriteAllText("web-stubs/react-native-shim.js", $rnWebShim)
+          [System.IO.File]::WriteAllText("web-stubs/react-native-shim.js", $rnShim)
 
-      - name: Create metro.config.js with better web stubbing
+      - name: Create Metro config with aggressive stubbing
         shell: pwsh
         run: |
           $metroConfig = @'
@@ -120,31 +123,16 @@ jobs:
 
           config.resolver.resolveRequest = (context, moduleName, platform) => {
             if (platform === "web") {
-              // Block codegenNativeComponent imports
-              if (moduleName.includes("codegenNativeComponent") || 
-                  moduleName.includes("Libraries/Utilities/codegenNativeComponent")) {
-                return { filePath: path.join(webStubs, "empty.js"), type: "sourceFile" };
+              // Block ANY react-native internal imports
+              if (moduleName.includes("react-native/Libraries/")) {
+                console.log(`[Metro] Stubbing react-native internal: ${moduleName}`);
+                return { filePath: path.join(webStubs, "react-native-shim.js"), type: "sourceFile" };
               }
               
-              // Block react-native internals
-              if (moduleName.includes("react-native/Libraries/")) {
-                return { filePath: path.join(webStubs, "empty.js"), type: "sourceFile" };
-              }
-
-              // Stub Fast Image
-              if (moduleName.includes("@d11/react-native-fast-image") || 
-                  moduleName.includes("react-native-fast-image")) {
-                return { filePath: path.join(webStubs, "FastImage.js"), type: "sourceFile" };
-              }
-
-              // Stub MMKV
-              if (moduleName === "react-native-mmkv" || moduleName.includes("react-native-mmkv")) {
-                return { filePath: path.join(webStubs, "MMKV.js"), type: "sourceFile" };
-              }
-
-              // Stub Haptics
-              if (moduleName.includes("expo-haptics") || moduleName.includes("react-native-haptics")) {
-                return { filePath: path.join(webStubs, "Haptics.js"), type: "sourceFile" };
+              // Block codegenNativeComponent
+              if (moduleName.includes("codegenNativeComponent")) {
+                console.log(`[Metro] Stubbing codegenNativeComponent: ${moduleName}`);
+                return { filePath: path.join(webStubs, "react-native-shim.js"), type: "sourceFile" };
               }
             }
             return context.resolveRequest(context, moduleName, platform);
@@ -160,6 +148,7 @@ jobs:
           NODE_ENV: production
           SENTRY_DISABLE_AUTO_UPLOAD: true
           EXPO_USE_FAST_RESOLVER: true
+          EXPO_DEBUG: true
 
       - name: Debug web-build output
         shell: pwsh
