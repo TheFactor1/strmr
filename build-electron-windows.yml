@@ -1,0 +1,156 @@
+name: Build Windows Desktop App
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+        
+      - name: Install Electron
+        run: npm install --save-dev electron electron-builder
+        
+      - name: Create Windows launcher
+        shell: pwsh
+        run: |
+          # Create a simple Electron app that points to your GitHub releases
+          New-Item -ItemType Directory -Force -Path "electron-app" | Out-Null
+          Set-Location electron-app
+          
+          # Package.json for Electron
+          @'
+          {
+            "name": "nuvio-windows",
+            "version": "1.0.0",
+            "description": "Nuvio Media Hub for Windows",
+            "main": "main.js",
+            "scripts": {
+              "start": "electron ."
+            },
+            "build": {
+              "appId": "com.nuvio.windows",
+              "productName": "Nuvio Media Hub",
+              "directories": {
+                "output": "dist"
+              },
+              "win": {
+                "target": "portable",
+                "icon": "../assets/icon.png"
+              }
+            }
+          }
+          '@ | Out-File -FilePath package.json -Encoding UTF8
+          
+          # Main Electron file
+          @'
+          const { app, BrowserWindow, shell } = require('electron');
+          const path = require('path');
+          
+          function createWindow() {
+            const win = new BrowserWindow({
+              width: 1200,
+              height: 800,
+              webPreferences: {
+                nodeIntegration: false,
+                contextIsolation: true
+              }
+            });
+            
+            // Load a simple HTML page with download link
+            const html = `
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <title>Nuvio Media Hub</title>
+                <style>
+                  body {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100vh;
+                    margin: 0;
+                    text-align: center;
+                  }
+                  .container {
+                    max-width: 600px;
+                    padding: 40px;
+                  }
+                  h1 { font-size: 48px; margin-bottom: 20px; }
+                  p { font-size: 18px; line-height: 1.6; margin-bottom: 30px; opacity: 0.9; }
+                  .download-btn {
+                    background: white;
+                    color: #667eea;
+                    padding: 15px 40px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    border: none;
+                    border-radius: 50px;
+                    cursor: pointer;
+                    text-decoration: none;
+                    display: inline-block;
+                    margin-top: 20px;
+                  }
+                  .note {
+                    margin-top: 40px;
+                    font-size: 14px;
+                    opacity: 0.7;
+                  }
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <h1>🎬 Nuvio Media Hub</h1>
+                  <p>Your mobile media hub is optimized for Android and iOS.<br>
+                  To use on Windows, please download the Android APK and run it using an emulator.</p>
+                  <a href="https://github.com/TheFactor1/strmr/releases" class="download-btn" id="downloadLink">📱 Download Android APK</a>
+                  <p class="note">💡 Tip: Use BlueStacks or Windows Subsystem for Android to run the APK</p>
+                </div>
+                <script>
+                  document.getElementById('downloadLink').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    require('electron').shell.openExternal('https://github.com/TheFactor1/strmr/releases');
+                  });
+                </script>
+              </body>
+              </html>
+            `;
+            
+            win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+          }
+          
+          app.whenReady().then(createWindow);
+          app.on('window-all-closed', () => app.quit());
+          '@ | Out-File -FilePath main.js -Encoding UTF8
+          
+          # Install electron-builder locally
+          npm init -y
+          npm install electron electron-builder --save-dev
+          
+          # Build the executable
+          npx electron-builder --win portable
+          
+          Set-Location ..
+          
+      - name: Upload Windows app
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nuvio-Windows-Portable
+          path: electron-app/dist/*.exe
+          retention-days: 30
