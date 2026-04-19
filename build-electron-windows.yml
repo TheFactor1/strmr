@@ -29,7 +29,6 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path "web-stubs" | Out-Null
 
-          # Stub for react-native-fast-image
           $fastImageStub = @'
           import React from "react";
           import { Image } from "react-native";
@@ -44,7 +43,6 @@ jobs:
           '@
           [System.IO.File]::WriteAllText("web-stubs/FastImage.js", $fastImageStub)
 
-          # Stub for react-native-mmkv
           $mmkvStub = @'
           export class MMKV {
             constructor() { this._store = {}; }
@@ -60,7 +58,6 @@ jobs:
           '@
           [System.IO.File]::WriteAllText("web-stubs/MMKV.js", $mmkvStub)
 
-          # Stub for expo-haptics
           $hapticsStub = @'
           export const impactAsync = () => Promise.resolve();
           export const notificationAsync = () => Promise.resolve();
@@ -70,6 +67,11 @@ jobs:
           export default { impactAsync, notificationAsync, selectionAsync };
           '@
           [System.IO.File]::WriteAllText("web-stubs/Haptics.js", $hapticsStub)
+
+          $emptyStub = @'
+          export default {};
+          '@
+          [System.IO.File]::WriteAllText("web-stubs/empty.js", $emptyStub)
 
       - name: Patch metro.config.js for web stubs
         shell: pwsh
@@ -82,16 +84,40 @@ jobs:
 
           const webStubs = path.resolve(__dirname, "web-stubs");
 
+          const FAST_IMAGE_STUB = path.join(webStubs, "FastImage.js");
+          const MMKV_STUB = path.join(webStubs, "MMKV.js");
+          const HAPTICS_STUB = path.join(webStubs, "Haptics.js");
+          const EMPTY_STUB = path.join(webStubs, "empty.js");
+
           config.resolver.resolveRequest = (context, moduleName, platform) => {
             if (platform === "web") {
-              if (moduleName.includes("react-native-fast-image") || moduleName.includes("@d11/react-native-fast-image")) {
-                return { filePath: path.join(webStubs, "FastImage.js"), type: "sourceFile" };
+              const origin = context.originModulePath || "";
+
+              // Block all imports FROM within @d11/react-native-fast-image
+              if (
+                origin.includes("@d11/react-native-fast-image") ||
+                origin.includes("@d11\\react-native-fast-image")
+              ) {
+                return { filePath: EMPTY_STUB, type: "sourceFile" };
               }
+
+              // Block imports TO @d11/react-native-fast-image or react-native-fast-image
+              if (
+                moduleName.includes("@d11/react-native-fast-image") ||
+                moduleName.includes("react-native-fast-image")
+              ) {
+                return { filePath: FAST_IMAGE_STUB, type: "sourceFile" };
+              }
+
               if (moduleName.includes("react-native-mmkv")) {
-                return { filePath: path.join(webStubs, "MMKV.js"), type: "sourceFile" };
+                return { filePath: MMKV_STUB, type: "sourceFile" };
               }
-              if (moduleName.includes("react-native-haptics") || moduleName === "expo-haptics") {
-                return { filePath: path.join(webStubs, "Haptics.js"), type: "sourceFile" };
+
+              if (
+                moduleName.includes("expo-haptics") ||
+                moduleName.includes("react-native-haptics")
+              ) {
+                return { filePath: HAPTICS_STUB, type: "sourceFile" };
               }
             }
             return context.resolveRequest(context, moduleName, platform);
