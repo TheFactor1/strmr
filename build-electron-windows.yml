@@ -27,7 +27,23 @@ jobs:
       - name: Install Expo CLI and web dependencies
         run: |
           npm install --save-dev expo @expo/webpack-config
-          npx expo install react-native-web react-dom react-native-web@~0.19.12
+          npx expo install react-native-web react-dom
+
+      - name: PATCH @d11/react-native-fast-image for web
+        shell: pwsh
+        run: |
+          $targetFile = "node_modules/@d11/react-native-fast-image/src/FastImageViewNativeComponent.ts"
+          if (Test-Path $targetFile) {
+            Write-Host "Patching $targetFile"
+            $content = Get-Content $targetFile -Raw
+            # Comment out the codegenNativeComponent import
+            $patched = $content -replace "import codegenNativeComponent", "// import codegenNativeComponent"
+            $patched = $patched -replace "codegenNativeComponent<", "// codegenNativeComponent<"
+            Set-Content $targetFile $patched
+            Write-Host "Patch applied successfully"
+          } else {
+            Write-Host "Warning: Target file not found at $targetFile"
+          }
 
       - name: Create web stubs for native-only modules
         shell: pwsh
@@ -79,14 +95,20 @@ jobs:
           '@
           [System.IO.File]::WriteAllText("web-stubs/empty.js", $emptyStub)
 
-      - name: Backup original metro config if exists
-        shell: pwsh
-        run: |
-          if (Test-Path "metro.config.js") {
-            Copy-Item "metro.config.js" "metro.config.backup.js"
-          }
+          # Add a complete web shim for react-native
+          $rnWebShim = @'
+          // Web shim for React Native internals
+          export const codegenNativeComponent = () => {
+            throw new Error("codegenNativeComponent not supported on web");
+          };
+          export const TurboModuleRegistry = {
+            get: () => null,
+            getEnforcing: () => { throw new Error("TurboModules not supported on web"); }
+          };
+          '@
+          [System.IO.File]::WriteAllText("web-stubs/react-native-shim.js", $rnWebShim)
 
-      - name: Create/overwrite metro.config.js for web stubs
+      - name: Create metro.config.js with better web stubbing
         shell: pwsh
         run: |
           $metroConfig = @'
@@ -94,44 +116,35 @@ jobs:
           const path = require("path");
 
           const config = getDefaultConfig(__dirname);
-
-          // Add web stubs resolver
           const webStubs = path.resolve(__dirname, "web-stubs");
-
-          const FAST_IMAGE_STUB = path.join(webStubs, "FastImage.js");
-          const MMKV_STUB = path.join(webStubs, "MMKV.js");
-          const HAPTICS_STUB = path.join(webStubs, "Haptics.js");
-          const EMPTY_STUB = path.join(webStubs, "empty.js");
 
           config.resolver.resolveRequest = (context, moduleName, platform) => {
             if (platform === "web") {
-              const origin = context.originModulePath || "";
-
-              // Block all imports FROM within @d11/react-native-fast-image
-              if (
-                origin.includes("@d11/react-native-fast-image") ||
-                origin.includes("@d11\\react-native-fast-image")
-              ) {
-                return { filePath: EMPTY_STUB, type: "sourceFile" };
+              // Block codegenNativeComponent imports
+              if (moduleName.includes("codegenNativeComponent") || 
+                  moduleName.includes("Libraries/Utilities/codegenNativeComponent")) {
+                return { filePath: path.join(webStubs, "empty.js"), type: "sourceFile" };
+              }
+              
+              // Block react-native internals
+              if (moduleName.includes("react-native/Libraries/")) {
+                return { filePath: path.join(webStubs, "empty.js"), type: "sourceFile" };
               }
 
-              // Block imports TO @d11/react-native-fast-image or react-native-fast-image
-              if (
-                moduleName.includes("@d11/react-native-fast-image") ||
-                moduleName.includes("react-native-fast-image")
-              ) {
-                return { filePath: FAST_IMAGE_STUB, type: "sourceFile" };
+              // Stub Fast Image
+              if (moduleName.includes("@d11/react-native-fast-image") || 
+                  moduleName.includes("react-native-fast-image")) {
+                return { filePath: path.join(webStubs, "FastImage.js"), type: "sourceFile" };
               }
 
+              // Stub MMKV
               if (moduleName === "react-native-mmkv" || moduleName.includes("react-native-mmkv")) {
-                return { filePath: MMKV_STUB, type: "sourceFile" };
+                return { filePath: path.join(webStubs, "MMKV.js"), type: "sourceFile" };
               }
 
-              if (
-                moduleName.includes("expo-haptics") ||
-                moduleName.includes("react-native-haptics")
-              ) {
-                return { filePath: HAPTICS_STUB, type: "sourceFile" };
+              // Stub Haptics
+              if (moduleName.includes("expo-haptics") || moduleName.includes("react-native-haptics")) {
+                return { filePath: path.join(webStubs, "Haptics.js"), type: "sourceFile" };
               }
             }
             return context.resolveRequest(context, moduleName, platform);
@@ -152,16 +165,16 @@ jobs:
         shell: pwsh
         run: |
           if (Test-Path "web-build") {
-            Write-Host "web-build directory exists"
-            Get-ChildItem "web-build" | ForEach-Object { Write-Host $_.Name }
+            Write-Host "✓ web-build directory exists"
             if (Test-Path "web-build/index.html") {
-              Write-Host "index.html found!"
+              Write-Host "✓ index.html found!"
             } else {
-              Write-Host "ERROR: index.html not found!"
+              Write-Host "✗ ERROR: index.html not found!"
+              Get-ChildItem "web-build"
               exit 1
             }
           } else {
-            Write-Host "ERROR: web-build directory not created!"
+            Write-Host "✗ ERROR: web-build directory not created!"
             exit 1
           }
 
