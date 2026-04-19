@@ -24,6 +24,11 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
+      - name: Install Expo CLI and web dependencies
+        run: |
+          npm install --save-dev expo @expo/webpack-config
+          npx expo install react-native-web react-dom react-native-web@~0.19.12
+
       - name: Create web stubs for native-only modules
         shell: pwsh
         run: |
@@ -55,6 +60,7 @@ jobs:
             getAllKeys() { return Object.keys(this._store); }
             clearAll() { this._store = {}; }
           }
+          export default { MMKV };
           '@
           [System.IO.File]::WriteAllText("web-stubs/MMKV.js", $mmkvStub)
 
@@ -73,7 +79,14 @@ jobs:
           '@
           [System.IO.File]::WriteAllText("web-stubs/empty.js", $emptyStub)
 
-      - name: Patch metro.config.js for web stubs
+      - name: Backup original metro config if exists
+        shell: pwsh
+        run: |
+          if (Test-Path "metro.config.js") {
+            Copy-Item "metro.config.js" "metro.config.backup.js"
+          }
+
+      - name: Create/overwrite metro.config.js for web stubs
         shell: pwsh
         run: |
           $metroConfig = @'
@@ -82,6 +95,7 @@ jobs:
 
           const config = getDefaultConfig(__dirname);
 
+          // Add web stubs resolver
           const webStubs = path.resolve(__dirname, "web-stubs");
 
           const FAST_IMAGE_STUB = path.join(webStubs, "FastImage.js");
@@ -109,7 +123,7 @@ jobs:
                 return { filePath: FAST_IMAGE_STUB, type: "sourceFile" };
               }
 
-              if (moduleName.includes("react-native-mmkv")) {
+              if (moduleName === "react-native-mmkv" || moduleName.includes("react-native-mmkv")) {
                 return { filePath: MMKV_STUB, type: "sourceFile" };
               }
 
@@ -132,6 +146,24 @@ jobs:
         env:
           NODE_ENV: production
           SENTRY_DISABLE_AUTO_UPLOAD: true
+          EXPO_USE_FAST_RESOLVER: true
+
+      - name: Debug web-build output
+        shell: pwsh
+        run: |
+          if (Test-Path "web-build") {
+            Write-Host "web-build directory exists"
+            Get-ChildItem "web-build" | ForEach-Object { Write-Host $_.Name }
+            if (Test-Path "web-build/index.html") {
+              Write-Host "index.html found!"
+            } else {
+              Write-Host "ERROR: index.html not found!"
+              exit 1
+            }
+          } else {
+            Write-Host "ERROR: web-build directory not created!"
+            exit 1
+          }
 
       - name: Create Electron wrapper
         shell: pwsh
@@ -174,6 +206,9 @@ jobs:
           '@
           [System.IO.File]::WriteAllText("electron/main.js", $mainJs)
 
+      - name: Create Electron package.json
+        shell: pwsh
+        run: |
           $electronPkg = @'
           {
             "name": "nuvio-desktop",
@@ -191,8 +226,7 @@ jobs:
                 "target": [
                   { "target": "nsis", "arch": ["x64"] },
                   { "target": "portable", "arch": ["x64"] }
-                ],
-                "icon": "assets/icon.png"
+                ]
               },
               "nsis": {
                 "oneClick": false,
@@ -206,7 +240,8 @@ jobs:
           [System.IO.File]::WriteAllText("electron-package.json", $electronPkg)
 
       - name: Install Electron builder
-        run: npm install --save-dev electron electron-builder --legacy-peer-deps
+        run: |
+          npm install --save-dev electron@^28.0.0 electron-builder@^24.13.3 --legacy-peer-deps
 
       - name: Build Windows executable
         shell: pwsh
@@ -220,5 +255,7 @@ jobs:
           name: Nuvio-Windows
           path: |
             dist/*.exe
-            dist/*.msi
+            dist/*.exe.blockmap
+            dist/*.nsis*
+            dist/*.portable.exe
           retention-days: 30
